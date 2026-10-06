@@ -47,7 +47,7 @@ function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcom
   return (
     <Screen underHeader>
       {welcome ? (
-        <AppText variant="body">Bienvenue ! Encore une petite étape : comment pouvons-nous vous appeler ?</AppText>
+        <AppText variant="body">Bienvenue ! Encore une petite étape : comment pouvons-nous vous appeler ?</AppText>
       ) : null}
       <TextField
         label="Nom et prénom"
@@ -60,7 +60,7 @@ function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcom
       />
       <TextField
         label="Téléphone (facultatif)"
-        hint="Utile pour vous prévenir en cas d'imprévu."
+        hint="Utile pour vous prévenir en cas d’imprévu."
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"

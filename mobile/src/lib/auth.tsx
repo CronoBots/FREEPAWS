@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 type AuthState = {
   session: Session | null;
   userId: string | null;
-  /** false tant que la session persistée n'a pas été relue : ne rien décider avant. */
+  /** false tant que la session persistée n’a pas été relue : ne rien décider avant. */
   ready: boolean;
 };
 

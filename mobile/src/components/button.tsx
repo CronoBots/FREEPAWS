@@ -46,7 +46,8 @@ export function Button({ label, variant = "primary", loading = false, disabled, 
 const styles = StyleSheet.create({
   base: {
     minHeight: 50,
-    paddingHorizontal: space.xl,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.sm,
     borderRadius: radius.md,
     alignItems: "center",
     justifyContent: "center",
@@ -57,6 +58,6 @@ const styles = StyleSheet.create({
   danger: { backgroundColor: colors.danger },
   pressed: { opacity: 0.82 },
   disabled: { opacity: 0.45 },
-  label: { fontFamily: fonts.sansSemiBold, fontSize: 16, color: colors.ink },
+  label: { fontFamily: fonts.sansSemiBold, fontSize: 16, lineHeight: 21, color: colors.ink, textAlign: "center" },
   labelInverse: { color: colors.cream },
 });

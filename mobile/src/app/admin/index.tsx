@@ -41,7 +41,7 @@ export default function AdminAgendaRoute() {
   if (!isAdmin) {
     return (
       <Screen underHeader>
-        <EmptyView title="Accès réservé" message="Cette page est réservée à l'équipe FreePaws." />
+        <EmptyView title="Accès réservé" message="Cette page est réservée à l’équipe FreePaws." />
       </Screen>
     );
   }
@@ -52,7 +52,7 @@ export default function AdminAgendaRoute() {
 
   const onCancel = async (entry: AgendaEntry) => {
     const ok = await confirm({
-      title: "Annuler ce rendez-vous ?",
+      title: "Annuler ce rendez-vous ?",
       message: `${entry.service?.name ?? ""} à ${formatTime(entry.start)}. Les inscrits devront être prévenus.`,
       confirmLabel: "Annuler le rendez-vous",
       destructive: true,
@@ -71,9 +71,10 @@ export default function AdminAgendaRoute() {
         onSelect={setDay}
         counts={Object.fromEntries(days.map((d) => [d, Math.max(1, counts[d] ?? 0)]))}
       />
-      <AppText variant="heading">
-        {formatDayLong(`${day}T12:00:00Z`)} · {counts[day] ?? 0} rendez-vous
-      </AppText>
+      <View>
+        <AppText variant="heading">{formatDayLong(`${day}T12:00:00Z`)}</AppText>
+        <AppText variant="caption">{counts[day] ?? 0} rendez-vous</AppText>
+      </View>
 
       {agenda.isLoading ? (
         <LoadingView />
@@ -85,7 +86,7 @@ export default function AdminAgendaRoute() {
         dayEntries.map((entry) => (
           <Card key={entry.id}>
             <AppText variant="eyebrow">
-              {formatTime(entry.start)} – {formatTime(entry.end)}
+              {formatTime(entry.start)} –⁠ {formatTime(entry.end)}
             </AppText>
             <AppText variant="heading">{entry.service?.name}</AppText>
             {entry.service?.mode === "event" ? (
@@ -105,7 +106,7 @@ export default function AdminAgendaRoute() {
                     {booking.client.phone}
                   </AppText>
                 ) : null}
-                {booking.client_notes ? <AppText variant="caption">« {booking.client_notes} »</AppText> : null}
+                {booking.client_notes ? <AppText variant="caption">« {booking.client_notes} »</AppText> : null}
               </View>
             ))}
             <Button label="Annuler" variant="ghost" onPress={() => void onCancel(entry)} />

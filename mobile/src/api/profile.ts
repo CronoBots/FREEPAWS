@@ -38,7 +38,7 @@ export function useDeleteAccount() {
     mutationFn: async () => {
       const { error } = await supabase.rpc("delete_my_account");
       if (error) throw error;
-      // Le compte n'existe plus : on purge la session locale.
+      // Le compte n’existe plus : on purge la session locale.
       await supabase.auth.signOut({ scope: "local" });
     },
   });

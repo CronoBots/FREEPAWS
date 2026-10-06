@@ -18,7 +18,7 @@ export const supabase = createClient<Database>(
   },
 );
 
-// Sur mobile, on ne rafraîchit le jeton que lorsque l'app est au premier plan.
+// Sur mobile, on ne rafraîchit le jeton que lorsque l’app est au premier plan.
 if (Platform.OS !== "web") {
   AppState.addEventListener("change", (state) => {
     if (state === "active") supabase.auth.startAutoRefresh();

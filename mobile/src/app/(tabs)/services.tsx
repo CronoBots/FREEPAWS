@@ -34,7 +34,7 @@ export default function ServicesScreen() {
       )}
 
       <Card>
-        <AppText variant="heading">Prête à en parler ?</AppText>
+        <AppText variant="heading">Prête à en parler ?</AppText>
         <AppText variant="body">
           Chaque situation est différente — le plus simple est d’en discuter directement pour voir quel accompagnement
           correspond à votre famille.

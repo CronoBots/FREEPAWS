@@ -50,7 +50,7 @@ export default function BookingRoute() {
 
   const onCancel = async () => {
     const ok = await confirm({
-      title: "Annuler cette réservation ?",
+      title: "Annuler cette réservation ?",
       message: `${data.service.name}, ${formatDayLong(data.start)} à ${formatTime(data.start)}.`,
       confirmLabel: "Annuler la réservation",
       destructive: true,
@@ -67,10 +67,10 @@ export default function BookingRoute() {
       {created === "1" && data.status === "confirmed" ? (
         <View style={styles.success} accessibilityRole="alert">
           <AppText variant="heading" style={styles.successText}>
-            C’est réservé !
+            C’est réservé !
           </AppText>
           <AppText variant="body" style={styles.successText}>
-            Vous retrouverez cette réservation dans l’onglet « Mes réservations ».
+            Vous retrouverez cette réservation dans l’onglet « Mes réservations ».
           </AppText>
         </View>
       ) : null}
@@ -80,11 +80,11 @@ export default function BookingRoute() {
         <AppText variant="title">{data.service.name}</AppText>
         <AppText variant="bodyStrong">{formatDayLong(data.start)}</AppText>
         <AppText variant="body">
-          {formatTime(data.start)} – {formatTime(data.end)}
+          {formatTime(data.start)} –⁠ {formatTime(data.end)}
         </AppText>
         {data.service.location ? <AppText variant="body">{data.service.location}</AppText> : null}
         {data.dog ? <AppText variant="body">Avec {data.dog.name}</AppText> : null}
-        {data.client_notes ? <AppText variant="caption">« {data.client_notes} »</AppText> : null}
+        {data.client_notes ? <AppText variant="caption">« {data.client_notes} »</AppText> : null}
       </Card>
 
       {data.status === "confirmed" ? (
@@ -97,7 +97,7 @@ export default function BookingRoute() {
           />
         ) : data.start > new Date() ? (
           <AppText variant="caption">
-            Le délai d’annulation en ligne ({data.service.cancel_notice_hours} h) est dépassé : contactez-nous
+            Le délai d’annulation en ligne ({data.service.cancel_notice_hours} h) est dépassé : contactez-nous
             directement.
           </AppText>
         ) : null

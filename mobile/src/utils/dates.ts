@@ -39,7 +39,7 @@ export function addDays(isoDay: string, days: number): string {
   return next.toISOString().slice(0, 10);
 }
 
-/** Libellés d'un jour AAAA-MM-JJ pour un sélecteur : { weekday: "mer.", day: "14", month: "oct." } */
+/** Libellés d’un jour AAAA-MM-JJ pour un sélecteur : { weekday: "mer.", day: "14", month: "oct." } */
 export function dayParts(isoDay: string): { weekday: string; day: string; month: string } {
   const [y, m, d] = isoDay.split("-").map(Number) as [number, number, number];
   const date = new Date(Date.UTC(y, m - 1, d, 12));
@@ -67,7 +67,7 @@ const partsFormat = new Intl.DateTimeFormat("en-GB", {
   second: "2-digit",
 });
 
-/** Décalage (ms) de Bruxelles par rapport à UTC à un instant donné (+1 h l'hiver, +2 h l'été). */
+/** Décalage (ms) de Bruxelles par rapport à UTC à un instant donné (+1 h l’hiver, +2 h l’été). */
 function brusselsOffset(instant: Date): number {
   const parts = Object.fromEntries(partsFormat.formatToParts(instant).map((p) => [p.type, p.value]));
   const asUtc = Date.UTC(
@@ -83,7 +83,7 @@ function brusselsOffset(instant: Date): number {
 
 /**
  * Instant correspondant à une date (AAAA-MM-JJ) et une heure (HH:MM) saisies à Bruxelles.
- * Renvoie null si la saisie est invalide ou tombe dans le trou du passage à l'heure d'été.
+ * Renvoie null si la saisie est invalide ou tombe dans le trou du passage à l’heure d’été.
  */
 export function brusselsDateTime(isoDay: string, time: string): Date | null {
   const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDay);
@@ -98,7 +98,7 @@ export function brusselsDateTime(isoDay: string, time: string): Date | null {
   ];
   if (m < 1 || m > 12 || d < 1 || d > 31 || h > 23 || min > 59) return null;
   const wallClock = Date.UTC(y, m - 1, d, h, min);
-  // Deux passes : le décalage dépend de l'instant recherché lui-même.
+  // Deux passes : le décalage dépend de l’instant recherché lui-même.
   let instant = new Date(wallClock - brusselsOffset(new Date(wallClock)));
   instant = new Date(wallClock - brusselsOffset(instant));
   const check = new Date(instant.getTime() + brusselsOffset(instant));

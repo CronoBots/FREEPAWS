@@ -1,11 +1,18 @@
-import { Pressable, StyleSheet } from "react-native";
+import { Pressable, type StyleProp, StyleSheet, type ViewStyle } from "react-native";
 
 import { AppText } from "@/components/text";
 import { colors, fonts, radius, space } from "@/theme";
 
-type Props = { label: string; selected: boolean; onPress: () => void; disabled?: boolean; accessibilityLabel?: string };
+type Props = {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  disabled?: boolean;
+  accessibilityLabel?: string;
+  style?: StyleProp<ViewStyle>;
+};
 
-export function Chip({ label, selected, onPress, disabled, accessibilityLabel }: Props) {
+export function Chip({ label, selected, onPress, disabled, accessibilityLabel, style }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -18,6 +25,7 @@ export function Chip({ label, selected, onPress, disabled, accessibilityLabel }:
         selected && styles.selected,
         disabled && styles.disabled,
         pressed && styles.pressed,
+        style,
       ]}
     >
       <AppText style={[styles.label, selected && styles.labelSelected]}>{label}</AppText>
@@ -28,8 +36,9 @@ export function Chip({ label, selected, onPress, disabled, accessibilityLabel }:
 const styles = StyleSheet.create({
   chip: {
     minHeight: 44,
-    minWidth: 76,
-    paddingHorizontal: space.lg,
+    maxWidth: "100%",
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.line,
@@ -40,6 +49,6 @@ const styles = StyleSheet.create({
   selected: { backgroundColor: colors.ink, borderColor: colors.ink },
   disabled: { opacity: 0.35 },
   pressed: { opacity: 0.75 },
-  label: { fontFamily: fonts.sansMedium, fontSize: 15, color: colors.ink },
+  label: { fontFamily: fonts.sansMedium, fontSize: 15, lineHeight: 20, color: colors.ink, textAlign: "center" },
   labelSelected: { color: colors.cream },
 });

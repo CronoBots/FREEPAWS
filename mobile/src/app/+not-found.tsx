@@ -8,8 +8,8 @@ export default function NotFoundRoute() {
     <Screen underHeader>
       <Stack.Screen options={{ title: "Page introuvable" }} />
       <EmptyView
-        title="Cette page n'existe pas"
-        actionLabel="Retour à l'accueil"
+        title="Cette page n’existe pas"
+        actionLabel="Retour à l’accueil"
         onAction={() => router.replace("/")}
       />
     </Screen>

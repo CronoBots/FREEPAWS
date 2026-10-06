@@ -1,7 +1,7 @@
 export type TimeRange = { start: Date; end: Date };
 
 /**
- * Lit un tstzrange Postgres tel que renvoyé par l'API :
+ * Lit un tstzrange Postgres tel que renvoyé par l’API :
  * ["2026-10-14 08:00:00+00","2026-10-14 09:00:00+00")
  */
 export function parseRange(value: string): TimeRange {

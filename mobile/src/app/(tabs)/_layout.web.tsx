@@ -6,7 +6,7 @@ import { colors, fonts } from "@/theme";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
-// Sur le web, les onglets natifs s'affichent en haut : on garde une barre classique en bas.
+// Sur le web, les onglets natifs s’affichent en haut : on garde une barre classique en bas.
 const TABS: { name: string; title: string; icon: IconName; iconActive: IconName }[] = [
   { name: "index", title: "Le parc", icon: "paw-outline", iconActive: "paw" },
   { name: "services", title: "Coaching", icon: "people-outline", iconActive: "people" },
@@ -24,11 +24,11 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.creamAlt,
           borderTopColor: colors.line,
-          height: 64,
-          paddingTop: 6,
-          paddingBottom: 8,
+          height: 76,
+          paddingTop: 8,
+          paddingBottom: 10,
         },
-        tabBarLabelStyle: { fontFamily: fonts.sansMedium, fontSize: 12, lineHeight: 16 },
+        tabBarLabelStyle: { fontFamily: fonts.sansMedium, fontSize: 11, lineHeight: 16, marginTop: 2 },
       }}
     >
       {TABS.map((tab) => (

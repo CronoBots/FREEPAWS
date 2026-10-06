@@ -8,7 +8,7 @@ export const queryClient = new QueryClient({
   },
 });
 
-// Rafraîchit les données quand l'app revient au premier plan.
+// Rafraîchit les données quand l’app revient au premier plan.
 if (Platform.OS !== "web") {
   AppState.addEventListener("change", (status) => focusManager.setFocused(status === "active"));
 }

@@ -4,7 +4,7 @@ import { StyleSheet, View } from "react-native";
 import { AppText } from "@/components/text";
 import { colors, radius, space } from "@/theme";
 
-/** Lecture d'un flux HLS en direct (URL signée à durée courte). */
+/** Lecture d’un flux HLS en direct (URL signée à durée courte). */
 export function LivePlayer({ url, label }: { url: string; label: string }) {
   const player = useVideoPlayer({ uri: url, contentType: "hls" }, (instance) => {
     instance.muted = true;

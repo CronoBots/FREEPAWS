@@ -72,7 +72,7 @@ export default function SignInRoute() {
         <>
           <AppText variant="title">Bienvenue</AppText>
           <AppText variant="body">
-            Saisissez votre email : nous vous envoyons un code à 6 chiffres. Pas de mot de passe à retenir.
+            Saisissez votre email : nous vous envoyons un code à 6 chiffres. Pas de mot de passe à retenir.
           </AppText>
           <TextField
             label="Adresse email"
@@ -126,7 +126,7 @@ export default function SignInRoute() {
           />
           <Button label="Se connecter" loading={busy} disabled={code.length !== 6} onPress={() => void verify()} />
           <Button
-            label="Changer d'adresse ou renvoyer un code"
+            label="Changer d’adresse ou renvoyer un code"
             variant="ghost"
             onPress={() => {
               setStep("email");

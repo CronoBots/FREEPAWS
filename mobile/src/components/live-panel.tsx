@@ -19,7 +19,7 @@ export function LivePanel({ status, statusFailed }: { status: ParkStatus | undef
         <AppText variant="body">Une fois ouvert, le parc fonctionnera avec un système de caméra à deux temps.</AppText>
         <AppText variant="bodyStrong">Parc libre</AppText>
         <AppText variant="body">
-          Consultez le direct pour découvrir le parc à tout moment : sa disponibilité, mais aussi son état du moment —
+          Consultez le direct pour découvrir le parc à tout moment : sa disponibilité, mais aussi son état du moment —
           pluie, neige, terrain praticable — avant de vous déplacer.
         </AppText>
         <AppText variant="bodyStrong">Parc réservé</AppText>

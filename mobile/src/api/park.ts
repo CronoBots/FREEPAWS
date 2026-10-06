@@ -29,7 +29,7 @@ export function useLiveStream(enabled: boolean) {
   return useQuery({
     queryKey: queryKeys.liveStream(userId),
     enabled,
-    // Les URLs signées expirent vite : on les renouvelle avant l'échéance.
+    // Les URLs signées expirent vite : on les renouvelle avant l’échéance.
     refetchInterval: (query) => {
       const expiresAt = query.state.data?.expiresAt;
       if (!expiresAt) return 60_000;

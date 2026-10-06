@@ -1,4 +1,4 @@
-import { Link } from "expo-router";
+import { router } from "expo-router";
 import { Pressable, StyleSheet } from "react-native";
 
 import type { Service } from "@/api/services";
@@ -9,20 +9,19 @@ import { formatPrice } from "@/utils/format";
 export function ServiceCard({ service }: { service: Service }) {
   const price = formatPrice(service.price_cents);
   return (
-    <Link href={{ pathname: "/service/[slug]", params: { slug: service.slug } }} asChild>
-      <Pressable
-        accessibilityRole="link"
-        accessibilityLabel={`${service.name}. ${service.summary}`}
-        style={({ pressed }) => [styles.card, pressed && styles.pressed]}
-      >
-        <AppText variant="heading">{service.name}</AppText>
-        <AppText variant="body">{service.summary}</AppText>
-        {price ? <AppText variant="bodyStrong">{price}</AppText> : null}
-        <AppText variant="caption" style={styles.more}>
-          En savoir plus →
-        </AppText>
-      </Pressable>
-    </Link>
+    <Pressable
+      onPress={() => router.push({ pathname: "/service/[slug]", params: { slug: service.slug } })}
+      accessibilityRole="link"
+      accessibilityLabel={`${service.name}. ${service.summary}`}
+      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+    >
+      <AppText variant="heading">{service.name}</AppText>
+      <AppText variant="body">{service.summary}</AppText>
+      {price ? <AppText variant="bodyStrong">{price}</AppText> : null}
+      <AppText variant="caption" style={styles.more}>
+        En savoir plus →
+      </AppText>
+    </Pressable>
   );
 }
 

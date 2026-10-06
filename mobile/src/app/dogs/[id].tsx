@@ -60,7 +60,7 @@ function DogForm({ dog }: { dog?: Dog }) {
         Number.isNaN(Date.parse(birthDate)) ||
         birthDate > new Date().toISOString().slice(0, 10))
     ) {
-      next.birthDate = "Format attendu : AAAA-MM-JJ, dans le passé.";
+      next.birthDate = "Format attendu : AAAA-MM-JJ, dans le passé.";
     }
     setErrors(next);
     if (Object.keys(next).length > 0) return;
@@ -82,7 +82,7 @@ function DogForm({ dog }: { dog?: Dog }) {
   const onDelete = async () => {
     if (!dog) return;
     const ok = await confirm({
-      title: `Retirer ${dog.name} ?`,
+      title: `Retirer ${dog.name} ?`,
       message: "Ses réservations passées restent dans votre historique.",
       confirmLabel: "Retirer",
       destructive: true,
@@ -110,7 +110,7 @@ function DogForm({ dog }: { dog?: Dog }) {
       />
       <TextField
         label="À savoir (facultatif)"
-        hint="Réactivité, rappel, santé… tout ce qui aide à bien l'accueillir."
+        hint="Réactivité, rappel, santé… tout ce qui aide à bien l’accueillir."
         value={notes}
         onChangeText={setNotes}
         maxLength={1000}

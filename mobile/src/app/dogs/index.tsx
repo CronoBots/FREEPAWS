@@ -19,7 +19,7 @@ export default function DogsRoute() {
       ) : dogs.data?.length === 0 ? (
         <EmptyView
           title="Aucun chien enregistré"
-          message="Présentez-nous votre compagnon : nous préparerons mieux chaque session."
+          message="Présentez-nous votre compagnon : nous préparerons mieux chaque session."
           actionLabel="Ajouter un chien"
           onAction={add}
         />

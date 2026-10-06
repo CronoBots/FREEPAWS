@@ -13,14 +13,14 @@ export function ServiceInfo({ service }: { service: Service }) {
   const paragraphs = (service.description || service.summary).split(/\n{2,}/);
   return (
     <>
-      <Stack.Screen options={{ title: service.name }} />
+      <Stack.Screen options={{ title: "" }} />
       <Screen
         underHeader
+        heading={service.name}
         footer={
           <Button label="Prendre rendez-vous" onPress={() => void openContactEmail(`Rendez-vous : ${service.name}`)} />
         }
       >
-        {service.location ? <AppText variant="eyebrow">{service.location}</AppText> : null}
         {paragraphs.map((text) => (
           <AppText key={text} variant="body">
             {text}

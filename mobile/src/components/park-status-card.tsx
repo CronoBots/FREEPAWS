@@ -7,9 +7,9 @@ import { colors, space } from "@/theme";
 import { formatTime } from "@/utils/dates";
 
 const COPY = {
-  free: { label: "Libre", color: colors.free, until: "jusqu'à" },
-  reserved: { label: "Réservé", color: colors.reserved, until: "jusqu'à" },
-  closed: { label: "Fermé", color: colors.closed, until: "jusqu'à" },
+  free: { label: "Libre", color: colors.free, until: "jusqu’à" },
+  reserved: { label: "Réservé", color: colors.reserved, until: "jusqu’à" },
+  closed: { label: "Fermé", color: colors.closed, until: "jusqu’à" },
   not_open: { label: "Pas encore ouvert", color: colors.reserved, until: "" },
 } as const;
 
@@ -21,13 +21,13 @@ export function ParkStatusCard({ status }: { status: ParkStatus | undefined }) {
       ? "Projet actif, recherche de terrain en cours."
       : status.status === "free"
         ? status.until
-          ? `Disponible maintenant, jusqu'à ${formatTime(status.until)}.`
+          ? `Disponible maintenant, jusqu’à ${formatTime(status.until)}.`
           : "Disponible maintenant."
         : status.status === "reserved"
-          ? `Session privée en cours${status.until ? `, jusqu'à ${formatTime(status.until)}` : ""}.`
+          ? `Session privée en cours${status.until ? `, jusqu’à ${formatTime(status.until)}` : ""}.`
           : status.until
-            ? `Fermé jusqu'à ${formatTime(status.until)}.`
-            : "En dehors des heures d'ouverture.";
+            ? `Fermé jusqu’à ${formatTime(status.until)}.`
+            : "En dehors des heures d’ouverture.";
 
   return (
     <Card accessibilityRole="summary" accessibilityLabel={`Parc ${copy?.label ?? ""}. ${detail}`}>

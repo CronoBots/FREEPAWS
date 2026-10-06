@@ -48,7 +48,7 @@ export function useCancelAppointment() {
   });
 }
 
-/** Planifie une séance de groupe (atelier). L'agenda refuse tout chevauchement. */
+/** Planifie une séance de groupe (atelier). L’agenda refuse tout chevauchement. */
 export function useCreateEvent() {
   const invalidate = useInvalidateBookings();
   return useMutation({

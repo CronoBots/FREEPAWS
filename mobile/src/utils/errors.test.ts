@@ -5,7 +5,7 @@ describe("toUserMessage", () => {
     expect(toUserMessage({ message: "slot_unavailable", code: "P0001" })).toMatch(/plus disponible/);
   });
 
-  it("traduit les codes d'erreur Supabase Auth", () => {
+  it("traduit les codes d’erreur Supabase Auth", () => {
     expect(toUserMessage({ code: "otp_expired", message: "Token has expired or is invalid" })).toMatch(/expiré/);
   });
 

@@ -3,21 +3,21 @@ import { Screen } from "@/components/screen";
 import { AppText } from "@/components/text";
 import { openContactEmail } from "@/lib/contact";
 
-// Uniquement des faits : ce que l'app collecte réellement et ce que dit freepaws.be.
+// Uniquement des faits : ce que l’app collecte réellement et ce que dit freepaws.be.
 // La politique de confidentialité complète (identité légale, hébergement, durées de conservation)
 // doit être rédigée et validée par FreePaws avant la publication sur les stores.
 const SECTIONS: { title: string; body: string }[] = [
   {
     title: "FreePaws",
-    body: "Coaching canin et FreePaws Park, Province de Liège. Contact : contact@freepaws.be.",
+    body: "Coaching canin et FreePaws Park, Province de Liège. Contact : contact@freepaws.be.",
   },
   {
     title: "Données enregistrées par l’app",
-    body: "Votre adresse email (connexion), votre nom et, si vous le renseignez, votre téléphone ; les informations sur vos chiens que vous saisissez ; vos réservations.",
+    body: "Votre adresse email (connexion), votre nom et, si vous le renseignez, votre téléphone ; les informations sur vos chiens que vous saisissez ; vos réservations.",
   },
   {
     title: "Caméra du parc",
-    body: "Parc libre : le direct permet de découvrir le parc à tout moment. Parc réservé : l’accès devient privé, conformément à la protection de la vie privée.",
+    body: "Parc libre : le direct permet de découvrir le parc à tout moment. Parc réservé : l’accès devient privé, conformément à la protection de la vie privée.",
   },
   {
     title: "Supprimer vos données",

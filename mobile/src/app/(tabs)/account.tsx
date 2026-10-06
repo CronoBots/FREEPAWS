@@ -23,7 +23,7 @@ export default function AccountScreen() {
 
   const onDelete = async () => {
     const ok = await confirm({
-      title: "Supprimer votre compte ?",
+      title: "Supprimer votre compte ?",
       message:
         "Vos réservations à venir seront annulées et vos données (profil, chiens, historique) définitivement effacées.",
       confirmLabel: "Supprimer définitivement",
@@ -31,7 +31,7 @@ export default function AccountScreen() {
     });
     if (!ok) return;
     deleteAccount.mutate(undefined, {
-      onSuccess: () => notify("Compte supprimé", "Vos données ont été effacées. À bientôt peut-être !"),
+      onSuccess: () => notify("Compte supprimé", "Vos données ont été effacées. À bientôt peut-être !"),
       onError: (error) => notify("Suppression impossible", toUserMessage(error)),
     });
   };
@@ -45,7 +45,7 @@ export default function AccountScreen() {
         </Card>
       ) : (
         <Card>
-          <AppText variant="heading">Pas encore de compte ?</AppText>
+          <AppText variant="heading">Pas encore de compte ?</AppText>
           <AppText variant="body">Un simple code reçu par email suffit pour vous connecter.</AppText>
           <Button label="Se connecter ou créer un compte" onPress={() => router.push("/sign-in")} />
         </Card>

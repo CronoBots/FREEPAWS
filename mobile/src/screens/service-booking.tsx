@@ -1,6 +1,6 @@
 import { router, Stack } from "expo-router";
-import { useMemo, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { type ScrollView, StyleSheet, View } from "react-native";
 
 import { useBookEvent, useBookSlot } from "@/api/bookings";
 import { useDogs } from "@/api/dogs";
@@ -9,6 +9,7 @@ import { type Slot, useSlots } from "@/api/slots";
 import { Button } from "@/components/button";
 import { Chip } from "@/components/chip";
 import { DayPicker } from "@/components/day-picker";
+import { SlotGrid } from "@/components/slot-grid";
 import { Screen } from "@/components/screen";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
@@ -34,6 +35,13 @@ export function ServiceBooking({ service }: { service: Service }) {
   const [dogId, setDogId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+
+  const selectSlot = (slot: Slot | null) => {
+    setSelected(slot);
+    // Amène le choix du chien et le message à l’écran.
+    if (slot && userId) setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
+  };
 
   const bookSlot = useBookSlot();
   const bookEvent = useBookEvent();
@@ -59,7 +67,7 @@ export function ServiceBooking({ service }: { service: Service }) {
         router.replace({ pathname: "/booking/[id]", params: { id: bookingId, created: "1" } }),
       onError: (err: unknown) => {
         setError(toUserMessage(err));
-        setSelected(null);
+        selectSlot(null);
       },
     };
     if (service.mode === "event") {
@@ -87,10 +95,16 @@ export function ServiceBooking({ service }: { service: Service }) {
 
   return (
     <>
-      <Stack.Screen options={{ title: service.name }} />
-      <Screen underHeader footer={footer} refreshing={slots.isRefetching} onRefresh={() => void slots.refetch()}>
+      <Stack.Screen options={{ title: "" }} />
+      <Screen
+        underHeader
+        heading={service.name}
+        scrollRef={scrollRef}
+        footer={footer}
+        refreshing={slots.isRefetching}
+        onRefresh={() => void slots.refetch()}
+      >
         <View style={styles.intro}>
-          {service.location ? <AppText variant="eyebrow">{service.location}</AppText> : null}
           <AppText variant="body">{service.description || service.summary}</AppText>
           {formatPrice(service.price_cents) ? (
             <AppText variant="bodyStrong">{formatPrice(service.price_cents)}</AppText>
@@ -115,28 +129,23 @@ export function ServiceBooking({ service }: { service: Service }) {
               counts={counts}
               onSelect={(day) => {
                 setPickedDay(day);
-                setSelected(null);
+                selectSlot(null);
               }}
             />
             {activeDay ? <AppText variant="heading">{formatDayLong(`${activeDay}T12:00:00Z`)}</AppText> : null}
-            <View style={styles.slots}>
-              {daySlots.map((slot) => {
-                const isSelected = selected?.startsAt === slot.startsAt;
-                const label =
+            <SlotGrid
+              wide={service.mode === "event"}
+              items={daySlots.map((slot) => ({
+                key: slot.startsAt,
+                label:
                   service.mode === "event"
-                    ? `${formatTime(slot.startsAt)} · ${slot.remaining} place${slot.remaining > 1 ? "s" : ""}`
-                    : formatTime(slot.startsAt);
-                return (
-                  <Chip
-                    key={slot.startsAt}
-                    label={label}
-                    accessibilityLabel={`${formatTime(slot.startsAt)} à ${formatTime(slot.endsAt)}`}
-                    selected={isSelected}
-                    onPress={() => setSelected(isSelected ? null : slot)}
-                  />
-                );
-              })}
-            </View>
+                    ? `${formatTime(slot.startsAt)} · ${slot.remaining}\u00a0place${slot.remaining > 1 ? "s" : ""}`
+                    : formatTime(slot.startsAt),
+                accessibilityLabel: `${formatTime(slot.startsAt)} à ${formatTime(slot.endsAt)}`,
+                selected: selected?.startsAt === slot.startsAt,
+                onPress: () => selectSlot(selected?.startsAt === slot.startsAt ? null : slot),
+              }))}
+            />
           </>
         )}
 
@@ -148,7 +157,7 @@ export function ServiceBooking({ service }: { service: Service }) {
 
         {userId && selected ? (
           <View style={styles.details}>
-            <AppText variant="heading">Pour quel chien ?</AppText>
+            <AppText variant="heading">Pour quel chien ?</AppText>
             <View style={styles.slots}>
               <Chip label="Non précisé" selected={dogId === null} onPress={() => setDogId(null)} />
               {dogs.data?.map((dog) => (

@@ -45,7 +45,7 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
     if (appReady) void SplashScreen.hideAsync();
   }, [appReady]);
 
-  // On garde le splash tant que la session persistée n'est pas relue (évite un flash « déconnecté »).
+  // On garde le splash tant que la session persistée n’est pas relue (évite un flash « déconnecté »).
   if (!appReady) return null;
   if (!isSupabaseConfigured) return <ConfigMissing />;
 
@@ -56,6 +56,8 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
         headerTintColor: colors.ink,
         headerTitleStyle: { fontFamily: fonts.serif, color: colors.ink },
         headerShadowVisible: false,
+        // Titre centré partout : aligné avec la colonne de contenu, y compris sur tablette et web.
+        headerTitleAlign: "center",
         headerBackButtonDisplayMode: "minimal",
         contentStyle: { backgroundColor: colors.cream },
       }}

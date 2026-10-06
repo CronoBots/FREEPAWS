@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 
-// La session Supabase dépasse la limite de taille d'une entrée SecureStore (~2 Ko) :
+// La session Supabase dépasse la limite de taille d’une entrée SecureStore (~2 Ko) :
 // on la découpe en morceaux, tous stockés dans le trousseau iOS / Keystore Android.
 const CHUNK_SIZE = 1800;
 

@@ -24,7 +24,7 @@ export default function ServiceRoute() {
       ) : service.isError ? (
         <ErrorView error={service.error} onRetry={() => void service.refetch()} />
       ) : (
-        <EmptyView title="Prestation introuvable" message="Elle n'est peut-être plus proposée." />
+        <EmptyView title="Prestation introuvable" message="Elle n’est peut-être plus proposée." />
       )}
     </Screen>
   );

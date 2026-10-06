@@ -12,6 +12,7 @@ import { ParkStatusCard } from "@/components/park-status-card";
 import { Screen } from "@/components/screen";
 import { ErrorView } from "@/components/state-views";
 import { AppText } from "@/components/text";
+import { useCompact } from "@/hooks/use-compact";
 import { openContactEmail } from "@/lib/contact";
 import { space } from "@/theme";
 
@@ -33,7 +34,7 @@ const STEPS: { state: string; tone: "success" | "warning" | "neutral"; title: st
     state: "En cours",
     tone: "warning",
     title: "Recherche du terrain",
-    text: "L’étape la plus longue : entre les contraintes d’urbanisme wallonnes (CoDT) et le choix du bon lieu sur l’axe Liège–Huy–Waremme, je prends le temps de bien faire les choses.",
+    text: "L’étape la plus longue : entre les contraintes d’urbanisme wallonnes (CoDT) et le choix du bon lieu sur l’axe Liège–Huy–Waremme, je prends le temps de bien faire les choses.",
   },
   {
     state: "À venir",
@@ -47,19 +48,20 @@ export default function ParkScreen() {
   const status = useParkStatus();
   const parkService = useService(PARK_SERVICE_SLUG).data;
   const notOpen = status.data?.status === "not_open";
+  const compact = useCompact();
 
   return (
     <Screen refreshing={status.isRefetching} onRefresh={() => void status.refetch()}>
       <View style={styles.brand}>
         <Image
           source={require("@/assets/logo.png")}
-          style={styles.logo}
+          style={compact ? styles.logoCompact : styles.logo}
           contentFit="contain"
           accessibilityLabel="Logo FreePaws"
         />
         <View style={styles.brandText}>
           <AppText variant="eyebrow">Un espace de liberté</AppText>
-          <AppText variant="display" accessibilityRole="header">
+          <AppText variant="display" accessibilityRole="header" style={compact && styles.titleCompact}>
             FreePaws Park
           </AppText>
         </View>
@@ -116,6 +118,8 @@ export default function ParkScreen() {
 const styles = StyleSheet.create({
   brand: { flexDirection: "row", alignItems: "center", gap: space.md },
   logo: { width: 64, height: 64 },
+  logoCompact: { width: 48, height: 48 },
+  titleCompact: { fontSize: 28, lineHeight: 34 },
   brandText: { flex: 1 },
   step: { gap: space.xs, paddingTop: space.sm },
 });

@@ -1,4 +1,4 @@
-import { Link } from "expo-router";
+import { router } from "expo-router";
 import { Pressable, StyleSheet } from "react-native";
 
 import { type Booking, isUpcoming } from "@/api/bookings";
@@ -15,20 +15,19 @@ export function bookingBadge(booking: Booking): { label: string; tone: "success"
 
 export function BookingCard({ booking }: { booking: Booking }) {
   const badge = bookingBadge(booking);
-  const when = `${formatDayLong(booking.start)}, ${formatTime(booking.start)} – ${formatTime(booking.end)}`;
+  const when = `${formatDayLong(booking.start)}, ${formatTime(booking.start)} –⁠ ${formatTime(booking.end)}`;
   return (
-    <Link href={{ pathname: "/booking/[id]", params: { id: booking.id } }} asChild>
-      <Pressable
-        accessibilityRole="link"
-        accessibilityLabel={`${booking.service.name}, ${when}, ${badge.label}`}
-        style={({ pressed }) => [styles.card, pressed && styles.pressed]}
-      >
-        <Badge label={badge.label} tone={badge.tone} />
-        <AppText variant="heading">{booking.service.name}</AppText>
-        <AppText variant="body">{when}</AppText>
-        {booking.dog ? <AppText variant="caption">Avec {booking.dog.name}</AppText> : null}
-      </Pressable>
-    </Link>
+    <Pressable
+      onPress={() => router.push({ pathname: "/booking/[id]", params: { id: booking.id } })}
+      accessibilityRole="link"
+      accessibilityLabel={`${booking.service.name}, ${when}, ${badge.label}`}
+      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+    >
+      <Badge label={badge.label} tone={badge.tone} />
+      <AppText variant="heading">{booking.service.name}</AppText>
+      <AppText variant="body">{when}</AppText>
+      {booking.dog ? <AppText variant="caption">Avec {booking.dog.name}</AppText> : null}
+    </Pressable>
   );
 }
 
