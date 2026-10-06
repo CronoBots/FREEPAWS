@@ -7,45 +7,55 @@ import { LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { colors, radius, space } from "@/theme";
 
-/** Caméra à deux temps : publique quand le parc est libre, privée pendant une session. */
+/** Caméra à deux temps (textes de freepaws.be/journal-de-bord.html). */
 export function LivePanel({ status, statusFailed }: { status: ParkStatus | undefined; statusFailed: boolean }) {
-  const live = useLiveStream(Boolean(status));
+  const parkOpen = Boolean(status) && status?.status !== "not_open";
+  const live = useLiveStream(parkOpen);
+
+  if (status?.status === "not_open") {
+    return (
+      <Card>
+        <AppText variant="eyebrow">L’accès pensé pour la liberté et la sécurité</AppText>
+        <AppText variant="body">Une fois ouvert, le parc fonctionnera avec un système de caméra à deux temps.</AppText>
+        <AppText variant="bodyStrong">Parc libre</AppText>
+        <AppText variant="body">
+          Consultez le direct pour découvrir le parc à tout moment : sa disponibilité, mais aussi son état du moment —
+          pluie, neige, terrain praticable — avant de vous déplacer.
+        </AppText>
+        <AppText variant="bodyStrong">Parc réservé</AppText>
+        <AppText variant="body">
+          L’accès devient privé, conformément à la protection de la vie privée. Vous gardez un œil sur votre chien —
+          utile si le rappel n’est pas encore acquis — et je garde un accès en cas d’incident.
+        </AppText>
+      </Card>
+    );
+  }
 
   let body;
   if (statusFailed) {
-    body = <Placeholder title="Direct indisponible" message="Impossible de vérifier l’état du parc pour le moment." />;
+    body = <Placeholder title="Direct indisponible" />;
   } else if (!status || live.isLoading) {
     body = <LoadingView label="Connexion au direct…" />;
   } else if (live.isError) {
-    body = <Placeholder title="Direct indisponible" message="Impossible de joindre la caméra pour le moment." />;
+    body = <Placeholder title="Direct indisponible" />;
   } else if (!live.data || live.data.mode === "denied") {
     body =
       status.status === "reserved" ? (
         <Placeholder
-          title="Session privée en cours"
-          message="Par respect pour la famille présente, le direct est réservé à la personne qui a réservé ce créneau."
+          title="Parc réservé"
+          message="L’accès devient privé, conformément à la protection de la vie privée."
         />
       ) : (
-        <Placeholder title="Parc fermé" message="Le direct reprend à l'ouverture du parc." />
+        <Placeholder title="Parc fermé" />
       );
   } else if (live.data.streams.length === 0) {
-    body = (
-      <Placeholder
-        title="Direct bientôt disponible"
-        message="Les caméras seront installées avec l'ouverture du parc. Vous pourrez alors vérifier en direct s'il est libre et l'état du terrain."
-      />
-    );
+    body = <Placeholder title="Direct indisponible" />;
   } else {
     body = (
       <View style={styles.streams}>
         {live.data.streams.map((stream) => (
           <LivePlayer key={stream.id} url={stream.url} label={stream.name} />
         ))}
-        <AppText variant="caption">
-          {live.data.mode === "private"
-            ? "Direct privé : visible uniquement par vous pendant votre session."
-            : "Direct public : il devient privé dès qu'une session réservée commence."}
-        </AppText>
       </View>
     );
   }
@@ -58,15 +68,17 @@ export function LivePanel({ status, statusFailed }: { status: ParkStatus | undef
   );
 }
 
-function Placeholder({ title, message }: { title: string; message: string }) {
+function Placeholder({ title, message }: { title: string; message?: string }) {
   return (
     <View style={styles.placeholder}>
       <AppText variant="heading" style={styles.placeholderText}>
         {title}
       </AppText>
-      <AppText variant="body" style={[styles.placeholderText, styles.placeholderBody]}>
-        {message}
-      </AppText>
+      {message ? (
+        <AppText variant="body" style={[styles.placeholderText, styles.placeholderBody]}>
+          {message}
+        </AppText>
+      ) : null}
     </View>
   );
 }

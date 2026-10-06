@@ -20,7 +20,7 @@ l'envoi se font dans le cloud avec **EAS** (Expo Application Services) : pas bes
 npx supabase login
 npx supabase link --project-ref <ref-du-projet>
 npx supabase db push                     # applique les migrations
-psql "<connexion>" -f supabase/seed.sql  # catalogue de départ (après validation des horaires)
+psql "<connexion>" -f supabase/seed.sql  # catalogue de départ (textes du site uniquement)
 npx supabase functions deploy live-stream
 
 # Dans le dashboard Supabase :

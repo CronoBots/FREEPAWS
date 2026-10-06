@@ -1,85 +1,54 @@
--- Données de départ : catalogue FreePaws et horaires d'exemple.
--- Les tarifs, horaires et durées marqués « à confirmer » doivent être validés avant la mise en ligne.
+-- Données de départ : uniquement les informations publiées sur www.freepaws.be.
+--
+-- Rien n'est inventé : pas d'horaires, pas de tarifs, pas de durée quand le site n'en donne pas.
+-- Tant que FreePaws n'a pas fixé horaires, durées et règles d'annulation, la réservation en ligne
+-- reste fermée (booking_enabled = false) et l'app propose « Prendre rendez-vous » par email,
+-- comme le site. Le parc est « pas encore ouvert » (is_open = false), comme indiqué sur le site.
 
-insert into public.resources (id, slug, name) values
-  ('00000000-0000-4000-a000-000000000001', 'park', 'FreePaws Park'),
-  ('00000000-0000-4000-a000-000000000002', 'coach', 'Coaching FreePaws')
+insert into public.resources (id, slug, name, is_open) values
+  ('00000000-0000-4000-a000-000000000001', 'park', 'FreePaws Park', false),
+  ('00000000-0000-4000-a000-000000000002', 'coach', 'Coaching FreePaws', false)
 on conflict (id) do nothing;
 
+-- Textes repris de coaching.html et des pages de chaque offre.
 insert into public.services (
   id, slug, resource_id, mode, name, summary, description, location,
-  duration_minutes, slot_step_minutes, buffer_minutes, default_capacity,
-  price_cents, min_notice_hours, max_advance_days, cancel_notice_hours, sort_order
+  duration_minutes, default_capacity, booking_enabled, sort_order
 ) values
-  (
-    '00000000-0000-4000-b000-000000000001', 'park-session',
-    '00000000-0000-4000-a000-000000000001', 'slot',
-    'Session privative au parc',
-    'Le parc rien que pour vous : votre chien court librement, en sécurité.',
-    'Un terrain clôturé réservé à votre seule famille pendant le créneau. Pendant votre session, la caméra devient privée : vous pouvez garder un œil sur votre chien, utile si le rappel n''est pas encore acquis.',
-    'FreePaws Park — axe Liège–Huy–Waremme',
-    60, 60, 0, 1,
-    null, 1, 30, 12, 10
-  ),
   (
     '00000000-0000-4000-b000-000000000002', 'bilan-cohabitation',
     '00000000-0000-4000-a000-000000000002', 'slot',
     'Bilan cohabitation',
-    '2h à domicile : observation de la dynamique famille-chien et plan d''action personnalisé.',
-    'J''observe la dynamique entre votre enfant/famille et votre chien, j''identifie les sources de tension, et je construis avec vous un plan d''action personnalisé. Sans jugement, pour construire une suite qui vous correspond.',
+    'J''observe la dynamique entre votre famille et votre chien, et je construis avec vous un plan d''action personnalisé.',
+    E'2h, à domicile. J''observe la dynamique entre votre enfant/famille et votre chien, j''identifie les sources de tension, et je construis avec vous un plan d''action personnalisé.\n\nLa même approche que celle des professionnels de l''enfance ou de la famille, appliquée à la relation enfant/famille-chien. Ce bilan est le point de départ : on regarde ensemble ce qui se joue vraiment dans votre quotidien avec votre chien, sans jugement, pour construire une suite qui vous correspond.',
     'À domicile',
-    120, 30, 30, 1,
-    null, 48, 60, 48, 20
+    120, 1, false, 20
   ),
   (
     '00000000-0000-4000-b000-000000000003', 'accompagnement-adoption',
     '00000000-0000-4000-a000-000000000002', 'slot',
     'Accompagnement adoption',
-    'Avant l''adoption : choix du chien, préparation du logement, protocole d''introduction. Suivi 3 mois.',
-    'Avant l''adoption : choix d''un chien adapté au profil de votre famille, préparation du logement, protocole d''introduction pensé pour un début serein. Après l''adoption, un suivi sur 3 mois pour ajuster et consolider les premières semaines de vie commune.',
-    'À domicile',
-    90, 30, 30, 1,
-    null, 48, 60, 48, 30
+    'Avant l''adoption : choix d''un chien adapté au profil de votre famille, préparation du logement, protocole d''introduction. Après l''adoption : suivi sur 3 mois.',
+    E'Avant l''adoption : choix d''un chien adapté au profil de votre famille, préparation du logement, protocole d''introduction pensé pour un début serein.\n\nAprès l''adoption, un suivi sur 3 mois pour ajuster et consolider les premières semaines de vie commune — parce que les vraies questions arrivent souvent une fois le chien à la maison, pas avant.',
+    '',
+    null, 1, false, 30
   ),
   (
     '00000000-0000-4000-b000-000000000004', 'adoption-famille-atypique',
     '00000000-0000-4000-a000-000000000002', 'slot',
     'Adoption, famille atypique',
-    'L''accompagnement adoption, pensé selon les besoins de votre enfant. Suivi 3 mois inclus.',
-    'La même approche que l''accompagnement classique, avec un choix de race et un protocole d''introduction pensés spécifiquement en fonction du profil et des besoins de votre enfant. Suivi sur 3 mois inclus.',
-    'À domicile',
-    90, 30, 30, 1,
-    null, 48, 60, 48, 40
+    'La même approche que l''accompagnement classique, avec un choix de race et un protocole pensés selon les besoins de votre enfant. Suivi sur 3 mois inclus.',
+    E'La même approche que l''accompagnement classique, mais avec un choix de race et un protocole d''introduction pensés spécifiquement en fonction du profil et des besoins de votre enfant.\n\nSuivi sur 3 mois inclus. Ce parcours s''appuie sur quinze ans d''accompagnement de l''enfant à besoins particuliers, combinés à une formation canine — pour que le chien devienne un vrai soutien, pas une source de stress supplémentaire.',
+    '',
+    null, 1, false, 40
   ),
   (
     '00000000-0000-4000-b000-000000000005', 'atelier-collectif',
     '00000000-0000-4000-a000-000000000002', 'event',
-    'Atelier « Mon enfant et mon chien »',
-    'Format groupe, 1 à 4 familles, 2h. Apprendre ensemble et échanger.',
-    'Un temps collectif pour apprendre ensemble, échanger entre familles qui vivent des situations similaires, et observer la relation enfant-chien dans un cadre bienveillant.',
-    'FreePaws Park',
-    120, 30, 0, 4,
-    null, 24, 90, 48, 50
+    'Atelier collectif « Mon enfant et mon chien »',
+    'Format groupe, 1 à 4 familles, 2h. Un temps pour apprendre ensemble et échanger entre familles qui vivent des situations similaires.',
+    E'Format groupe, 1 à 4 familles, 2h. Un temps collectif pour apprendre ensemble, échanger entre familles qui vivent des situations similaires, et observer la relation enfant-chien dans un cadre bienveillant.\n\nIdéalement organisé dans un terrain privé et clôturé où les chiens peuvent être présents en toute sécurité.',
+    '',
+    120, 4, false, 50
   )
 on conflict (id) do nothing;
-
--- Horaires d'exemple (à confirmer).
--- Parc : tous les jours 8h–20h.
-insert into public.availability_rules (resource_id, weekday, start_time, end_time, valid_from)
-select '00000000-0000-4000-a000-000000000001', d, '08:00', '20:00', date '2026-01-01'
-from generate_series(1, 7) as d
-where not exists (select 1 from public.availability_rules where resource_id = '00000000-0000-4000-a000-000000000001');
-
--- Coaching : lundi–vendredi 9h–12h et 13h30–18h, samedi 9h–12h.
-insert into public.availability_rules (resource_id, weekday, start_time, end_time, valid_from)
-select '00000000-0000-4000-a000-000000000002', w.d, w.s::time, w.e::time, date '2026-01-01'
-from (
-  select d, '09:00' as s, '12:00' as e from generate_series(1, 6) as d
-  union all
-  select d, '13:30', '18:00' from generate_series(1, 5) as d
-) as w
-where not exists (select 1 from public.availability_rules where resource_id = '00000000-0000-4000-a000-000000000002');
-
-insert into public.cameras (resource_id, name, stream_path, sort_order)
-select '00000000-0000-4000-a000-000000000001', 'Vue d''ensemble', 'park/main', 10
-where not exists (select 1 from public.cameras);

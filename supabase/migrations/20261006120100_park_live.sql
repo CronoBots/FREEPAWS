@@ -4,6 +4,7 @@
 --   Parc réservé  : le direct devient privé ; seul le client qui a réservé le créneau en cours
 --                   (et l'admin, en cas d'incident) peut le regarder.
 --   Parc fermé    : hors horaires ou période bloquée ; pas de direct public.
+--   Pas ouvert    : le parc n'existe pas encore (resources.is_open = false) ; pas de direct.
 --
 -- L'app n'obtient jamais d'URL de flux permanente : l'Edge Function `live-stream` appelle
 -- camera_access() avec le jeton de l'utilisateur, puis signe des URLs à durée de vie courte.
@@ -28,7 +29,7 @@ create policy "cameras: admin" on public.cameras
   using ((select public.is_admin())) with check ((select public.is_admin()));
 
 -- Statut d'une ressource à l'instant présent. Ne révèle aucune donnée personnelle.
---   status : 'free' | 'reserved' | 'closed'
+--   status : 'free' | 'reserved' | 'closed' | 'not_open'
 --   until  : fin de l'état courant si connue (fin du créneau, prochaine réservation, fermeture)
 create or replace function public.get_resource_status(p_resource_slug text)
 returns table (status text, until timestamptz)
@@ -46,10 +47,15 @@ declare
   v_end timestamptz;
   v_next_booking timestamptz;
   v_next_blackout timestamptz;
+  v_is_open boolean;
 begin
-  select id into v_resource_id from public.resources where slug = p_resource_slug;
+  select id, is_open into v_resource_id, v_is_open from public.resources where slug = p_resource_slug;
   if not found then
     raise exception 'resource_not_found' using errcode = 'P0001';
+  end if;
+  if not v_is_open then
+    return query select 'not_open'::text, null::timestamptz;
+    return;
   end if;
 
   select upper(a.period) into v_end

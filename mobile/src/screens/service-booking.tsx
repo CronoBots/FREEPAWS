@@ -15,7 +15,7 @@ import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { useAuth } from "@/lib/auth";
 import { colors, space } from "@/theme";
-import { addDays, dayParts, formatDayLong, formatDuration, formatTime, toIsoDay } from "@/utils/dates";
+import { addDays, dayParts, formatDayLong, formatTime, toIsoDay } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 import { formatPrice } from "@/utils/format";
 
@@ -90,11 +90,11 @@ export function ServiceBooking({ service }: { service: Service }) {
       <Stack.Screen options={{ title: service.name }} />
       <Screen underHeader footer={footer} refreshing={slots.isRefetching} onRefresh={() => void slots.refetch()}>
         <View style={styles.intro}>
-          <AppText variant="eyebrow">
-            {[formatDuration(service.duration_minutes), service.location].filter(Boolean).join(" · ")}
-          </AppText>
+          {service.location ? <AppText variant="eyebrow">{service.location}</AppText> : null}
           <AppText variant="body">{service.description || service.summary}</AppText>
-          <AppText variant="bodyStrong">{formatPrice(service.price_cents)}</AppText>
+          {formatPrice(service.price_cents) ? (
+            <AppText variant="bodyStrong">{formatPrice(service.price_cents)}</AppText>
+          ) : null}
         </View>
 
         <AppText variant="heading">Choisissez un jour</AppText>

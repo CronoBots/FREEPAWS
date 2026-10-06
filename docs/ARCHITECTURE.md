@@ -29,12 +29,23 @@ FREEPAWS/
 | Données | React Query | Cache, rafraîchissement, états chargement / erreur / vide |
 | Session | Trousseau iOS / Keystore Android (expo-secure-store) | Jeton jamais stocké en clair |
 
+## Contenu : uniquement des infos réelles
+
+Le catalogue (`supabase/seed.sql`) ne reprend que les textes de freepaws.be : aucun horaire, tarif ou
+durée inventés. Tant qu'une prestation n'a pas ses horaires et règles fixés par FreePaws, sa réservation
+en ligne reste fermée (`services.booking_enabled = false`) et l'app affiche « Prendre rendez-vous »
+(email), comme le site. Le parc est « Pas encore ouvert » (`resources.is_open = false`).
+
+Pour ouvrir la réservation d'une prestation : renseigner `duration_minutes`, `min_notice_hours`,
+`max_advance_days`, `cancel_notice_hours` (et `buffer_minutes` pour le trajet), ajouter les horaires dans
+`availability_rules`, puis passer `booking_enabled` à true.
+
 ## Règles métier (côté serveur, jamais dans l'app seule)
 
 - **Pas de double réservation** : contrainte d'exclusion Postgres sur l'agenda de chaque ressource
   (le parc et la coach sont deux ressources indépendantes). Même deux clics simultanés ne peuvent pas
   réserver le même créneau.
-- **Temps de trajet** : les visites à domicile bloquent 30 min avant et après.
+- **Temps de trajet** : `buffer_minutes` bloque du temps avant et après une visite à domicile.
 - **Délais** : réservation au plus tôt `min_notice_hours` avant, au plus tard `max_advance_days` ;
   annulation en ligne jusqu'à `cancel_notice_hours` avant (réglable par prestation).
 - **Anti-abus** : 5 réservations à venir maximum par client.

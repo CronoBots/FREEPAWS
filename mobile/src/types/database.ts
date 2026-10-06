@@ -38,6 +38,7 @@ export type Database = {
           status: Database["public"]["Enums"]["appointment_status"];
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           admin_notes?: string | null;
           blocked?: unknown;
@@ -101,6 +102,7 @@ export type Database = {
           valid_until: string | null;
           weekday: number;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           end_time: string;
@@ -139,6 +141,7 @@ export type Database = {
           reason: string;
           resource_id: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           id?: string;
@@ -177,6 +180,7 @@ export type Database = {
           status: Database["public"]["Enums"]["booking_status"];
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           appointment_id: string;
           cancelled_at?: string | null;
@@ -244,6 +248,7 @@ export type Database = {
           sort_order: number;
           stream_path: string;
         };
+        ComputedFields: never;
         Insert: {
           active?: boolean;
           created_at?: string;
@@ -283,6 +288,7 @@ export type Database = {
           owner_id: string;
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           birth_date?: string | null;
           breed?: string | null;
@@ -323,6 +329,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"];
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           email?: string;
@@ -347,18 +354,22 @@ export type Database = {
         Row: {
           created_at: string;
           id: string;
+          is_open: boolean;
           name: string;
           slug: string;
         };
+        ComputedFields: never;
         Insert: {
           created_at?: string;
           id?: string;
+          is_open?: boolean;
           name: string;
           slug: string;
         };
         Update: {
           created_at?: string;
           id?: string;
+          is_open?: boolean;
           name?: string;
           slug?: string;
         };
@@ -367,12 +378,13 @@ export type Database = {
       services: {
         Row: {
           active: boolean;
+          booking_enabled: boolean;
           buffer_minutes: number;
           cancel_notice_hours: number;
           created_at: string;
           default_capacity: number;
           description: string;
-          duration_minutes: number;
+          duration_minutes: number | null;
           id: string;
           location: string;
           max_advance_days: number;
@@ -387,14 +399,16 @@ export type Database = {
           summary: string;
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           active?: boolean;
+          booking_enabled?: boolean;
           buffer_minutes?: number;
           cancel_notice_hours?: number;
           created_at?: string;
           default_capacity?: number;
           description?: string;
-          duration_minutes: number;
+          duration_minutes?: number | null;
           id?: string;
           location?: string;
           max_advance_days?: number;
@@ -411,12 +425,13 @@ export type Database = {
         };
         Update: {
           active?: boolean;
+          booking_enabled?: boolean;
           buffer_minutes?: number;
           cancel_notice_hours?: number;
           created_at?: string;
           default_capacity?: number;
           description?: string;
-          duration_minutes?: number;
+          duration_minutes?: number | null;
           id?: string;
           location?: string;
           max_advance_days?: number;

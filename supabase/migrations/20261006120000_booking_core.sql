@@ -139,6 +139,9 @@ create table public.resources (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,
   name text not null,
+  -- Tant que la ressource n'est pas ouverte (ex. le parc en recherche de terrain),
+  -- son statut est « not_open » et aucune caméra n'est accessible au public.
+  is_open boolean not null default false,
   created_at timestamptz not null default now()
 );
 
@@ -151,7 +154,8 @@ create table public.services (
   summary text not null default '',
   description text not null default '',
   location text not null default '',
-  duration_minutes integer not null check (duration_minutes between 15 and 480),
+  -- Inconnue tant que FreePaws ne l'a pas communiquée (null = non affichée).
+  duration_minutes integer check (duration_minutes between 15 and 480),
   -- Pas de la grille de créneaux proposés (mode 'slot').
   slot_step_minutes integer not null default 30 check (slot_step_minutes between 5 and 240),
   -- Temps bloqué avant/après (trajet pour les visites à domicile).
@@ -163,9 +167,13 @@ create table public.services (
   max_advance_days integer not null default 60 check (max_advance_days between 1 and 365),
   cancel_notice_hours integer not null default 24 check (cancel_notice_hours >= 0),
   active boolean not null default true,
+  -- Réservation en ligne ouverte ? Sinon l'app propose « Prendre rendez-vous » par email.
+  -- À activer seulement quand durée, horaires et règles d'annulation sont fixés par FreePaws.
+  booking_enabled boolean not null default false,
   sort_order integer not null default 0,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  check (not booking_enabled or duration_minutes is not null)
 );
 
 create index services_resource_id_idx on public.services (resource_id);
@@ -384,7 +392,7 @@ declare
   v_earliest timestamptz;
   v_latest timestamptz;
 begin
-  select * into v_service from public.services where id = p_service_id and active;
+  select * into v_service from public.services where id = p_service_id and active and booking_enabled;
   if not found then
     raise exception 'service_not_found' using errcode = 'P0001';
   end if;
@@ -524,7 +532,8 @@ begin
     raise exception 'notes_too_long' using errcode = 'P0001';
   end if;
 
-  select * into v_service from public.services where id = p_service_id and active and mode = 'slot';
+  select * into v_service from public.services
+  where id = p_service_id and active and booking_enabled and mode = 'slot';
   if not found then
     raise exception 'service_not_found' using errcode = 'P0001';
   end if;
@@ -599,6 +608,7 @@ begin
   where a.id = p_appointment_id
     and a.status = 'scheduled'
     and s.active
+    and s.booking_enabled
     and s.mode = 'event';
   if not found then
     raise exception 'slot_unavailable' using errcode = 'P0001';

@@ -17,7 +17,8 @@ import { toUserMessage } from "@/utils/errors";
 export default function NewEventRoute() {
   const services = useServices();
   const create = useCreateEvent();
-  const eventServices = services.data?.filter((service) => service.mode === "event") ?? [];
+  const eventServices =
+    services.data?.filter((service) => service.mode === "event" && service.duration_minutes != null) ?? [];
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [day, setDay] = useState("");
   const [time, setTime] = useState("10:00");
@@ -44,7 +45,7 @@ export default function NewEventRoute() {
         serviceId: service.id,
         resourceId: service.resource_id,
         start,
-        durationMinutes: service.duration_minutes,
+        durationMinutes: service.duration_minutes ?? 0,
         capacity: places,
       },
       {

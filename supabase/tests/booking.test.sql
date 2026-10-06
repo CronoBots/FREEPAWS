@@ -46,6 +46,41 @@ insert into public.dogs (id, owner_id, name) values
   ('dddddddd-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', 'Nami'),
   ('dddddddd-0000-4000-8000-000000000002', '22222222-2222-4222-8222-222222222222', 'Sanji');
 
+-- 0. Le seed ne contient que les infos du site : parc pas encore ouvert, aucun horaire,
+--    aucune réservation en ligne ouverte.
+select pg_temp.assert((select status from public.get_resource_status('park')) = 'not_open', 'parc pas encore ouvert');
+select pg_temp.assert((select mode from public.camera_access('park')) = 'denied', 'pas de direct avant l''ouverture');
+select pg_temp.assert(not exists (select 1 from public.availability_rules), 'aucun horaire inventé');
+select pg_temp.assert(not exists (select 1 from public.services where booking_enabled), 'réservation en ligne fermée par défaut');
+select pg_temp.act_as('11111111-1111-4111-8111-111111111111');
+select pg_temp.expect_error(
+  $$select public.book_slot('00000000-0000-4000-b000-000000000002', now() + interval '3 days')$$,
+  'service_not_found');
+select pg_temp.reset_role();
+
+-- Configuration de TEST (annulée en fin de transaction) : ces valeurs servent uniquement à
+-- vérifier les règles de réservation, ce ne sont pas des horaires ou tarifs FreePaws.
+update public.resources set is_open = true where slug = 'park';
+insert into public.services (id, slug, resource_id, mode, name, duration_minutes, slot_step_minutes,
+  min_notice_hours, max_advance_days, cancel_notice_hours, booking_enabled)
+values ('00000000-0000-4000-b000-000000000001', 'test-park', '00000000-0000-4000-a000-000000000001',
+  'slot', 'Test parc', 60, 60, 1, 30, 12, true);
+update public.services set booking_enabled = true, buffer_minutes = 30, slot_step_minutes = 30,
+  min_notice_hours = 48, max_advance_days = 60, cancel_notice_hours = 48
+where slug = 'bilan-cohabitation';
+update public.services set booking_enabled = true, min_notice_hours = 24, max_advance_days = 90
+where slug = 'atelier-collectif';
+insert into public.availability_rules (resource_id, weekday, start_time, end_time, valid_from)
+select '00000000-0000-4000-a000-000000000001', d, '08:00', '20:00', date '2026-01-01'
+from generate_series(1, 7) as d;
+insert into public.availability_rules (resource_id, weekday, start_time, end_time, valid_from)
+select '00000000-0000-4000-a000-000000000002', w.d, w.s::time, w.e::time, date '2026-01-01'
+from (
+  select d, '09:00' as s, '12:00' as e from generate_series(1, 6) as d
+  union all
+  select d, '13:30', '18:00' from generate_series(1, 5) as d
+) as w;
+
 -- Jour de test : le premier mercredi à au moins 3 jours d'ici, 10h heure de Bruxelles
 -- (jour ouvré pour le coaching, dans la fenêtre de réservation du parc).
 create temp table t as
@@ -65,7 +100,7 @@ select pg_temp.assert(
   (select full_name from public.profiles where id = '11111111-1111-4111-8111-111111111111') = 'Alice',
   'profil créé avec le nom');
 
--- 2. Créneaux visibles sans compte (12 créneaux d'une heure entre 8h et 20h)
+-- 2. Créneaux visibles sans compte (configuration de test : 12 créneaux d'une heure)
 select pg_temp.act_as(null);
 select pg_temp.assert(
   (select count(*) from public.get_available_slots((select park from t), (select day from t), (select day from t))) = 12,

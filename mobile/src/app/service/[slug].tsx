@@ -4,12 +4,19 @@ import { useService } from "@/api/services";
 import { Screen } from "@/components/screen";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { ServiceBooking } from "@/screens/service-booking";
+import { ServiceInfo } from "@/screens/service-info";
 
 export default function ServiceRoute() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const service = useService(slug);
 
-  if (service.data) return <ServiceBooking service={service.data} />;
+  if (service.data) {
+    return service.data.booking_enabled ? (
+      <ServiceBooking service={service.data} />
+    ) : (
+      <ServiceInfo service={service.data} />
+    );
+  }
   return (
     <Screen underHeader>
       {service.isLoading ? (

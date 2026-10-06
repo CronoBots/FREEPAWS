@@ -10,8 +10,8 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Label>Le parc</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="services">
-        <NativeTabs.Trigger.Icon sf={{ default: "calendar.badge.plus", selected: "calendar.badge.plus" }} md="event" />
-        <NativeTabs.Trigger.Label>Réserver</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: "person.2", selected: "person.2.fill" }} md="groups" />
+        <NativeTabs.Trigger.Label>Coaching</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="bookings">
         <NativeTabs.Trigger.Icon

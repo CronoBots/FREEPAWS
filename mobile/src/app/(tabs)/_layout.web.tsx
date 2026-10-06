@@ -9,7 +9,7 @@ type IconName = ComponentProps<typeof Ionicons>["name"];
 // Sur le web, les onglets natifs s'affichent en haut : on garde une barre classique en bas.
 const TABS: { name: string; title: string; icon: IconName; iconActive: IconName }[] = [
   { name: "index", title: "Le parc", icon: "paw-outline", iconActive: "paw" },
-  { name: "services", title: "Réserver", icon: "calendar-outline", iconActive: "calendar" },
+  { name: "services", title: "Coaching", icon: "people-outline", iconActive: "people" },
   { name: "bookings", title: "Réservations", icon: "list-outline", iconActive: "list" },
   { name: "account", title: "Compte", icon: "person-circle-outline", iconActive: "person-circle" },
 ];

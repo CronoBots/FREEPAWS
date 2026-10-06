@@ -4,7 +4,7 @@ import { queryKeys } from "@/api/keys";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
-export type ParkStatus = { status: "free" | "reserved" | "closed"; until: string | null };
+export type ParkStatus = { status: "free" | "reserved" | "closed" | "not_open"; until: string | null };
 
 export function useParkStatus() {
   return useQuery({

@@ -15,6 +15,11 @@ Three independent parts in one repo:
 
 The owner wants every change pushed to **`main`**.
 
+**Never invent business content.** Everything shown in the app (offers, texts, durations, hours,
+prices, rules) must come from www.freepaws.be or from the owner. When information is missing, show
+nothing or fall back to the site's « Prendre rendez-vous » email button. Do not put placeholder values in
+`supabase/seed.sql`. Test-only values belong inside `supabase/tests/*.test.sql`.
+
 ## Commands
 
 ```bash
@@ -47,6 +52,9 @@ All booking logic lives in SQL (`supabase/migrations/`), not in the app:
 - `resources` (the park, the coach) own an agenda. `appointments` is the agenda; the exclusion
   constraint `appointments_no_overlap` on `(resource_id, blocked)` makes double-booking impossible.
   `blocked` = `period` widened by `buffer_minutes` (travel time) and is computed by a trigger.
+- Online booking is opt-in per service (`services.booking_enabled`, default false). When it is off,
+  the app shows the description and a mailto button. `resources.is_open = false` makes
+  `get_resource_status` return `not_open`, and there is no camera access (the park is not open yet).
 - `services.mode`: `slot` = individual slots generated from `availability_rules` minus `blackouts`
   and existing appointments; `event` = group sessions (workshops) created by the admin, with
   `capacity` enforced by a locking trigger on `bookings`.

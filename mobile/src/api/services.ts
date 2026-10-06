@@ -6,6 +6,7 @@ import type { Tables } from "@/types/database";
 
 export type Service = Tables<"services">;
 
+/** Prestation de réservation du parc, à créer par FreePaws à l’ouverture (aucune n’existe encore). */
 export const PARK_SERVICE_SLUG = "park-session";
 
 async function fetchServices(): Promise<Service[]> {

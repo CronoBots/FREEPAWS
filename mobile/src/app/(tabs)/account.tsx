@@ -46,7 +46,7 @@ export default function AccountScreen() {
       ) : (
         <Card>
           <AppText variant="heading">Pas encore de compte ?</AppText>
-          <AppText variant="body">Un simple code reçu par email suffit pour réserver et suivre vos sessions.</AppText>
+          <AppText variant="body">Un simple code reçu par email suffit pour vous connecter.</AppText>
           <Button label="Se connecter ou créer un compte" onPress={() => router.push("/sign-in")} />
         </Card>
       )}

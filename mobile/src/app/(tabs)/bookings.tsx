@@ -16,7 +16,7 @@ export default function BookingsScreen() {
       <Screen title="Mes réservations">
         <EmptyView
           title="Connectez-vous"
-          message="Retrouvez ici vos sessions au parc et vos rendez-vous de coaching."
+          message="Retrouvez ici vos réservations."
           actionLabel="Se connecter"
           onAction={() => router.push("/sign-in")}
         />
@@ -36,8 +36,8 @@ export default function BookingsScreen() {
       ) : bookings.data?.length === 0 ? (
         <EmptyView
           title="Aucune réservation"
-          message="Réservez une session au parc ou un rendez-vous de coaching."
-          actionLabel="Voir les prestations"
+          message="Vos réservations apparaîtront ici."
+          actionLabel="Voir le coaching"
           onAction={() => router.navigate("/services")}
         />
       ) : (
