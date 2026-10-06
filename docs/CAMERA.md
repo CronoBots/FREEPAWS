@@ -25,9 +25,12 @@ La décision est prise **uniquement par la base de données** (`camera_access()`
 3. Si l'accès est accordé, elle renvoie pour chaque caméra une URL HLS **signée** :
 
    ```
-   {CAMERA_BASE_URL}/{stream_path}/index.m3u8?expires={unix}&token={signature}
+   {CAMERA_BASE_URL}/{expires}/{signature}/{stream_path}/index.m3u8
    signature = base64url( HMAC-SHA256( CAMERA_SIGNING_SECRET, "{stream_path}:{expires}" ) )
    ```
+
+   La signature est **dans le chemin** : le lecteur HLS résout les segments (`segment123.ts`)
+   relativement à la playlist, ils portent donc automatiquement le même préfixe signé.
 
 4. L'app renouvelle l'URL avant son expiration. Une URL obtenue quand le parc était libre
    **cesse de fonctionner** dès que la session privée commence (expiration courte).
@@ -36,8 +39,9 @@ La décision est prise **uniquement par la base de données** (`camera_access()`
 
 - Recevoir les flux des caméras (RTSP) et les publier en HLS — par exemple **MediaMTX** sur un petit
   serveur ou un mini-PC sur place, ou un service géré (Cloudflare Stream, Mux…).
-- **Refuser toute requête** dont la signature est invalide ou dont `expires` est dépassé
-  (vérification HMAC identique à la formule ci-dessus, sur la playlist et les segments).
+- **Refuser toute requête** (playlist **et** segments) dont la signature est invalide ou dont `expires`
+  est dépassé : extraire `{expires}/{signature}/{stream_path}` du chemin, recalculer le HMAC, comparer,
+  puis servir le fichier sans ce préfixe (petit reverse-proxy, ex. Caddy/nginx + script, ou Cloudflare Worker).
 - Ne pas enregistrer les images (ou définir une durée de conservation et l'indiquer dans la
   politique de confidentialité).
 

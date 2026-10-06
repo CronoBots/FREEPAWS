@@ -48,7 +48,7 @@ export default function ParkScreen() {
         onPress={() => router.push({ pathname: "/service/[slug]", params: { slug: PARK_SERVICE_SLUG } })}
       />
 
-      <LivePanel status={status.data} />
+      <LivePanel status={status.data} statusFailed={status.isError} />
 
       <Card>
         <AppText variant="eyebrow">Comment ça marche</AppText>

@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+
+import { useInvalidateBookings } from "@/api/bookings";
 
 import { queryKeys } from "@/api/keys";
 import { supabase } from "@/lib/supabase";
@@ -36,24 +38,19 @@ export function useAgenda(from: Date, to: Date) {
 export type AgendaEntry = NonNullable<ReturnType<typeof useAgenda>["data"]>[number];
 
 export function useCancelAppointment() {
-  const client = useQueryClient();
+  const invalidate = useInvalidateBookings();
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("appointments").update({ status: "cancelled" }).eq("id", id);
       if (error) throw error;
     },
-    onSettled: () =>
-      Promise.all([
-        client.invalidateQueries({ queryKey: queryKeys.allAgenda }),
-        client.invalidateQueries({ queryKey: queryKeys.allSlots }),
-        client.invalidateQueries({ queryKey: queryKeys.parkStatus }),
-      ]),
+    onSettled: invalidate,
   });
 }
 
 /** Planifie une séance de groupe (atelier). L'agenda refuse tout chevauchement. */
 export function useCreateEvent() {
-  const client = useQueryClient();
+  const invalidate = useInvalidateBookings();
   return useMutation({
     mutationFn: async (input: {
       serviceId: string;
@@ -71,10 +68,6 @@ export function useCreateEvent() {
       });
       if (error) throw error;
     },
-    onSettled: () =>
-      Promise.all([
-        client.invalidateQueries({ queryKey: queryKeys.allAgenda }),
-        client.invalidateQueries({ queryKey: queryKeys.allSlots }),
-      ]),
+    onSettled: invalidate,
   });
 }

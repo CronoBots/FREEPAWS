@@ -463,10 +463,13 @@ $$;
 create or replace function public.assert_booking_quota(p_client_id uuid)
 returns void
 language plpgsql
-stable
+volatile
 set search_path = ''
 as $$
 begin
+  -- Sérialise les réservations d'un même client : sans ce verrou, des appels parallèles
+  -- compteraient tous le même total et dépasseraient la limite.
+  perform pg_advisory_xact_lock(hashtextextended('booking_quota:' || p_client_id::text, 0));
   if (
     select count(*)
     from public.bookings b
@@ -732,9 +735,11 @@ create policy "resources: admin écrit" on public.resources
   for all to authenticated
   using ((select public.is_admin())) with check ((select public.is_admin()));
 
-create policy "services: lecture publique des actifs" on public.services
+-- Les prestations désactivées restent lisibles : l'historique des clients doit les afficher.
+-- L'app ne propose à la réservation que les actives, et les fonctions de réservation le vérifient.
+create policy "services: lecture publique" on public.services
   for select to anon, authenticated
-  using (active or (select public.is_admin()));
+  using (true);
 create policy "services: admin écrit" on public.services
   for all to authenticated
   using ((select public.is_admin())) with check ((select public.is_admin()));

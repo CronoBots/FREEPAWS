@@ -55,3 +55,53 @@ export function formatDuration(minutes: number): string {
   const m = minutes % 60;
   return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`;
 }
+
+const partsFormat = new Intl.DateTimeFormat("en-GB", {
+  timeZone: TIME_ZONE,
+  hourCycle: "h23",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+
+/** Décalage (ms) de Bruxelles par rapport à UTC à un instant donné (+1 h l'hiver, +2 h l'été). */
+function brusselsOffset(instant: Date): number {
+  const parts = Object.fromEntries(partsFormat.formatToParts(instant).map((p) => [p.type, p.value]));
+  const asUtc = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute),
+    Number(parts.second),
+  );
+  return asUtc - Math.floor(instant.getTime() / 1000) * 1000;
+}
+
+/**
+ * Instant correspondant à une date (AAAA-MM-JJ) et une heure (HH:MM) saisies à Bruxelles.
+ * Renvoie null si la saisie est invalide ou tombe dans le trou du passage à l'heure d'été.
+ */
+export function brusselsDateTime(isoDay: string, time: string): Date | null {
+  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDay);
+  const hm = /^(\d{2}):(\d{2})$/.exec(time);
+  if (!day || !hm) return null;
+  const [y, m, d, h, min] = [day[1], day[2], day[3], hm[1], hm[2]].map(Number) as [
+    number,
+    number,
+    number,
+    number,
+    number,
+  ];
+  if (m < 1 || m > 12 || d < 1 || d > 31 || h > 23 || min > 59) return null;
+  const wallClock = Date.UTC(y, m - 1, d, h, min);
+  // Deux passes : le décalage dépend de l'instant recherché lui-même.
+  let instant = new Date(wallClock - brusselsOffset(new Date(wallClock)));
+  instant = new Date(wallClock - brusselsOffset(instant));
+  const check = new Date(instant.getTime() + brusselsOffset(instant));
+  if (check.getUTCHours() !== h || check.getUTCMinutes() !== min || check.getUTCDate() !== d) return null;
+  return instant;
+}

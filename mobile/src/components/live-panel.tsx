@@ -8,11 +8,13 @@ import { AppText } from "@/components/text";
 import { colors, radius, space } from "@/theme";
 
 /** Caméra à deux temps : publique quand le parc est libre, privée pendant une session. */
-export function LivePanel({ status }: { status: ParkStatus | undefined }) {
+export function LivePanel({ status, statusFailed }: { status: ParkStatus | undefined; statusFailed: boolean }) {
   const live = useLiveStream(Boolean(status));
 
   let body;
-  if (!status || live.isLoading) {
+  if (statusFailed) {
+    body = <Placeholder title="Direct indisponible" message="Impossible de vérifier l’état du parc pour le moment." />;
+  } else if (!status || live.isLoading) {
     body = <LoadingView label="Connexion au direct…" />;
   } else if (live.isError) {
     body = <Placeholder title="Direct indisponible" message="Impossible de joindre la caméra pour le moment." />;

@@ -128,6 +128,16 @@ select pg_temp.assert(
   'le parc garde ses autres créneaux');
 select pg_temp.reset_role();
 
+-- Une prestation désactivée reste visible dans l'historique du client
+update public.services set active = false where id = (select bilan from t);
+select pg_temp.act_as('22222222-2222-4222-8222-222222222222');
+select pg_temp.assert(
+  (select count(*) from public.bookings b join public.appointments a on a.id = b.appointment_id join public.services s on s.id = a.service_id) = 1,
+  'la réservation d''une prestation désactivée reste lisible');
+select pg_temp.expect_error($$select public.book_slot((select bilan from t), (select ten from t) + interval '1 day')$$, 'service_not_found');
+select pg_temp.reset_role();
+update public.services set active = true where id = (select bilan from t);
+
 -- 6. Annulation : délai respecté → créneau libéré ; réservation d'autrui → refus
 select pg_temp.act_as('22222222-2222-4222-8222-222222222222');
 select pg_temp.expect_error(
@@ -184,6 +194,17 @@ delete from public.appointments where id = 'aaaaaaaa-0000-4000-8000-000000000001
 select pg_temp.act_as(null);
 select pg_temp.assert((select status from public.get_resource_status('park')) = 'free', 'parc libre');
 select pg_temp.assert((select mode from public.camera_access('park')) = 'public', 'direct public quand le parc est libre');
+select pg_temp.reset_role();
+-- Une fermeture imminente borne l'état « libre » et l'accès public au direct.
+insert into public.blackouts (id, resource_id, period, reason)
+values ('cccccccc-0000-4000-8000-000000000001', '00000000-0000-4000-a000-000000000001',
+        tstzrange(now() + interval '4 minutes', now() + interval '1 hour'), 'entretien');
+select pg_temp.act_as(null);
+select pg_temp.assert((select until from public.get_resource_status('park')) = now() + interval '4 minutes', 'libre jusqu''à la fermeture');
+select pg_temp.assert((select expires_at from public.camera_access('park')) = now() + interval '4 minutes', 'direct public coupé à la fermeture');
+select pg_temp.reset_role();
+delete from public.blackouts where id = 'cccccccc-0000-4000-8000-000000000001';
+select pg_temp.act_as(null);
 select pg_temp.expect_error($$select * from public.cameras$$, 'permission denied');
 select pg_temp.reset_role();
 

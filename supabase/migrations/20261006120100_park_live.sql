@@ -45,6 +45,7 @@ declare
   v_window_end timestamptz;
   v_end timestamptz;
   v_next_booking timestamptz;
+  v_next_blackout timestamptz;
 begin
   select id into v_resource_id from public.resources where slug = p_resource_slug;
   if not found then
@@ -92,7 +93,13 @@ begin
     and lower(a.period) > v_now
     and lower(a.period) < v_window_end;
 
-  return query select 'free'::text, coalesce(v_next_booking, v_window_end);
+  select min(lower(b.period)) into v_next_blackout
+  from public.blackouts b
+  where b.resource_id = v_resource_id
+    and lower(b.period) > v_now
+    and lower(b.period) < v_window_end;
+
+  return query select 'free'::text, least(coalesce(v_next_booking, v_window_end), coalesce(v_next_blackout, v_window_end));
 end;
 $$;
 

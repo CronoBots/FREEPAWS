@@ -14,6 +14,7 @@ const MESSAGES: Record<string, string> = {
   notes_too_long: "Votre message est trop long (1000 caractères maximum).",
   invalid_party_size: "Nombre de participants invalide.",
   invalid_range: "Période invalide.",
+  resource_not_found: "Le parc n’est pas encore configuré. Réessayez plus tard.",
   otp_expired: "Ce code a expiré ou est incorrect. Demandez-en un nouveau.",
   over_email_send_rate_limit: "Trop de demandes. Patientez une minute avant de redemander un code.",
   email_address_invalid: "Adresse email invalide.",

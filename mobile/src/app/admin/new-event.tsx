@@ -11,19 +11,8 @@ import { LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { colors, space } from "@/theme";
-import { TIME_ZONE } from "@/utils/dates";
+import { brusselsDateTime } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
-
-/** Convertit une date + heure saisies à Bruxelles en instant UTC. */
-function brusselsToDate(day: string, time: string): Date | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !/^\d{2}:\d{2}$/.test(time)) return null;
-  const guess = new Date(`${day}T${time}:00Z`);
-  if (Number.isNaN(guess.getTime())) return null;
-  // Décalage de Bruxelles à cet instant (1 h ou 2 h selon la saison).
-  const local = new Date(guess.toLocaleString("en-US", { timeZone: TIME_ZONE }));
-  const utc = new Date(guess.toLocaleString("en-US", { timeZone: "UTC" }));
-  return new Date(guess.getTime() - (local.getTime() - utc.getTime()));
-}
 
 export default function NewEventRoute() {
   const services = useServices();
@@ -45,7 +34,7 @@ export default function NewEventRoute() {
 
   const submit = () => {
     if (!service) return;
-    const start = brusselsToDate(day, time);
+    const start = brusselsDateTime(day, time);
     const places = capacity ? Number.parseInt(capacity, 10) : service.default_capacity;
     if (!start || start < new Date()) return setError("Date ou heure invalide (AAAA-MM-JJ et HH:MM, dans le futur).");
     if (!Number.isInteger(places) || places < 1 || places > 50) return setError("Nombre de places entre 1 et 50.");

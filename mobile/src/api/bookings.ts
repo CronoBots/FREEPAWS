@@ -58,7 +58,8 @@ export function useBooking(id: string | undefined) {
   });
 }
 
-function useInvalidateBookings() {
+/** Toute écriture touchant l’agenda rafraîchit ces quatre vues ensemble. */
+export function useInvalidateBookings() {
   const client = useQueryClient();
   return () =>
     Promise.all([

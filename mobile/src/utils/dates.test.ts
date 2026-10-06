@@ -1,4 +1,4 @@
-import { addDays, dayParts, formatDayLong, formatDuration, formatTime, toIsoDay } from "./dates";
+import { addDays, brusselsDateTime, dayParts, formatDayLong, formatDuration, formatTime, toIsoDay } from "./dates";
 
 describe("dates (heure de Bruxelles)", () => {
   it("affiche l'heure locale de Bruxelles, été comme hiver", () => {
@@ -27,5 +27,25 @@ describe("dates (heure de Bruxelles)", () => {
     expect(formatDuration(45)).toBe("45 min");
     expect(formatDuration(60)).toBe("1h");
     expect(formatDuration(90)).toBe("1h30");
+  });
+});
+
+describe("brusselsDateTime", () => {
+  it("convertit une heure d'hiver et d'été de Bruxelles en UTC", () => {
+    expect(brusselsDateTime("2026-12-01", "10:00")?.toISOString()).toBe("2026-12-01T09:00:00.000Z");
+    expect(brusselsDateTime("2026-07-01", "10:00")?.toISOString()).toBe("2026-07-01T08:00:00.000Z");
+  });
+
+  it("gère les jours de changement d'heure", () => {
+    expect(brusselsDateTime("2026-03-29", "01:30")?.toISOString()).toBe("2026-03-29T00:30:00.000Z");
+    expect(brusselsDateTime("2026-03-29", "03:30")?.toISOString()).toBe("2026-03-29T01:30:00.000Z");
+    expect(brusselsDateTime("2026-10-25", "12:00")?.toISOString()).toBe("2026-10-25T11:00:00.000Z");
+  });
+
+  it("refuse une heure inexistante ou une saisie invalide", () => {
+    expect(brusselsDateTime("2026-03-29", "02:30")).toBeNull();
+    expect(brusselsDateTime("2026-02-30", "10:00")).toBeNull();
+    expect(brusselsDateTime("06/10/2026", "10:00")).toBeNull();
+    expect(brusselsDateTime("2026-10-06", "25:00")).toBeNull();
   });
 });
