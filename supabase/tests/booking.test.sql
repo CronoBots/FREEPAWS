@@ -70,6 +70,8 @@ select pg_temp.act_as(null);
 select pg_temp.assert(
   (select count(*) from public.get_available_slots((select park from t), (select day from t), (select day from t))) = 12,
   'le parc propose 12 créneaux par jour');
+select pg_temp.assert((select count(*) from public.services) = 5, 'le catalogue est lisible sans compte');
+select pg_temp.assert((select count(*) from public.availability_rules) > 0, 'les horaires sont lisibles sans compte');
 select pg_temp.expect_error($$select public.book_slot((select park from t), (select ten from t))$$, 'permission denied');
 select pg_temp.assert((select count(*) from public.bookings) = 0, 'anon ne voit aucune réservation');
 select pg_temp.reset_role();

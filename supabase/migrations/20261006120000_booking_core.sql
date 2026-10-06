@@ -215,7 +215,7 @@ create table public.appointments (
   period tstzrange not null check (not isempty(period) and lower(period) is not null and upper(period) is not null),
   buffer_minutes integer not null default 0 check (buffer_minutes between 0 and 240),
   -- period élargie du buffer ; calculée par trigger, c'est elle qui ne doit pas se chevaucher.
-  blocked tstzrange not null,
+  blocked tstzrange not null default 'empty',
   capacity integer not null default 1 check (capacity between 1 and 50),
   status public.appointment_status not null default 'scheduled',
   admin_notes text check (char_length(admin_notes) <= 2000),
@@ -776,7 +776,8 @@ create policy "bookings: admin écrit" on public.bookings
 
 revoke execute on all functions in schema public from public, anon, authenticated;
 
-grant execute on function public.is_admin() to authenticated;
+-- is_admin() est appelée par les policies de lecture publique : elle renvoie false pour un visiteur anonyme.
+grant execute on function public.is_admin() to anon, authenticated;
 grant execute on function public.get_available_slots(uuid, date, date) to anon, authenticated;
 grant execute on function public.book_slot(uuid, timestamptz, uuid, text) to authenticated;
 grant execute on function public.book_event(uuid, uuid, text, integer) to authenticated;
