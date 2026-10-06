@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreePaws | Les Fondations de l'Équilibre — Province de Liège</title>
+<meta name="description" content="Accompagnement canin avant l'adoption et orientation vers l'expertise adaptée, entre Liège, Huy et Waremme. FreePaws Park : un espace de liberté en construction.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,340;9..144,440;9..144,560&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream: #faf1e7;
+    --cream-alt: #fdfaef;
+    --ink: #2b3a30;
+    --ink-soft: #4a5c4c;
+    --olive: #6c7746;
+    --brass: #a3823f;
+    --line: rgba(43,58,48,0.22);
+    --serif: "Fraunces", Georgia, serif;
+    --sans: "Work Sans", Arial, sans-serif;
+    --spine-x: 88px;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 400;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  a{ color: inherit; }
+  img{ max-width:100%; }
+
+  h1,h2,h3{
+    font-family: var(--serif);
+    font-weight: 560;
+    color: var(--ink);
+    margin: 0 0 0.5em 0;
+    letter-spacing: -0.01em;
+  }
+  h1{ font-size: clamp(2.4rem, 6vw, 4.2rem); font-weight: 440; }
+  h2{ font-size: clamp(1.5rem, 3vw, 2.1rem); }
+  h3{ font-family: var(--sans); font-weight: 600; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--olive); }
+
+  p{ margin: 0 0 1.1em 0; max-width: 58ch; color: var(--ink-soft); }
+
+  .eyebrow{
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--brass);
+    margin-bottom: 0.6em;
+    display: block;
+  }
+
+  :focus-visible{ outline: 2px solid var(--olive); outline-offset: 3px; }
+
+  /* ---------- Nav ---------- */
+  nav{
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px clamp(20px, 5vw, 60px);
+    background: rgba(250,241,231,0.9);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-mark{
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    font-weight: 560;
+    text-decoration: none;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+  }
+  .nav-mark img{
+    height: 65px;
+    width: auto;
+  }
+  .nav-mark h2{
+    margin: 0;
+    line-height: 1;
+  }
+  .nav-links{
+    display:flex;
+    gap: clamp(14px, 2.5vw, 32px);
+    list-style:none;
+    margin:0; padding:0;
+    font-size: 0.88rem;
+  }
+  .nav-links a{
+    text-decoration:none;
+    color: var(--ink-soft);
+    border-bottom: 1px solid transparent;
+    padding-bottom: 2px;
+    transition: border-color .2s, color .2s;
+  }
+  .nav-links a:hover{ color: var(--ink); border-color: var(--olive); }
+  .nav-links li:last-child a{
+    color: var(--cream);
+    background: var(--ink);
+    padding: 8px 16px;
+    border-radius: 3px;
+  }
+  .nav-links li:last-child a:hover{ background: var(--olive); border-color: transparent; }
+
+  @media (max-width: 720px){
+    nav {
+      flex-direction: column;
+      gap: 12px;
+      padding: 15px 20px;
+    }
+    .nav-links {
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .nav-links li:last-child a {
+      display: inline-block;
+      padding: 6px 12px;
+    }
+  }
+
+  /* ---------- The Spine ---------- */
+  .spine-wrap{
+    position: relative;
+    max-width: 980px;
+    margin: 0 auto;
+    padding-left: calc(var(--spine-x) + 30px);
+  }
+  .spine-wrap::before{
+    content:"";
+    position:absolute;
+    top:0; bottom:0;
+    left: var(--spine-x);
+    width:1px;
+    background: var(--line);
+  }
+  .tick{
+    position: relative;
+  }
+  .tick::before{
+    content: attr(data-tick);
+    position:absolute;
+    left: calc(-1 * (var(--spine-x) + 30px) + 24px);
+    top: 0.15em;
+    width: calc(var(--spine-x) - 24px);
+    text-align:right;
+    padding-right: 18px;
+    font-family: var(--sans);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    color: var(--brass);
+  }
+  .tick::after{
+    content:"";
+    position:absolute;
+    left: calc(-1 * (var(--spine-x) + 30px) + var(--spine-x));
+    top: 0.6em;
+    width: 14px; height: 1px;
+    background: var(--brass);
+  }
+
+  @media (max-width: 720px){
+    :root{ --spine-x: 20px; }
+    .spine-wrap { padding-left: calc(var(--spine-x) + 20px); }
+    .tick::before{ display:none; }
+    .tick::after{ left: calc(-1 * (var(--spine-x) + 20px) + var(--spine-x) - 10px); width: 10px; }
+  }
+
+  /* ---------- Balance visual (hero) ---------- */
+  .balance-visual{
+    max-width: 260px;
+    margin: 0 0 28px 0;
+  }
+  .balance-visual img{ width: 100%; height: auto; display:block; }
+
+  /* ---------- Sections ---------- */
+  header.hero{
+    padding: clamp(40px, 10vw, 100px) clamp(20px, 5vw, 60px) clamp(40px, 8vw, 80px);
+  }
+  header.hero p.lede{
+    font-size: 1.15rem;
+    color: var(--ink);
+    max-width: 42ch;
+  }
+
+  .hero-axes{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 28px 0;
+  }
+  .axis-card{
+    flex: 1 1 200px;
+    perspective: 1200px;
+  }
+  .axis-inner{
+    display: grid;
+    height: 100%;
+  }
+  .axis-front,
+  .axis-back{
+    grid-area: 1 / 1;
+    backface-visibility: hidden;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 18px 16px;
+    background: var(--cream-alt);
+    box-sizing: border-box;
+    transition: transform .5s cubic-bezier(.4,.2,.2,1), opacity .3s ease;
+  }
+  .axis-front{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    transform: rotateY(0deg);
+    opacity: 1;
+  }
+  .axis-front:hover{
+    border-color: var(--olive);
+  }
+  .axis-num{
+    display: block;
+    font-family: var(--sans);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--brass);
+    margin-bottom: 8px;
+  }
+  .axis-front h3{
+    font-family: var(--serif);
+    font-weight: 560;
+    font-size: 1.02rem;
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: normal;
+    margin: 0;
+  }
+  .axis-back{
+    transform: rotateY(180deg);
+    opacity: 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .axis-card.flipped .axis-front{
+    transform: rotateY(-180deg);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .axis-card.flipped .axis-back{
+    transform: rotateY(0deg);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .axis-back p{
+    font-size: 0.86rem;
+    margin: 0 0 10px 0;
+  }
+  .axis-link{
+    font-size: 0.82rem;
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid var(--olive);
+    align-self: flex-start;
+    padding-bottom: 1px;
+  }
+  .axis-link:hover{ color: var(--olive); }
+  .axis-back-close{
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    cursor: pointer;
+    margin-top: 8px;
+    align-self: flex-start;
+    background: none;
+    border: none;
+    padding: 0;
+    text-decoration: underline;
+    font-family: inherit;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .axis-front, .axis-back{ transition: none; }
+  }
+
+  section{
+    padding: clamp(50px, 8vw, 90px) clamp(20px, 5vw, 60px);
+    border-top: 1px solid var(--line);
+    scroll-margin-top: 130px;
+  }
+  section.alt{ background: var(--cream-alt); }
+
+  .pillar{ margin-bottom: clamp(40px, 6vw, 64px); max-width: 640px; }
+  .pillar:last-child{ margin-bottom: 0; }
+  .pillar h2{ margin-bottom: 0.35em; }
+
+  .hero-cta-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .btn{
+    display:inline-block;
+    background: var(--ink);
+    color: var(--cream);
+    text-decoration:none;
+    padding: 13px 26px;
+    border-radius: 3px;
+    font-size: 0.92rem;
+    letter-spacing: 0.01em;
+    transition: background .2s;
+  }
+  .btn:hover{ background: var(--olive); }
+  .btn.ghost{
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--ink);
+  }
+  .btn.ghost:hover{ background: var(--ink); color: var(--cream); }
+
+  .link-inline{
+    display:inline-block;
+    text-decoration: none;
+    color: var(--ink);
+    border-bottom: 1px solid var(--olive);
+    padding-bottom: 1px;
+    margin-top: 4px;
+  }
+  .link-inline:hover{ color: var(--olive); }
+
+  /* Version allégée du statut Park (accueil) */
+  .park-status-brief{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin: 18px 0 22px;
+    font-size: 0.92rem;
+    color: var(--ink);
+  }
+  .park-status-brief .dot{
+    width:9px; height:9px; border-radius:50%;
+    background: var(--brass);
+    flex-shrink:0;
+  }
+
+  .quote-block{
+    border-left: 2px solid var(--olive);
+    padding-left: 22px;
+    max-width: 560px;
+    margin-top: 24px;
+  }
+  .quote-block p{ font-style: italic; color: var(--ink); }
+  footer{
+    padding: 50px clamp(20px, 5vw, 60px) 60px;
+    border-top: 1px solid var(--line);
+    display:flex;
+    flex-wrap:wrap;
+    gap: 24px;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-size: 0.86rem;
+    color: var(--ink-soft);
+  }
+  footer .foot-links{
+    display:flex; gap: 18px; list-style:none; padding:0; margin:0;
+    align-items:center;
+  }
+  footer a{ text-decoration:none; color: var(--ink-soft); }
+  footer a:hover{ color: var(--ink); }
+  footer .foot-links img{ display:block; }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-mark" href="index.html">
+    <img src="Images/FreePaws.png" alt="FreePaws">
+    <h2>FreePaws</h2>
+  </a>
+  <ul class="nav-links">
+    <li><a href="coaching.html">Coaching</a></li>
+    <li><a href="#park">Park</a></li>
+    <li><a href="qui-suis-je.html">Qui suis-je</a></li>
+    <li><a href="partenaires.html">Partenaires</a></li>
+    <li><a href="mailto:contact@freepaws.be">Prendre rendez-vous</a></li>
+  </ul>
+</nav>
+<header class="hero" id="top">
+  <div class="spine-wrap">
+    <div class="tick" data-tick="FR—01">
+      <div class="balance-visual">
+        <img src="Images/Balance.png" alt="Balance illustrant l'équilibre entre le chien et la famille">
+      </div>
+      <span class="eyebrow">Coaching canin · Province de Liège</span>
+      <h1>Les Fondations<br>de l'Équilibre</h1>
+      <p class="lede">Le chien ne s'éduque pas, il se construit avec vous. Ma mission&nbsp;: vous accompagner sereinement, dès les premières questions.</p>
+
+      <div class="hero-axes">
+
+        <div class="axis-card">
+          <div class="axis-inner">
+            <button type="button" class="axis-front" aria-expanded="false">
+              <span class="axis-num">01</span>
+              <h3>Un accompagnement</h3>
+            </button>
+            <div class="axis-back">
+              <p>Coaching personnalisé avant l'adoption, et soutien aux familles.</p>
+              <a href="coaching.html" class="axis-link">En savoir plus →</a>
+              <button type="button" class="axis-back-close">← Retour</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="axis-card">
+          <div class="axis-inner">
+            <button type="button" class="axis-front" aria-expanded="false">
+              <span class="axis-num">02</span>
+              <h3>Une orientation</h3>
+            </button>
+            <div class="axis-back">
+              <p>Diagnostic honnête, relais vers les bons spécialistes.</p>
+              <a href="coaching.html" class="axis-link">En savoir plus →</a>
+              <button type="button" class="axis-back-close">← Retour</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="axis-card">
+          <div class="axis-inner">
+            <button type="button" class="axis-front" aria-expanded="false">
+              <span class="axis-num">03</span>
+              <h3>Un parc libre</h3>
+            </button>
+            <div class="axis-back">
+              <p>FreePaws Park&nbsp;: un espace sécurisé, en préparation.</p>
+              <a href="journal-de-bord.html" class="axis-link">Découvrir FreePaws Park →</a>
+              <button type="button" class="axis-back-close">← Retour</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="hero-cta-group">
+        <a class="btn" href="mailto:contact@freepaws.be">Prendre rendez-vous</a>
+        <a class="btn ghost" href="#park">Découvrir FreePaws Park</a>
+      </div>
+    </div>
+  </div>
+</header>
+<section id="park" class="alt">
+  <div class="spine-wrap">
+    <div class="tick" data-tick="03">
+      <span class="eyebrow">FreePaws Park</span>
+      <h2>Un espace de liberté, en préparation</h2>
+      <p>Un lieu pensé pour que votre chien puisse enfin courir, jouer et se dépenser librement et en sécurité, entre Liège, Huy et Waremme.</p>
+
+      <div class="park-status-brief">
+        <span class="dot"></span>
+        <span>Pas encore ouvert — projet actif, recherche de terrain en cours.</span>
+      </div>
+
+      <a class="link-inline" href="journal-de-bord.html">En savoir plus sur le projet →</a>
+    </div>
+  </div>
+</section>
+<section id="partenaires">
+  <div class="spine-wrap">
+    <div class="tick" data-tick="FR—02">
+      <span class="eyebrow">Vétérinaires · Éleveurs</span>
+      <h2>Pour mes partenaires</h2>
+      <p>Je ne me substitue pas à votre travail, je le prolonge. J'apporte le cadre éducatif et environnemental qui aide vos bénéficiaires — et leurs familles — à trouver leur équilibre, au quotidien.</p>
+      <div class="quote-block">
+        <p>« Je sélectionne avec soin les structures et personnes vers lesquelles j'oriente, pour garantir la cohérence de la prise en charge. »</p>
+      </div>
+      <a class="link-inline" href="partenaires.html">Découvrir les partenaires →</a>
+    </div>
+  </div>
+</section>
+<footer>
+  <div>
+    <strong style="font-family: var(--serif); font-size:1.1rem;">FreePaws</strong>
+    <div>Province de Liège</div>
+  </div>
+  <ul class="foot-links">
+    <li><a href="mailto:contact@freepaws.be">contact@freepaws.be</a></li>
+    <li><a href="https://facebook.com/freepawspark" target="_blank" rel="noopener"><img src="Images/Facebook.png" width="24" height="24" alt="Facebook"></a></li>
+    <li><a href="https://instagram.com/freepawspark" target="_blank" rel="noopener"><img src="Images/Instagram.png" width="24" height="24" alt="Instagram"></a></li>
+    <li><a href="https://wa.me/32497794074" target="_blank" rel="noopener"><img src="Images/WhatsApp.png" width="24" height="24" alt="WhatsApp"></a></li>
+  </ul>
+</footer>
+<script>
+  document.querySelectorAll('.axis-card').forEach(function(card){
+    var front = card.querySelector('.axis-front');
+    var closeBtn = card.querySelector('.axis-back-close');
+
+    function flip(open){
+      card.classList.toggle('flipped', open);
+      front.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    front.addEventListener('click', function(){ flip(true); });
+    if (closeBtn){
+      closeBtn.addEventListener('click', function(){ flip(false); });
+    }
+  });
+</script>
+</body>
+</html>
