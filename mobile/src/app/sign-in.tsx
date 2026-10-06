@@ -6,13 +6,15 @@ import { Button } from "@/components/button";
 import { Screen } from "@/components/screen";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
+import { env } from "@/lib/env";
 import { supabase } from "@/lib/supabase";
 import { toUserMessage } from "@/utils/errors";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function SignInRoute() {
-  const [step, setStep] = useState<"email" | "code">("email");
+  const [step, setStep] = useState<"email" | "code" | "password">("email");
+  const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -23,6 +25,11 @@ export default function SignInRoute() {
     const address = email.trim().toLowerCase();
     if (!EMAIL_PATTERN.test(address)) {
       setError("Saisissez une adresse email valide.");
+      return;
+    }
+    if (env.reviewEmail && address === env.reviewEmail) {
+      setEmail(address);
+      setStep("password");
       return;
     }
     setBusy(true);
@@ -44,7 +51,10 @@ export default function SignInRoute() {
   const verify = async () => {
     setBusy(true);
     setError(undefined);
-    const { data, error: authError } = await supabase.auth.verifyOtp({ email, token: code.trim(), type: "email" });
+    const { data, error: authError } =
+      step === "password"
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : await supabase.auth.verifyOtp({ email, token: code.trim(), type: "email" });
     if (authError || !data.user) {
       setBusy(false);
       setError(toUserMessage(authError ?? { code: "otp_expired" }));
@@ -81,6 +91,21 @@ export default function SignInRoute() {
             En continuant, vous acceptez nos conditions d’utilisation et notre politique de confidentialité.
           </AppText>
           <Button label="Lire la politique de confidentialité" variant="ghost" onPress={() => router.push("/legal")} />
+        </>
+      ) : step === "password" ? (
+        <>
+          <AppText variant="title">Compte de démonstration</AppText>
+          <TextField
+            label="Mot de passe"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            textContentType="password"
+            onSubmitEditing={() => void verify()}
+            error={error}
+          />
+          <Button label="Se connecter" loading={busy} disabled={!password} onPress={() => void verify()} />
         </>
       ) : (
         <>

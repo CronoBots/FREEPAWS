@@ -21,7 +21,13 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.ink,
         tabBarInactiveTintColor: colors.inkSoft,
-        tabBarStyle: { backgroundColor: colors.creamAlt, borderTopColor: colors.line, height: 64, paddingTop: 6, paddingBottom: 8 },
+        tabBarStyle: {
+          backgroundColor: colors.creamAlt,
+          borderTopColor: colors.line,
+          height: 64,
+          paddingTop: 6,
+          paddingBottom: 8,
+        },
         tabBarLabelStyle: { fontFamily: fonts.sansMedium, fontSize: 12, lineHeight: 16 },
       }}
     >
