@@ -1,7 +1,9 @@
 import { router } from "expo-router";
 
-import { useDogs } from "@/api/dogs";
+import { type Dog, useDogs } from "@/api/dogs";
+import { useVaccinations } from "@/api/park-profile";
 import { Button } from "@/components/button";
+import { vaccinationAttention } from "@/components/fiche/vaccinations-section";
 import { ListRow } from "@/components/list-row";
 import { Screen } from "@/components/screen";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
@@ -28,16 +30,28 @@ export default function DogsRoute() {
       ) : (
         <>
           {dogs.data?.map((dog) => (
-            <ListRow
-              key={dog.id}
-              label={dog.name}
-              detail={dog.breed ?? undefined}
-              onPress={() => router.push({ pathname: "/dogs/[id]", params: { id: dog.id } })}
-            />
+            <DogRow key={dog.id} dog={dog} />
           ))}
           <Button label={t("dogs.add")} variant="secondary" onPress={add} />
         </>
       )}
     </Screen>
+  );
+}
+
+/** Ligne d’un chien, avec un rappel discret si une vaccination est en attente ou refusée. */
+function DogRow({ dog }: { dog: Dog }) {
+  const { t } = useLanguage();
+  const vaccinations = useVaccinations(dog.id);
+  const attention = vaccinationAttention(vaccinations.data);
+  const status =
+    attention === "rejected" ? t("fiche.dogRejected") : attention === "pending" ? t("fiche.dogPending") : null;
+  const detail = [dog.breed, status].filter(Boolean).join(" · ");
+  return (
+    <ListRow
+      label={dog.name}
+      detail={detail || undefined}
+      onPress={() => router.push({ pathname: "/dogs/[id]", params: { id: dog.id } })}
+    />
   );
 }

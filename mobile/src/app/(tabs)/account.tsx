@@ -1,7 +1,9 @@
 import Constants from "expo-constants";
 import { router } from "expo-router";
+import { useState } from "react";
 import { Linking, StyleSheet, View } from "react-native";
 
+import { exportMyData } from "@/api/park-profile";
 import { useDeleteAccount, useIsAdmin, useProfile } from "@/api/profile";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
@@ -13,6 +15,7 @@ import { LANGUAGES, useLanguage } from "@/i18n";
 import { useAuth } from "@/lib/auth";
 import { confirm, notify } from "@/lib/confirm";
 import { env } from "@/lib/env";
+import { shareTextFile } from "@/lib/share-file";
 import { supabase } from "@/lib/supabase";
 import { space } from "@/theme";
 import { toUserMessage } from "@/utils/errors";
@@ -23,6 +26,20 @@ export default function AccountScreen() {
   const profile = useProfile();
   const isAdmin = useIsAdmin();
   const deleteAccount = useDeleteAccount();
+  const [exporting, setExporting] = useState(false);
+
+  const onExport = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const data = await exportMyData();
+      await shareTextFile("freepaws-mes-donnees.json", JSON.stringify(data, null, 2), "application/json");
+    } catch (error) {
+      notify(t("fiche.exportFailed"), toUserMessage(error));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const onDelete = async () => {
     const ok = await confirm({
@@ -72,7 +89,7 @@ export default function AccountScreen() {
           <>
             <ListRow
               label={t("account.myInfo")}
-              detail={t("account.myInfoDetail")}
+              detail={t("fiche.myInfoDetail")}
               onPress={() => router.push("/profile")}
             />
             <ListRow label={t("account.myDogs")} onPress={() => router.push("/dogs")} />
@@ -98,6 +115,11 @@ export default function AccountScreen() {
         <ListRow label={t("account.legal")} onPress={() => router.push("/legal")} />
         {userId ? (
           <>
+            <ListRow
+              label={t("fiche.export")}
+              detail={exporting ? t("fiche.exportLoading") : t("fiche.exportDetail")}
+              onPress={() => void onExport()}
+            />
             <ListRow label={t("account.signOut")} onPress={() => void supabase.auth.signOut()} />
             <ListRow label={t("account.delete")} destructive onPress={() => void onDelete()} />
           </>
