@@ -36,7 +36,12 @@ export default function TabsLayout() {
           paddingBottom: 10,
           paddingHorizontal: gutter,
         },
-        tabBarLabelStyle: { fontFamily: fonts.sansSemiBold, fontSize: 13, lineHeight: 17, marginTop: 2 },
+        tabBarLabelStyle: {
+          fontFamily: width < 360 ? fonts.sansMedium : fonts.sansSemiBold,
+          fontSize: width < 360 ? 11 : 13,
+          lineHeight: 17,
+          marginTop: 2,
+        },
       }}
     >
       {TABS.map((tab) => (

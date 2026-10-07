@@ -333,6 +333,6 @@ const styles = StyleSheet.create({
   form: { gap: space.md },
   // Actions groupées à gauche, à leur largeur naturelle (pas étirées sur toute la carte).
   rowActions: { flexDirection: "row", flexWrap: "wrap", gap: space.lg },
-  rowAction: { paddingHorizontal: 0 },
+  rowAction: { paddingHorizontal: space.sm, minWidth: 44 },
   error: { color: colors.danger },
 });
