@@ -1,0 +1,16 @@
+# Hébergement de la version web de l'app chez Infomaniak (Apache) : toutes les adresses de l'app
+# (ex. /booking/…, /live/…, /rescue/…) sont servies par index.html, le routeur de l'app fait le reste.
+Options -MultiViews
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  # Les liens invités et secours sont personnels : jamais en cache partagé.
+  <FilesMatch "index\.html$">
+    Header set Cache-Control "no-store"
+  </FilesMatch>
+</IfModule>
