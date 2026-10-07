@@ -27,7 +27,7 @@ export function DayPicker({ days, selected, onSelect, counts, fullDays }: Props)
     const timer = setTimeout(
       () =>
         scroller.current?.scrollTo({
-          x: Math.max(0, selectedIndex * (DAY_WIDTH + space.sm) - space.xl),
+          x: Math.max(0, selectedIndex * (DAY_WIDTH + space.sm) - DAY_WIDTH * 1.5),
           animated: true,
         }),
       50,

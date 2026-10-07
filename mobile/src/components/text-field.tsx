@@ -12,9 +12,7 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
 ) {
   // Champ multiligne : grandit avec le texte (aucune ligne coupée à mi-hauteur), dans une limite raisonnable.
   const [contentHeight, setContentHeight] = useState(0);
-  const autoHeight = multiline
-    ? { height: Math.min(MAX_MULTILINE, Math.max(MIN_MULTILINE, contentHeight + space.md * 2)) }
-    : null;
+  const autoHeight = multiline ? { height: Math.min(MAX_MULTILINE, Math.max(MIN_MULTILINE, contentHeight)) } : null;
   return (
     <View style={styles.field}>
       <AppText variant="bodyStrong">{label}</AppText>

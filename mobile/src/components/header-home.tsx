@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Pressable, StyleSheet } from "react-native";
+import { Pressable, StyleSheet, useWindowDimensions } from "react-native";
 
 import { AppText } from "@/components/text";
 import { useLanguage } from "@/i18n";
@@ -13,6 +13,8 @@ import { colors, fonts, space } from "@/theme";
 export function HeaderHome({ admin }: { admin: boolean }) {
   const { t } = useLanguage();
   const label = admin ? t("titles.admin") : t("common.home");
+  // Sur téléphone, la flèche seule : le libellé chevaucherait le titre centré.
+  const { width } = useWindowDimensions();
   return (
     <Pressable
       accessibilityRole="button"
@@ -22,7 +24,7 @@ export function HeaderHome({ admin }: { admin: boolean }) {
       style={({ pressed }) => [styles.button, pressed && styles.pressed]}
     >
       <Ionicons name="chevron-back" size={22} color={colors.ink} />
-      <AppText style={styles.label}>{label}</AppText>
+      {width >= 600 ? <AppText style={styles.label}>{label}</AppText> : null}
     </Pressable>
   );
 }

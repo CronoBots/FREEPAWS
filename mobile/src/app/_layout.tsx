@@ -77,7 +77,7 @@ function AppStack() {
         headerStyle: { backgroundColor: colors.cream },
         headerTintColor: colors.ink,
         headerTitleStyle: { fontFamily: fonts.serif, color: colors.ink },
-        headerShadowVisible: false,
+        headerShadowVisible: true,
         // Titre centré partout : aligné avec la colonne de contenu, y compris sur tablette et web.
         headerTitleAlign: "center",
         headerBackButtonDisplayMode: "minimal",

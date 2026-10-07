@@ -14,6 +14,8 @@ type Props = Omit<PressableProps, "children"> & {
 
 export function Button({ label, variant = "primary", loading = false, disabled, onPress, style, ...props }: Props) {
   const inactive = disabled || loading;
+  // Bouton plein désactivé : fond gris clair et texte foncé (lisible), plutôt qu’un bouton délavé.
+  const filled = variant === "primary" || variant === "danger";
   return (
     <Pressable
       accessibilityRole="button"
@@ -28,7 +30,7 @@ export function Button({ label, variant = "primary", loading = false, disabled, 
         styles.base,
         styles[variant],
         state.pressed && styles.pressed,
-        inactive && styles.disabled,
+        inactive && (filled && !loading ? styles.disabledFilled : styles.disabled),
         typeof style === "function" ? style(state) : style,
       ]}
       {...props}
@@ -39,7 +41,8 @@ export function Button({ label, variant = "primary", loading = false, disabled, 
         <Text
           style={[
             styles.label,
-            (variant === "primary" || variant === "danger") && styles.labelInverse,
+            filled && !(disabled && !loading) && styles.labelInverse,
+            filled && disabled && !loading && styles.labelDisabled,
             variant === "dangerText" && styles.labelDanger,
           ]}
         >
@@ -66,7 +69,9 @@ const styles = StyleSheet.create({
   dangerText: { backgroundColor: "transparent" },
   pressed: { opacity: 0.82 },
   disabled: { opacity: 0.45 },
+  disabledFilled: { backgroundColor: colors.closedSoft },
   label: { fontFamily: fonts.sansSemiBold, fontSize: 16, lineHeight: 21, color: colors.ink, textAlign: "center" },
   labelInverse: { color: colors.cream },
   labelDanger: { color: colors.danger },
+  labelDisabled: { color: colors.inkSoft },
 });

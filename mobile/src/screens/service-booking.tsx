@@ -522,7 +522,7 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
             ) : null}
 
             {missing ? (
-              <AppText variant="bodyStrong" style={styles.error}>
+              <AppText variant="bodyStrong" style={styles.missing}>
                 {missing}
               </AppText>
             ) : quote.isLoading ? (
@@ -562,5 +562,6 @@ const styles = StyleSheet.create({
   total: { gap: 2 },
   documentBody: { padding: space.sm, backgroundColor: colors.cream, borderRadius: 8 },
   error: { color: colors.danger },
+  missing: { color: colors.inkSoft },
   ok: { color: colors.free },
 });
