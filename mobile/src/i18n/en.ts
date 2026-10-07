@@ -6,6 +6,8 @@ import { en as adminClientsEn } from "@/i18n/parts/adminClients";
 import { en as adminSafetyEn } from "@/i18n/parts/adminSafety";
 import { en as pricingEn } from "@/i18n/parts/pricing";
 import { en as adminExtraEn } from "@/i18n/parts/adminExtra";
+import { en as v11ClientEn } from "@/i18n/parts/v11Client";
+import { en as v11AdminEn } from "@/i18n/parts/v11Admin";
 
 // Traduction anglaise. Les textes FreePaws (parc, coaching) sont des traductions du site
 // www.freepaws.be, à faire valider par FreePaws.
@@ -304,6 +306,9 @@ export const en: Dictionary = {
     hubCalendarSync: "Personal calendar",
     hubCalendarSyncDetail: "Your appointments block slots",
     pricingRulesTitle: "Pricing rules",
+    questionnaireTitle: "Pre-visit questionnaire",
+    questionnaireAdminTitle: "Questionnaire",
+    bookingAdminTitle: "Booking",
     liveGuestTitle: "Park live",
     hubCalendar: "External calendar",
     calendarText:
@@ -427,6 +432,8 @@ export const en: Dictionary = {
   adminSafety: adminSafetyEn,
   pricing: pricingEn,
   adminExtra: adminExtraEn,
+  v11Client: v11ClientEn,
+  v11Admin: v11AdminEn,
   errors: {
     slot_unavailable: "This time is no longer available. Please choose another one.",
     appointment_full: "There are not enough places left for this session.",

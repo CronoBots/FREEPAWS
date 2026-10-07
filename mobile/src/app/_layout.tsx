@@ -106,6 +106,9 @@ function AppStack() {
       <Stack.Screen name="admin/pricing/[serviceId]" options={{ title: t("admin.pricingRulesTitle") }} />
       <Stack.Screen name="admin/calendar-days" options={{ title: t("admin.hubCalendarDays") }} />
       <Stack.Screen name="admin/calendar-sync" options={{ title: t("admin.hubCalendarSync") }} />
+      <Stack.Screen name="booking/[id]/questionnaire" options={{ title: t("admin.questionnaireTitle") }} />
+      <Stack.Screen name="admin/questionnaire/[serviceId]" options={{ title: t("admin.questionnaireAdminTitle") }} />
+      <Stack.Screen name="admin/booking/[id]" options={{ title: t("admin.bookingAdminTitle") }} />
       <Stack.Screen name="rescue/[token]" options={{ title: t("adminExtra.rescuePageTitle") }} />
       <Stack.Screen name="live/[token]" options={{ title: t("admin.liveGuestTitle") }} />
       <Stack.Screen name="admin/new-event" options={{ presentation: "modal", title: t("titles.newEvent") }} />
