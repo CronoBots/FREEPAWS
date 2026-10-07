@@ -142,7 +142,7 @@ export function useAdminBooking(id: string | undefined) {
           .select(
             `id, status, created_at, cancelled_at, client_notes, visit_address, adults_count, children_count, dogs_count,
              party_size, price_cents, discount_cents, group_dogs, group_certified_at, health_warnings,
-             appointment:appointments ( period, service:services ( id, name, mode ) ),
+             appointment:appointments ( id, period, status, service:services ( id, name, mode ) ),
              client:profiles!bookings_client_id_fkey ( id, full_name, email, phone ),
              dog:dogs!bookings_dog_id_fkey ( id, name, breed, size, protocol ),
              booking_dogs ( dog:dogs ( id, name, breed, size, protocol ) ),

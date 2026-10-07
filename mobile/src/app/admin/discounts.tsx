@@ -2,30 +2,28 @@ import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
 import {
-  useCreateDiscountCode,
+  useDeleteDiscountCode,
   useDiscountCodes,
   useSettings,
   useUpdateDiscountCode,
   useUpdateSettings,
 } from "@/api/admin";
+import { DiscountCodeForm } from "@/components/admin/v11/discount-code-form";
 import { AdminGuard } from "@/components/admin-guard";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { Checkbox } from "@/components/checkbox";
-import { Chip } from "@/components/chip";
-import { DateField } from "@/components/date-field";
 import { Screen } from "@/components/screen";
 import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { useLanguage } from "@/i18n";
-import { notify } from "@/lib/confirm";
+import { confirm, notify } from "@/lib/confirm";
+import type { Tables } from "@/types/database";
 import { colors, space } from "@/theme";
 import { formatDate } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 import { formatPrice } from "@/utils/format";
-
-const CODE = /^[A-Z0-9-]{4,32}$/;
 
 export default function AdminDiscountsRoute() {
   return (
@@ -36,51 +34,17 @@ export default function AdminDiscountsRoute() {
 }
 
 function Discounts() {
-  const { t, tp } = useLanguage();
+  const { t } = useLanguage();
   const codes = useDiscountCodes();
-  const create = useCreateDiscountCode();
-  const updateCode = useUpdateDiscountCode();
   const settings = useSettings();
   const updateSettings = useUpdateSettings();
+  // Code en cours de modification (un seul formulaire ouvert à la fois).
+  const [editing, setEditing] = useState<string | null>(null);
 
-  const [code, setCode] = useState("");
-  const [label, setLabel] = useState("");
-  const [kind, setKind] = useState<"percent" | "amount">("percent");
-  const [value, setValue] = useState("");
-  const [validUntil, setValidUntil] = useState("");
-  const [maxUses, setMaxUses] = useState("");
   const [cap, setCap] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [capError, setCapError] = useState<string | null>(null);
 
   const capValue = cap ?? (settings.data?.social_monthly_cap == null ? "" : String(settings.data.social_monthly_cap));
-  const valueLabel = t(kind === "percent" ? "pricing.codeValuePercent" : "pricing.codeValueAmount");
-
-  const submit = () => {
-    setError(null);
-    if (!CODE.test(code)) return setError(t("admin.invalidCode"));
-    const amount = kind === "percent" ? Number(value) : Math.round(Number(value.replace(",", ".")) * 100);
-    if (!value.trim() || !Number.isFinite(amount) || amount <= 0 || (kind === "percent" && amount > 100)) {
-      return setError(t("admin.invalidNumber", { field: valueLabel }));
-    }
-    const uses = maxUses ? Number(maxUses) : null;
-    if (uses != null && (!Number.isInteger(uses) || uses < 1)) {
-      return setError(t("admin.invalidNumber", { field: t("admin.maxUses") }));
-    }
-    create.mutate(
-      { code, label: label.trim(), kind, value: amount, valid_until: validUntil || null, max_uses: uses },
-      {
-        onSuccess: () => {
-          setCode("");
-          setLabel("");
-          setValue("");
-          setValidUntil("");
-          setMaxUses("");
-        },
-        onError: (err) => setError(toUserMessage(err)),
-      },
-    );
-  };
 
   const saveCap = () => {
     setCapError(null);
@@ -105,67 +69,17 @@ function Discounts() {
         <AppText variant="body">{t("admin.noCodes")}</AppText>
       ) : (
         codes.data?.map((item) => {
-          const uses = (item.bookings as unknown as { count: number }[] | null)?.[0]?.count ?? 0;
-          return (
-            <Card key={item.id}>
-              <AppText variant="heading">{item.code}</AppText>
-              {item.label ? <AppText variant="body">{item.label}</AppText> : null}
-              <AppText variant="caption" style={styles.help}>
-                {[
-                  item.kind === "percent"
-                    ? t("pricing.percentValue", { value: `−${item.value}` })
-                    : `−${formatPrice(item.value) ?? ""}`,
-                  item.valid_until
-                    ? t("pricing.codeValidUntil", { date: formatDate(`${item.valid_until}T12:00:00Z`) })
-                    : null,
-                  item.max_uses ? tp("pricing.codeMaxUses", item.max_uses) : null,
-                  tp("admin.codeUses", uses),
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </AppText>
-              <Checkbox
-                label={t("admin.codeActive")}
-                checked={item.active}
-                onChange={(active) => updateCode.mutate({ id: item.id, active })}
-              />
-            </Card>
+          const { bookings, ...code } = item;
+          const uses = (bookings as unknown as { count: number }[] | null)?.[0]?.count ?? 0;
+          return editing === item.id ? (
+            <DiscountCodeForm key={item.id} code={code} onDone={() => setEditing(null)} />
+          ) : (
+            <CodeCard key={item.id} code={code} uses={uses} onEdit={() => setEditing(item.id)} />
           );
         })
       )}
 
-      <Card>
-        <AppText variant="heading">{t("admin.newCode")}</AppText>
-        <TextField
-          label={t("admin.codeField")}
-          value={code}
-          onChangeText={(text) => setCode(text.toUpperCase().replace(/[^A-Z0-9-]/g, ""))}
-          autoCapitalize="characters"
-          maxLength={32}
-        />
-        <TextField label={t("admin.codeLabel")} value={label} onChangeText={setLabel} maxLength={120} />
-        <AppText variant="bodyStrong">{t("pricing.discountKind")}</AppText>
-        <View style={styles.chips}>
-          <Chip label={t("admin.kindPercent")} selected={kind === "percent"} onPress={() => setKind("percent")} />
-          <Chip label={t("admin.kindAmount")} selected={kind === "amount"} onPress={() => setKind("amount")} />
-        </View>
-        <TextField label={valueLabel} value={value} onChangeText={setValue} keyboardType="decimal-pad" maxLength={8} />
-        <DateField label={t("pricing.validUntilField")} value={validUntil} onChange={setValidUntil} />
-        <TextField
-          label={t("admin.maxUses")}
-          hint={t("pricing.maxUsesHint")}
-          value={maxUses}
-          onChangeText={(text) => setMaxUses(text.replace(/\D/g, ""))}
-          keyboardType="number-pad"
-          maxLength={6}
-        />
-        {error ? (
-          <AppText variant="bodyStrong" style={styles.error} accessibilityRole="alert">
-            {error}
-          </AppText>
-        ) : null}
-        <Button label={t("admin.create")} loading={create.isPending} onPress={submit} />
-      </Card>
+      <DiscountCodeForm />
 
       <Card>
         <AppText variant="heading">{t("pricing.capTitle")}</AppText>
@@ -188,8 +102,69 @@ function Discounts() {
   );
 }
 
+function CodeCard({ code, uses, onEdit }: { code: Tables<"discount_codes">; uses: number; onEdit: () => void }) {
+  const { t, tp } = useLanguage();
+  const updateCode = useUpdateDiscountCode();
+  const remove = useDeleteDiscountCode();
+
+  // Un code déjà utilisé ne se supprime pas (les réservations y renvoient) : il se désactive.
+  const askDelete = async () => {
+    const ok = await confirm({
+      title: t("pricing.deleteCodeTitle"),
+      message: t("pricing.deleteCodeMessage", { code: code.code }),
+      confirmLabel: t("admin.delete"),
+      destructive: true,
+    });
+    if (ok) remove.mutate(code.id, { onError: (err) => notify(t("pricing.deleteCodeTitle"), toUserMessage(err)) });
+  };
+
+  return (
+    <Card>
+      <AppText variant="heading">{code.code}</AppText>
+      {code.label ? <AppText variant="body">{code.label}</AppText> : null}
+      <AppText variant="caption">
+        {[
+          code.kind === "percent"
+            ? t("pricing.percentValue", { value: `−${code.value}` })
+            : `−${formatPrice(code.value) ?? ""}`,
+          code.valid_until ? t("pricing.codeValidUntil", { date: formatDate(`${code.valid_until}T12:00:00Z`) }) : null,
+          code.max_uses ? tp("pricing.codeMaxUses", code.max_uses) : null,
+          tp("admin.codeUses", uses),
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      </AppText>
+      <Checkbox
+        label={t("admin.codeActive")}
+        checked={code.active}
+        onChange={(active) =>
+          updateCode.mutate(
+            { id: code.id, active },
+            { onError: (err) => notify(t("admin.codeActive"), toUserMessage(err)) },
+          )
+        }
+      />
+      <View style={styles.actions}>
+        <Button label={t("pricing.editCode")} variant="secondary" style={styles.edit} onPress={onEdit} />
+        {uses === 0 ? (
+          <Button
+            label={t("admin.delete")}
+            variant="dangerText"
+            style={styles.delete}
+            loading={remove.isPending}
+            onPress={() => void askDelete()}
+          />
+        ) : null}
+      </View>
+      {uses > 0 ? <AppText variant="caption">{t("pricing.codeUsedHint")}</AppText> : null}
+    </Card>
+  );
+}
+
 const styles = StyleSheet.create({
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
-  help: { fontSize: 14, lineHeight: 20 },
   error: { color: colors.danger },
+  // Même disposition que les autres écrans admin : Modifier, puis Supprimer en rouge à côté.
+  actions: { flexDirection: "row", alignItems: "center", gap: space.md },
+  edit: { minWidth: 130 },
+  delete: { paddingHorizontal: space.md },
 });

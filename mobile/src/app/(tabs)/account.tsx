@@ -86,47 +86,68 @@ export default function AccountScreen() {
         </View>
       </View>
 
+      {userId && isAdmin ? (
+        <View>
+          <AppText variant="eyebrow" style={styles.sectionTitle}>
+            {t("account.sectionAdmin")}
+          </AppText>
+          <ListRow
+            label={t("account.admin")}
+            detail={t("account.adminDetail")}
+            onPress={() => router.push("/admin")}
+            last
+          />
+        </View>
+      ) : null}
+
+      {userId ? (
+        <View>
+          <AppText variant="eyebrow" style={styles.sectionTitle}>
+            {t("account.sectionAccount")}
+          </AppText>
+          <ListRow
+            label={t("account.myInfo")}
+            detail={t("fiche.myInfoDetail")}
+            onPress={() => router.push("/profile")}
+          />
+          <ListRow label={t("account.myDogs")} onPress={() => router.push("/dogs")} />
+          <ListRow
+            label={t("fiche.export")}
+            detail={exporting ? t("fiche.exportLoading") : t("fiche.exportDetail")}
+            chevron={false}
+            onPress={() => void onExport()}
+            last
+          />
+        </View>
+      ) : null}
+
       <View>
-        {userId ? (
-          <>
-            <ListRow
-              label={t("account.myInfo")}
-              detail={t("fiche.myInfoDetail")}
-              onPress={() => router.push("/profile")}
-            />
-            <ListRow label={t("account.myDogs")} onPress={() => router.push("/dogs")} />
-            {isAdmin ? (
-              <ListRow
-                label={t("account.admin")}
-                detail={t("account.adminDetail")}
-                onPress={() => router.push("/admin")}
-              />
-            ) : null}
-          </>
-        ) : null}
+        <AppText variant="eyebrow" style={styles.sectionTitle}>
+          {t("account.sectionHelp")}
+        </AppText>
         <ListRow
           label={t("account.contact")}
           detail={env.contactEmail}
+          external
+          accessibilityHint={t("account.externalLink")}
           onPress={() => void Linking.openURL(`mailto:${env.contactEmail}`)}
         />
         <ListRow
           label={t("account.website")}
           detail="freepaws.be"
+          external
+          accessibilityHint={t("account.externalLink")}
           onPress={() => void Linking.openURL(env.websiteUrl)}
         />
-        <ListRow label={t("account.legal")} onPress={() => router.push("/legal")} />
-        {userId ? (
-          <>
-            <ListRow
-              label={t("fiche.export")}
-              detail={exporting ? t("fiche.exportLoading") : t("fiche.exportDetail")}
-              onPress={() => void onExport()}
-            />
-            <ListRow label={t("account.signOut")} chevron={false} onPress={() => void supabase.auth.signOut()} />
-            <ListRow label={t("account.delete")} destructive onPress={() => void onDelete()} />
-          </>
-        ) : null}
+        <ListRow label={t("account.legal")} onPress={() => router.push("/legal")} last />
       </View>
+
+      {userId ? (
+        <View>
+          <ListRow label={t("account.signOut")} chevron={false} onPress={() => void supabase.auth.signOut()} />
+          <ListRow label={t("account.delete")} destructive onPress={() => void onDelete()} last />
+        </View>
+      ) : null}
 
       <AppText variant="caption" style={styles.version}>
         FreePaws {Constants.expoConfig?.version ?? ""}
@@ -138,5 +159,6 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   language: { gap: space.sm },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  sectionTitle: { marginBottom: space.xs },
   version: { textAlign: "center", marginTop: space.lg },
 });

@@ -65,7 +65,8 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
   const [address, setAddress] = useState("");
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
-  const [dogsCount, setDogsCount] = useState(1);
+  // Chiens non enregistrés sur le compte (hors parc) : s’ajoutent aux chiens touchés.
+  const [extraDogs, setExtraDogs] = useState(0);
   const [dogIds, setDogIds] = useState<string[]>([]);
   const [guests, setGuests] = useState<GuestDraft[]>([]);
   const [showGuestErrors, setShowGuestErrors] = useState(false);
@@ -90,16 +91,19 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
     if (slot && userId) setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
   };
 
+  const fullDays = useMemo(() => (rescheduling ? [] : (fullDaysQuery.data ?? [])), [rescheduling, fullDaysQuery.data]);
   const { days, byDay } = useMemo(() => {
     const groups: Record<string, Slot[]> = {};
     for (const slot of slots.data ?? []) (groups[toIsoDay(slot.startsAt)] ??= []).push(slot);
     const allDays: string[] = [];
-    for (let day = today; day <= lastDay; day = addDays(day, 1)) allDays.push(day);
+    for (let day = today; day <= lastDay; day = addDays(day, 1)) {
+      // Séances (ateliers) : seulement les jours où une séance existe, pas une rangée de jours grisés.
+      if (service.mode !== "event" || groups[day] || fullDays.includes(day)) allDays.push(day);
+    }
     return { days: allDays, byDay: groups };
-  }, [slots.data, today, lastDay]);
+  }, [slots.data, today, lastDay, service.mode, fullDays]);
 
   const counts = Object.fromEntries(days.map((day) => [day, byDay[day]?.length ?? 0]));
-  const fullDays = useMemo(() => (rescheduling ? [] : (fullDaysQuery.data ?? [])), [rescheduling, fullDaysQuery.data]);
   const activeDay = pickedDay ?? days.find((day) => (counts[day] ?? 0) > 0) ?? null;
   const activeDayFull = activeDay != null && (counts[activeDay] ?? 0) === 0 && fullDays.includes(activeDay);
   const daySlots = activeDay ? (byDay[activeDay] ?? []) : [];
@@ -120,16 +124,17 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
 
   // Parc : chiens du compte + chiens d’autres foyers, sous le même plafond (M2-06).
   const groupCount = parkProfile ? groupDogs.length : 0;
-  const totalDogs = dogIds.length + groupCount;
-  // Autres prestations : les chiens touchés donnent le nombre ; le compteur ne sert que sans chien choisi.
-  const effectiveDogsCount = parkProfile ? totalDogs : dogIds.length > 0 ? dogIds.length : dogsCount;
+  // Autres prestations : chiens touchés + compteur des chiens non enregistrés.
+  const otherCount = parkProfile ? groupCount : extraDogs;
+  const totalDogs = dogIds.length + otherCount;
+  const effectiveDogsCount = totalDogs;
   const dogsFull = totalDogs >= maxDogs;
 
   const toggleDog = (id: string) =>
     setDogIds((prev) =>
       prev.includes(id)
         ? prev.filter((item) => item !== id)
-        : prev.length + groupCount >= maxDogs
+        : prev.length + otherCount >= maxDogs
           ? prev
           : [...prev, id],
     );
@@ -179,6 +184,7 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
 
     if (!addressOk) return setError(t("errors.address_required"));
     if (!documentsOk) return setError(t("booking.documentsRequired"));
+    // Coaching : un chien n’est pas obligatoire (ex. accompagnement avant adoption).
     if (parkProfile && totalDogs === 0) return setError(t("parkBooking.dogRequired"));
     if (parkProfile && groupDogs.length > 0 && (!groupDogsValid(groupDogs) || !groupCertified)) {
       setShowGroupErrors(true);
@@ -234,27 +240,33 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
           ? t("parkBooking.dogRequired")
           : null;
 
+  const hasDogs = (dogs.data?.length ?? 0) > 0;
   const dogChips = (
-    <View style={styles.chips}>
-      {dogs.data?.map((dog) => {
-        const checked = dogIds.includes(dog.id);
-        return (
-          <Chip
-            key={dog.id}
-            label={checked ? `✓ ${dog.name}` : dog.name}
-            accessibilityLabel={dog.name}
-            selected={checked}
-            disabled={!checked && dogsFull}
-            onPress={() => toggleDog(dog.id)}
-          />
-        );
-      })}
-      <Chip
+    <>
+      {hasDogs ? (
+        <View style={styles.chips}>
+          {dogs.data?.map((dog) => {
+            const checked = dogIds.includes(dog.id);
+            return (
+              <Chip
+                key={dog.id}
+                label={checked ? `✓ ${dog.name}` : dog.name}
+                accessibilityLabel={dog.name}
+                selected={checked}
+                disabled={!checked && dogsFull}
+                onPress={() => toggleDog(dog.id)}
+              />
+            );
+          })}
+        </View>
+      ) : null}
+      {/* Même style que « + Ajouter un chien » : un bouton, distinct des pastilles de chiens. */}
+      <Button
         label={t("booking.addDog")}
-        selected={false}
+        variant="secondary"
         onPress={() => router.push({ pathname: "/dogs/[id]", params: { id: "new" } })}
       />
-    </View>
+    </>
   );
 
   const footer = !userId ? (
@@ -270,13 +282,17 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
 
   const quote = useQuote({
     serviceId: service.id,
-    startsAt: userId && selected && !rescheduling && !(parkProfile && totalDogs === 0) ? selected.startsAt : null,
+    startsAt: userId && selected && !rescheduling && totalDogs > 0 ? selected.startsAt : null,
     dogs: effectiveDogsCount,
     guests: guestInputs.length,
     discountCode: discount?.valid ? discount.code : undefined,
   });
-  const quotedPrice = formatPrice(quote.data?.price_cents ?? null);
   const quotedDiscount = quote.data?.discount_cents ? formatPrice(quote.data.discount_cents) : null;
+  // Prix final affiché seulement s’il apporte une information (différent du tarif de base annoncé plus haut).
+  const quoteDiffers =
+    quote.data != null &&
+    (quote.data.price_cents !== service.displayPriceCents || quote.data.labels.length > 0 || Boolean(quotedDiscount));
+  const quotedPrice = quoteDiffers ? formatPrice(quote.data?.price_cents ?? null) : null;
   const hasSlots = (slots.data?.length ?? 0) > 0 || fullDays.length > 0;
 
   return (
@@ -391,7 +407,10 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
 
             <Card>
               {showAdults ? (
-                <Stepper label={t("booking.adults")} value={adults} onChange={setAdults} min={1} max={adultsMax} />
+                <>
+                  <AppText variant="heading">{t("booking.peopleTitle")}</AppText>
+                  <Stepper label={t("booking.adults")} value={adults} onChange={setAdults} min={1} max={adultsMax} />
+                </>
               ) : null}
               <Stepper label={t("booking.children")} value={children} onChange={setChildren} max={childrenMax} />
               {maxPeople ? (
@@ -408,24 +427,27 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
                     : t("parkBooking.dogsHintNoMax")}
                 </AppText>
                 {dogChips}
-                <AppText variant="bodyStrong">{tp("parkBooking.dogsSelected", dogIds.length)}</AppText>
+                {hasDogs ? (
+                  <AppText variant="bodyStrong">{tp("parkBooking.dogsSelected", dogIds.length)}</AppText>
+                ) : null}
               </Card>
             ) : (
               <Card>
                 <AppText variant="heading">{t("booking.whichDogs")}</AppText>
-                <AppText variant="caption">{t("booking.whichDogsHint")}</AppText>
+                <AppText variant="caption">
+                  {hasDogs ? t("booking.whichDogsHint") : t("booking.whichDogsHintNoDog")}
+                </AppText>
                 {dogChips}
-                {dogIds.length > 0 ? (
-                  <AppText variant="bodyStrong">{tp("parkBooking.dogsSelected", dogIds.length)}</AppText>
-                ) : (
-                  <Stepper
-                    label={t("booking.dogsCount")}
-                    value={dogsCount}
-                    onChange={setDogsCount}
-                    min={1}
-                    max={maxDogs}
-                  />
-                )}
+                <Stepper
+                  label={hasDogs ? t("booking.otherDogs") : t("booking.dogsShort")}
+                  value={extraDogs}
+                  onChange={setExtraDogs}
+                  min={0}
+                  max={Math.max(extraDogs, maxDogs - dogIds.length)}
+                />
+                <AppText variant="bodyStrong" accessibilityLiveRegion="polite">
+                  {tp("v11Client.dogsTotal", totalDogs)}
+                </AppText>
                 {service.max_dogs ? (
                   <AppText variant="caption">{t("booking.maxDogs", { count: service.max_dogs })}</AppText>
                 ) : null}
@@ -441,15 +463,14 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
                   onCertifiedChange={setGroupCertified}
                   canAdd={!dogsFull}
                   showErrors={showGroupErrors}
-                  footer={
-                    <View style={styles.total} accessibilityLiveRegion="polite">
-                      <AppText variant="bodyStrong">{tp("v11Client.dogsTotal", totalDogs)}</AppText>
-                      {dogsFull ? (
-                        <AppText variant="caption">{t("v11Client.dogsMaxReached", { max: maxDogs })}</AppText>
-                      ) : null}
-                    </View>
-                  }
                 />
+                {/* Total des deux cartes (chiens du compte + autres foyers), placé sous les deux. */}
+                <View style={styles.total} accessibilityLiveRegion="polite">
+                  <AppText variant="bodyStrong">{tp("v11Client.dogsTotal", totalDogs)}</AppText>
+                  {dogsFull ? (
+                    <AppText variant="caption">{t("v11Client.dogsMaxReached", { max: maxDogs })}</AppText>
+                  ) : null}
+                </View>
                 <EligibilityPreview
                   loading={eligibility.isLoading && eligibility.fetchStatus !== "idle"}
                   data={totalDogs > 0 ? eligibility.data : undefined}

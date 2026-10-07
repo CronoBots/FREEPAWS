@@ -38,9 +38,7 @@ export default function RescueRoute() {
       ) : access.isError ? (
         <ErrorView error={access.error} onRetry={() => void access.refetch()} />
       ) : !valid ? (
-        <Card>
-          <AppText variant="bodyStrong">{t("adminExtra.rescueDenied")}</AppText>
-        </Card>
+        <DeniedCard />
       ) : (
         <>
           {access.data?.label ? <AppText variant="bodyStrong">{access.data.label}</AppText> : null}
@@ -68,9 +66,7 @@ export default function RescueRoute() {
             </Card>
           ) : live.data?.mode !== "rescue" ? (
             // Le lien a expiré entre les deux vérifications : la prochaine lecture en base le dira.
-            <Card>
-              <AppText variant="body">{t("adminExtra.rescueDenied")}</AppText>
-            </Card>
+            <DeniedCard />
           ) : live.data.streams.length === 0 ? (
             <Card>
               <AppText variant="body">{t("adminExtra.rescueNoCamera")}</AppText>
@@ -85,6 +81,22 @@ export default function RescueRoute() {
         </>
       )}
     </Screen>
+  );
+}
+
+/** Lien expiré ou révoqué : carte en ton d’avertissement, avec la marche à suivre. */
+function DeniedCard() {
+  const { t } = useLanguage();
+  return (
+    <Card style={styles.denied} accessibilityRole="alert">
+      <View style={styles.deniedHead}>
+        <Ionicons name="alert-circle" size={24} color={colors.brassText} />
+        <AppText variant="bodyStrong" style={styles.deniedText}>
+          {t("adminExtra.rescueDenied")}
+        </AppText>
+      </View>
+      <AppText variant="body">{t("adminExtra.rescueDeniedHelp")}</AppText>
+    </Card>
   );
 }
 
@@ -105,6 +117,9 @@ function Call112() {
 
 const styles = StyleSheet.create({
   streams: { gap: space.md },
+  denied: { backgroundColor: colors.reservedSoft, borderColor: colors.brass },
+  deniedHead: { flexDirection: "row", alignItems: "flex-start", gap: space.sm },
+  deniedText: { flex: 1, color: colors.ink },
   call112: {
     minHeight: 60,
     borderRadius: radius.lg,

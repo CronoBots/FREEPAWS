@@ -191,12 +191,11 @@ function VaccinationCard({
       <AppText variant="bodyStrong">{name}</AppText>
       {previous ? <AppText variant="caption">{t("fiche.previousDose")}</AppText> : null}
       <StatusBadge row={row} />
-      <AppText variant="caption">
-        {/* Validée : la fin de validité est déjà dans le badge. */}
-        {row.status === "validated"
-          ? t("fiche.vaccinatedOnly", { date: formatDate(row.vaccinated_on) })
-          : t("fiche.vaccinatedOnLine", { date: formatDate(row.vaccinated_on), until: formatDate(row.valid_until) })}
-      </AppText>
+      <AppText variant="caption">{t("fiche.vaccinatedOnly", { date: formatDate(row.vaccinated_on) })}</AppText>
+      {/* Validée : la fin de validité est déjà dans le badge. Sinon, sur sa propre ligne pour ne pas se couper. */}
+      {row.status === "validated" ? null : (
+        <AppText variant="caption">{t("fiche.validUntilLine", { date: formatDate(row.valid_until) })}</AppText>
+      )}
       {row.status === "rejected" && row.review_note ? (
         <AppText variant="body">{t("fiche.reviewNote", { note: row.review_note })}</AppText>
       ) : null}

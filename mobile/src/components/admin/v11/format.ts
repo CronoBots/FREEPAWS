@@ -9,14 +9,28 @@ const HEALTH_LABELS: Record<string, TranslationKey> = {
   antiparasitic_missing: "v11Admin.healthAntiparasitic",
 };
 
-/** « code:nom du chien » → « Chien trop jeune : Rex ». */
-export function healthWarningText(raw: string): string {
+/** « code:nom du chien » → { label: « Chien trop jeune », dog: « Rex » }. */
+export function parseHealthWarning(raw: string): { label: string; dog: string } {
   const index = raw.indexOf(":");
   const code = index < 0 ? raw : raw.slice(0, index);
   const dog = index < 0 ? "" : raw.slice(index + 1).trim();
   const key = HEALTH_LABELS[code];
-  const label = key ? t(key) : t("v11Admin.healthOther", { code });
+  return { label: key ? t(key) : t("v11Admin.healthOther", { code }), dog };
+}
+
+/** « code:nom du chien » → « Chien trop jeune : Rex ». */
+export function healthWarningText(raw: string): string {
+  const { label, dog } = parseHealthWarning(raw);
   return dog ? t("v11Admin.healthLine", { label, dog }) : label;
+}
+
+/** Avertissements qui portent sur un chien donné (par son nom), pour les afficher sur sa ligne. */
+export function healthLabelsForDog(warnings: string[], dogName: string): string[] {
+  const name = dogName.trim().toLowerCase();
+  return warnings
+    .map(parseHealthWarning)
+    .filter((warning) => warning.dog.toLowerCase() === name)
+    .map((warning) => warning.label);
 }
 
 const SIZES: Record<string, TranslationKey> = {

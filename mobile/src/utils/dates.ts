@@ -50,6 +50,12 @@ export function formatDate(date: Date | string): string {
   return unbreakable(getLocale().startsWith("fr") ? text.replace(/^1 /, "1er ") : text);
 }
 
+/** "7 octobre 2026 à 20:27" / "7 October 2026 at 20:27" (l’heure ne se sépare jamais du « à »). */
+export function formatDateTime(date: Date | string): string {
+  const joiner = getLocale().startsWith("fr") ? " à " : " at ";
+  return `${formatDate(date)}${joiner}${formatTime(date)}`;
+}
+
 /** Espaces insécables : une date ou une durée ne se coupe jamais en fin de ligne. */
 function unbreakable(text: string): string {
   return text.replace(/ /g, "\u00a0");

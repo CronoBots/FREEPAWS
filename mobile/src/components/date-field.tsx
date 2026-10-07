@@ -71,7 +71,8 @@ export function DateField({ label, value, onChange, hint, error, editable }: Pro
       keyboardType="number-pad"
       inputMode="numeric"
       maxLength={10}
-      hint={hint}
+      // Le format reste visible une fois le champ rempli (le texte d’exemple disparaît) : 04/05 est ambigu en anglais.
+      hint={hint ?? t("common.datePlaceholder")}
       error={error ?? (invalid ? t("common.dateInvalid") : undefined)}
       editable={editable}
       onBlur={() => setBlurred(true)}

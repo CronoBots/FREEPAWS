@@ -98,7 +98,7 @@ function Documents() {
     <Screen underHeader refreshing={documents.isRefetching} onRefresh={() => void documents.refetch()}>
       {formOpen ? (
         <Card>
-          <AppText variant="heading">{t("admin.newVersion")}</AppText>
+          <AppText variant="heading">{t("v11Admin.docNew")}</AppText>
           <AppText variant="bodyStrong">{t("v11Admin.docKind")}</AppText>
           {kinds.length > 0 ? (
             <View style={styles.chips}>
@@ -157,7 +157,7 @@ function Documents() {
           />
         </Card>
       ) : (
-        <Button label={t("admin.newVersion")} onPress={() => setFormOpen(true)} style={styles.newButton} />
+        <Button label={t("v11Admin.docNew")} onPress={() => setFormOpen(true)} style={styles.newButton} />
       )}
 
       <AppText variant="heading">{t("v11Admin.docListTitle")}</AppText>
@@ -216,6 +216,7 @@ const styles = StyleSheet.create({
   error: { color: colors.danger },
   empty: { color: colors.inkSoft },
   newButton: { alignSelf: "flex-start" },
+  // Boutons compacts : ils ne doivent pas peser plus lourd que le titre du document.
   actions: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
-  action: { flexGrow: 1, flexBasis: 140 },
+  action: { minHeight: 44, paddingHorizontal: space.md },
 });

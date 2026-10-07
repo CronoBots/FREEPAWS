@@ -146,6 +146,7 @@ function NewEvent() {
       </Card>
 
       <Card>
+        <AppText variant="heading">{t("adminExtra.eventSessionTitle")}</AppText>
         <DateField label={t("admin.date")} value={day} onChange={setDay} />
         <TextField
           label={t("adminExtra.eventTime")}

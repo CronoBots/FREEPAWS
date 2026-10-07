@@ -10,7 +10,7 @@ import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { DayPicker } from "@/components/day-picker";
 import { Screen } from "@/components/screen";
-import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
+import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { AdminGuard } from "@/components/admin-guard";
 import { useLanguage } from "@/i18n";
@@ -67,12 +67,20 @@ function Agenda() {
         days={days}
         selected={day}
         onSelect={setDay}
-        counts={Object.fromEntries(days.map((d) => [d, Math.max(1, counts[d] ?? 0)]))}
+        counts={Object.fromEntries(days.map((d) => [d, 1]))}
+        marks={agenda.isSuccess ? counts : {}}
+        markLabel={(label, count) =>
+          count > 0
+            ? tp("admin.dayAppointmentsA11y", count, { day: label })
+            : t("admin.dayNoAppointmentA11y", { day: label })
+        }
       />
       <View>
         <AppText variant="heading">{formatDayLong(`${day}T12:00:00Z`)}</AppText>
-        {/* Pas de « 0 rendez-vous » tant que l’agenda n’est pas chargé (ou en erreur). */}
-        {agenda.isSuccess ? <AppText variant="caption">{tp("admin.appointments", counts[day] ?? 0)}</AppText> : null}
+        {/* Compteur seulement s’il y a des rendez-vous : le vide est dit une seule fois, plus bas. */}
+        {agenda.isSuccess && (counts[day] ?? 0) > 0 ? (
+          <AppText variant="caption">{tp("admin.appointments", counts[day] ?? 0)}</AppText>
+        ) : null}
       </View>
 
       {agenda.isLoading ? (
@@ -80,7 +88,9 @@ function Agenda() {
       ) : agenda.isError ? (
         <ErrorView error={agenda.error} onRetry={() => void agenda.refetch()} />
       ) : dayEntries.length === 0 ? (
-        <EmptyView title={t("admin.freeDay")} message={t("admin.freeDayText")} />
+        <AppText variant="body" style={styles.muted}>
+          {t("admin.freeDayText")}
+        </AppText>
       ) : (
         dayEntries.map((entry) => (
           <Card key={entry.id}>
@@ -110,7 +120,10 @@ function Agenda() {
                 <View style={styles.bookingHead}>
                   <AppText variant="bodyStrong" style={styles.flex}>
                     {booking.client?.full_name || booking.client?.email}
-                    {booking.dog ? ` · ${booking.dog.name}${booking.dog.breed ? ` (${booking.dog.breed})` : ""}` : ""}
+                    {/* Tous les chiens de la réservation (parc : plusieurs chiens dans booking_dogs). */}
+                    {booking.dogs.length > 0
+                      ? ` · ${booking.dogs.map((dog) => `${dog.name}${dog.breed ? ` (${dog.breed})` : ""}`).join(", ")}`
+                      : ""}
                   </AppText>
                   <Ionicons name="chevron-forward" size={18} color={colors.inkSoft} />
                 </View>
@@ -168,4 +181,5 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: space.xs, paddingVertical: 2 },
   pressed: { opacity: 0.7 },
+  muted: { color: colors.inkSoft },
 });

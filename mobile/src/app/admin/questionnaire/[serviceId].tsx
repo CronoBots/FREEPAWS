@@ -24,7 +24,7 @@ import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { useLanguage } from "@/i18n";
 import { confirm, notify } from "@/lib/confirm";
-import { colors, space } from "@/theme";
+import { colors, fonts, space } from "@/theme";
 import { toUserMessage } from "@/utils/errors";
 
 export default function AdminQuestionnaireRoute() {
@@ -175,7 +175,7 @@ function QuestionCard({
   return (
     <Card style={!question.active && styles.inactive}>
       <View style={styles.head}>
-        <AppText variant="eyebrow" style={styles.flex}>
+        <AppText variant="caption" style={[styles.flex, styles.number]}>
           {t("v11Admin.questionNumber", { number })}
         </AppText>
         <MoveButton
@@ -214,7 +214,7 @@ function QuestionCard({
         <Button
           label={t("v11Admin.delete")}
           variant="dangerText"
-          style={styles.action}
+          style={styles.delete}
           loading={remove.isPending}
           onPress={() => void onDelete()}
         />
@@ -253,8 +253,11 @@ const styles = StyleSheet.create({
   head: { flexDirection: "row", alignItems: "center", gap: space.xs },
   flex: { flex: 1, minWidth: 0 },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: space.xs },
-  actions: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  number: { color: colors.ink, fontFamily: fonts.sansMedium },
+  // Modifier et Supprimer restent sur une ligne, même à 320 px.
+  actions: { flexDirection: "row", alignItems: "center", gap: space.md },
   action: { minWidth: 130 },
+  delete: { paddingHorizontal: space.md },
   add: { alignSelf: "flex-start" },
   move: {
     width: 44,

@@ -345,7 +345,8 @@ function IncidentForm({ incident }: { incident?: Incident }) {
         <Card>
           <AppText variant="heading">{t("adminSafety.sanctionTitle")}</AppText>
           <AppText variant="body">{t("adminSafety.sanctionText")}</AppText>
-          <View>
+          {/* La dernière ligne a déjà sa marge intérieure : pas de vide en plus sous la carte. */}
+          <View style={styles.lastList}>
             {people.map((person, index) => (
               <ListRow
                 key={person.id}
@@ -397,13 +398,13 @@ const styles = StyleSheet.create({
     minHeight: 44,
     paddingLeft: space.md,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.white,
+    // Fond olive clair sans bordure : une étiquette, pas un champ de saisie.
+    backgroundColor: "rgba(108, 119, 70, 0.12)",
   },
   tagName: { flex: 1, paddingVertical: space.sm },
   tagRemove: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   tagRemoveText: { fontSize: 18, color: colors.inkSoft },
+  lastList: { marginBottom: -space.md },
   photoRow: {
     flexDirection: "row",
     flexWrap: "wrap",

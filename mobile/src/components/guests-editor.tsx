@@ -58,7 +58,7 @@ export function GuestsEditor({ value, onChange, showErrors = false }: Props) {
       <AppText variant="heading">{t("parkBooking.guestsTitle")}</AppText>
       <AppText variant="caption">{t("parkBooking.guestsResponsibility")}</AppText>
 
-      {value.length === 0 ? <AppText variant="body">{t("parkBooking.guestsEmpty")}</AppText> : null}
+      {value.length === 0 ? <AppText variant="caption">{t("parkBooking.guestsEmpty")}</AppText> : null}
 
       {value.map((guest, index) => (
         <View key={guest.key} style={styles.guest}>

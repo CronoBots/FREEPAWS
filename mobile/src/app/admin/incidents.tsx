@@ -12,7 +12,15 @@ import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { useLanguage } from "@/i18n";
 import { colors, space } from "@/theme";
-import { formatDate, formatTime } from "@/utils/dates";
+import { formatDateTime } from "@/utils/dates";
+
+/** Espace insécable après chaque mot court : « Art. 4 (essai) » ne se coupe pas après « Art. ». */
+function bindShortWords(text: string) {
+  const words = text.split(" ");
+  return words
+    .map((word, index) => (index === words.length - 1 ? word : word + (word.length <= 5 ? "\u00a0" : " ")))
+    .join("");
+}
 
 export default function AdminIncidentsRoute() {
   return (
@@ -45,7 +53,7 @@ function Incidents() {
       ) : (
         incidents.data.map((incident) => {
           const kindLabel = t(incidentKindKey(incident.kind));
-          const when = `${formatDate(incident.occurred_at)}, ${formatTime(incident.occurred_at)}`;
+          const when = formatDateTime(incident.occurred_at);
           const people = incident.person_ids.map(nameOf);
           // Noms connus : on les affiche ; sinon (chargement), le nombre de personnes.
           const peopleText = !people.length
@@ -53,6 +61,12 @@ function Incidents() {
             : people.every(Boolean)
               ? people.join(", ")
               : tp("adminSafety.people", people.length);
+          const details = [
+            peopleText,
+            incident.photo_paths.length ? tp("adminSafety.photos", incident.photo_paths.length) : null,
+          ]
+            .filter(Boolean)
+            .join(" · ");
           return (
             <Pressable
               key={incident.id}
@@ -61,26 +75,25 @@ function Incidents() {
               onPress={() => openIncident(incident.id)}
               style={({ pressed }) => pressed && styles.pressed}
             >
-              <Card>
-                <View style={styles.head}>
-                  <Badge label={kindLabel} tone={incident.kind === "bite" ? "danger" : "warning"} />
-                  <AppText variant="caption" style={styles.flex}>
-                    {when}
+              {/* Chevron centré verticalement, comme dans la fiche client. */}
+              <Card style={styles.card}>
+                <View style={styles.body}>
+                  <View style={styles.head}>
+                    <Badge label={kindLabel} tone={incident.kind === "bite" ? "danger" : "warning"} />
+                    <AppText variant="caption" style={styles.flex}>
+                      {when}
+                    </AppText>
+                  </View>
+                  <AppText variant="body" numberOfLines={3}>
+                    {incident.description.trim() || t("adminSafety.noDescription")}
                   </AppText>
-                  <AppText style={styles.chevron}>›</AppText>
+                  {details ? <AppText variant="caption">{details}</AppText> : null}
+                  {/* Référence du règlement sur sa propre ligne ; un mot court (« Art. », « 4 ») reste lié au suivant. */}
+                  {incident.rule_reference ? (
+                    <AppText variant="caption">{bindShortWords(incident.rule_reference)}</AppText>
+                  ) : null}
                 </View>
-                <AppText variant="body" numberOfLines={3}>
-                  {incident.description.trim() || t("adminSafety.noDescription")}
-                </AppText>
-                <AppText variant="caption">
-                  {[
-                    peopleText,
-                    incident.photo_paths.length ? tp("adminSafety.photos", incident.photo_paths.length) : null,
-                    incident.rule_reference,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </AppText>
+                <AppText style={styles.chevron}>›</AppText>
               </Card>
             </Pressable>
           );
@@ -91,6 +104,8 @@ function Incidents() {
 }
 
 const styles = StyleSheet.create({
+  card: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  body: { flex: 1, gap: space.sm },
   head: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: space.sm },
   pressed: { opacity: 0.7 },
   flex: { flexGrow: 1, flexShrink: 1 },

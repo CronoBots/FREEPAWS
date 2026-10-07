@@ -1,10 +1,11 @@
 import { router, useLocalSearchParams } from "expo-router";
-import type { PropsWithChildren, ReactNode } from "react";
+import { type PropsWithChildren, type ReactNode, useState } from "react";
 import { Linking, StyleSheet, View } from "react-native";
 
+import { useCancelAppointment } from "@/api/admin";
 import { type AdminBooking, asGroupDog, type SnapshotQuestion, useAdminBooking } from "@/api/v11-admin";
 import { CallRow } from "@/components/admin/safety/call-button";
-import { answerText, dogText, healthWarningText } from "@/components/admin/v11/format";
+import { answerText, dogText, healthLabelsForDog, healthWarningText } from "@/components/admin/v11/format";
 import { AdminGuard } from "@/components/admin-guard";
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
@@ -13,8 +14,10 @@ import { Screen } from "@/components/screen";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { useLanguage } from "@/i18n";
-import { colors, radius, space } from "@/theme";
+import { confirm, notify } from "@/lib/confirm";
+import { colors, space } from "@/theme";
 import { formatDate, formatDayLong, formatTime } from "@/utils/dates";
+import { toUserMessage } from "@/utils/errors";
 import { formatPrice } from "@/utils/format";
 
 export default function AdminBookingRoute() {
@@ -135,6 +138,7 @@ function BookingContent({
       <DogsSection booking={booking} />
       {booking.guests.length > 0 ? <GuestsSection guests={booking.guests} /> : null}
       <QuestionnaireSection booking={booking} />
+      <CancelAction booking={booking} onCancelled={onRefresh} />
     </Screen>
   );
 }
@@ -184,7 +188,7 @@ function DetailsSection({ booking }: { booking: AdminBooking }) {
       {booking.visit_address ? <Info label={t("v11Admin.address")} value={booking.visit_address} /> : null}
       <Info label={t("v11Admin.people")} value={people || t("v11Admin.notProvided")} />
       {booking.client_notes?.trim() ? (
-        <Info label={t("v11Admin.message")} value={`« ${booking.client_notes.trim()} »`} />
+        <Info label={t("v11Admin.message")} value={t("v11Admin.quoted", { text: booking.client_notes.trim() })} />
       ) : null}
       <Info
         label={t("v11Admin.price")}
@@ -213,30 +217,42 @@ function HealthSection({ warnings }: { warnings: string[] }) {
   );
 }
 
-function DogLine({ dog }: { dog: { name: string; breed: string | null; size: string | null; protocol: boolean } }) {
+type DogInfo = { name: string; breed: string | null; size: string | null; protocol: boolean };
+
+/** Une ligne par chien : les avertissements de santé qui le concernent sont repris en badge sur sa ligne. */
+function DogLine({ dog, warnings, last }: { dog: DogInfo; warnings: string[]; last: boolean }) {
   const { t } = useLanguage();
+  const health = healthLabelsForDog(warnings, dog.name);
   return (
-    <View style={[styles.dog, dog.protocol && styles.dogProtocol]}>
+    <View style={[styles.line, last && styles.lineLast]}>
       <AppText variant="bodyStrong">{dogText(dog)}</AppText>
-      {dog.protocol ? <Badge label={t("v11Admin.protocol")} tone="danger" /> : null}
+      {health.length > 0 || dog.protocol ? (
+        <View style={styles.badges}>
+          {health.map((label) => (
+            <Badge key={label} label={label} tone="danger" />
+          ))}
+          {dog.protocol ? <Badge label={t("v11Admin.protocol")} tone="warning" /> : null}
+        </View>
+      ) : null}
     </View>
   );
 }
 
 function DogsSection({ booking }: { booking: AdminBooking }) {
   const { t } = useLanguage();
+  const warnings = booking.health_warnings;
   return (
     <>
       <Section title={t("v11Admin.sectionOwnDogs")}>
         {booking.ownDogs.length === 0 ? <AppText variant="body">{t("v11Admin.noOwnDogs")}</AppText> : null}
-        {booking.ownDogs.map((dog) => (
-          <DogLine key={dog.id} dog={dog} />
+        {booking.ownDogs.map((dog, index) => (
+          <DogLine key={dog.id} dog={dog} warnings={warnings} last={index === booking.ownDogs.length - 1} />
         ))}
       </Section>
       {booking.groupDogs.length > 0 ? (
         <Section title={t("v11Admin.sectionGroupDogs")}>
           {booking.groupDogs.map((dog, index) => (
-            <DogLine key={`${dog.name}-${index}`} dog={dog} />
+            <DogLine key={`${dog.name}-${index}`} dog={dog} warnings={warnings} last={false} />
           ))}
           <AppText variant="caption">
             {booking.group_certified_at
@@ -253,10 +269,10 @@ function GuestsSection({ guests }: { guests: AdminBooking["guests"] }) {
   const { t } = useLanguage();
   return (
     <Section title={t("v11Admin.sectionGuests")}>
-      {guests.map((guest) => {
+      {guests.map((guest, index) => {
         const dog = asGroupDog(guest.dog);
         return (
-          <View key={guest.id} style={styles.line}>
+          <View key={guest.id} style={[styles.line, index === guests.length - 1 && styles.lineLast]}>
             <Badge
               label={guest.profile_completed_at ? t("v11Admin.guestCompleted") : t("v11Admin.guestPending")}
               tone={guest.profile_completed_at ? "success" : "warning"}
@@ -279,7 +295,7 @@ function GuestsSection({ guests }: { guests: AdminBooking["guests"] }) {
             {dog ? (
               <View style={styles.badges}>
                 <AppText variant="body">{t("v11Admin.guestDog", { dog: dogText(dog) })}</AppText>
-                {dog.protocol ? <Badge label={t("v11Admin.protocol")} tone="danger" /> : null}
+                {dog.protocol ? <Badge label={t("v11Admin.protocol")} tone="warning" /> : null}
               </View>
             ) : (
               <AppText variant="caption">{t("v11Admin.guestNoDog")}</AppText>
@@ -302,17 +318,7 @@ function QuestionnaireSection({ booking }: { booking: AdminBooking }) {
   const updated = response && response.updated_at.slice(0, 16) !== response.submitted_at.slice(0, 16);
 
   return (
-    <Section
-      title={t("v11Admin.sectionQuestionnaire")}
-      right={
-        booking.hasQuestionnaire ? (
-          <Badge
-            label={response ? t("v11Admin.questionnaireReceived") : t("v11Admin.questionnairePending")}
-            tone={response ? "success" : "warning"}
-          />
-        ) : null
-      }
-    >
+    <Section title={t("v11Admin.sectionQuestionnaire")}>
       {response ? (
         <>
           <AppText variant="caption">
@@ -324,8 +330,8 @@ function QuestionnaireSection({ booking }: { booking: AdminBooking }) {
               ? ` · ${t("v11Admin.updatedAt", { date: formatDate(response.updated_at), time: formatTime(response.updated_at) })}`
               : ""}
           </AppText>
-          {questions.map((question) => (
-            <View key={question.id} style={styles.line}>
+          {questions.map((question, index) => (
+            <View key={question.id} style={[styles.line, index === questions.length - 1 && styles.lineLast]}>
               <AppText variant="caption">{question.label}</AppText>
               <AppText variant="body" style={styles.ink} selectable>
                 {answerText(question, answers[question.id])}
@@ -340,12 +346,62 @@ function QuestionnaireSection({ booking }: { booking: AdminBooking }) {
       )}
       {serviceId ? (
         <Button
-          label={t("v11Admin.editQuestionnaire")}
+          label={booking.hasQuestionnaire ? t("v11Admin.editQuestionnaire") : t("v11Admin.createQuestionnaire")}
           variant="ghost"
           onPress={() => router.push({ pathname: "/admin/questionnaire/[serviceId]", params: { serviceId } })}
         />
       ) : null}
     </Section>
+  );
+}
+
+/**
+ * Annulation depuis la fiche : même mutation que l’agenda (annule le rendez-vous, donc la réservation).
+ * Réservée aux créneaux individuels à venir : pour une séance de groupe, annuler le rendez-vous annulerait
+ * tous les inscrits, ce qui se fait depuis l’agenda.
+ */
+function CancelAction({ booking, onCancelled }: { booking: AdminBooking; onCancelled: () => void }) {
+  const { t } = useLanguage();
+  const cancel = useCancelAppointment();
+  const appointment = booking.appointment;
+  // Heure figée à l’ouverture de la fiche (le rendu doit rester pur).
+  const [now] = useState(() => Date.now());
+  const upcoming = booking.end ? new Date(booking.end).getTime() > now : false;
+  if (
+    booking.status === "cancelled" ||
+    !appointment ||
+    appointment.status !== "scheduled" ||
+    appointment.service?.mode === "event" ||
+    !upcoming
+  ) {
+    return null;
+  }
+
+  const onCancel = async () => {
+    const ok = await confirm({
+      title: t("v11Admin.cancelBookingTitle"),
+      message: t("v11Admin.cancelBookingMessage", {
+        name: booking.client?.full_name?.trim() || booking.client?.email || "",
+        day: booking.start ? formatDayLong(booking.start) : "",
+        time: booking.start ? formatTime(booking.start) : "",
+      }),
+      confirmLabel: t("v11Admin.cancelBooking"),
+      destructive: true,
+    });
+    if (!ok) return;
+    cancel.mutate(appointment.id, {
+      onSuccess: onCancelled,
+      onError: (error) => notify(t("booking.cancelFailed"), toUserMessage(error)),
+    });
+  };
+
+  return (
+    <Button
+      label={t("v11Admin.cancelBooking")}
+      variant="danger"
+      loading={cancel.isPending}
+      onPress={() => void onCancel()}
+    />
   );
 }
 
@@ -360,19 +416,11 @@ const styles = StyleSheet.create({
   action: { flexGrow: 1, flexBasis: 140 },
   danger: { backgroundColor: colors.dangerSoft, borderColor: colors.danger, borderWidth: 1 },
   dangerText: { color: colors.danger },
-  dog: {
-    gap: space.xs,
-    padding: space.sm,
-    borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
-    backgroundColor: colors.white,
-  },
-  dogProtocol: { borderColor: colors.danger, borderWidth: 1 },
   line: {
     gap: space.xs,
     paddingVertical: space.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
   },
+  lineLast: { borderBottomWidth: 0, paddingBottom: 0 },
 });

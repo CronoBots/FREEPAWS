@@ -44,7 +44,7 @@ export function GroupDogsEditor({
     <Card>
       <AppText variant="heading">{t("v11Client.groupTitle")}</AppText>
       <AppText variant="caption">{t("v11Client.groupIntro")}</AppText>
-      {value.length === 0 ? <AppText variant="body">{t("v11Client.groupEmpty")}</AppText> : null}
+      {value.length === 0 ? <AppText variant="caption">{t("v11Client.groupEmpty")}</AppText> : null}
 
       {value.map((dog, index) => (
         <View key={dog.key} style={styles.dog}>

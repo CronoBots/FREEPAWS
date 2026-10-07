@@ -1,4 +1,13 @@
-import { addDays, brusselsDateTime, dayParts, formatDayLong, formatDuration, formatTime, toIsoDay } from "./dates";
+import {
+  addDays,
+  brusselsDateTime,
+  dayParts,
+  formatDateTime,
+  formatDayLong,
+  formatDuration,
+  formatTime,
+  toIsoDay,
+} from "./dates";
 import { setLanguage } from "@/i18n";
 
 beforeEach(() => setLanguage("fr", { persist: false }));
@@ -7,6 +16,12 @@ describe("dates (heure de Bruxelles)", () => {
   it("affiche l’heure locale de Bruxelles, été comme hiver", () => {
     expect(formatTime("2026-07-01T08:00:00Z")).toBe("10:00");
     expect(formatTime("2026-12-01T08:00:00Z")).toBe("09:00");
+  });
+
+  it("formate une date avec l’heure", () => {
+    expect(formatDateTime("2026-10-07T18:27:00Z")).toBe("7 octobre 2026 à 20:27");
+    setLanguage("en", { persist: false });
+    expect(formatDateTime("2026-10-07T18:27:00Z")).toBe("7 October 2026 at 20:27");
   });
 
   it("calcule le jour calendaire à Bruxelles, pas en UTC", () => {

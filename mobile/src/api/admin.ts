@@ -21,7 +21,8 @@ export function useAgenda(from: Date, to: Date) {
            service:services ( name, mode, location ),
            bookings ( id, status, party_size, client_notes, visit_address, adults_count, children_count, dogs_count,
              client:profiles!bookings_client_id_fkey ( full_name, email, phone ),
-             dog:dogs!bookings_dog_id_fkey ( name, breed ) )`,
+             dog:dogs!bookings_dog_id_fkey ( id, name, breed ),
+             booking_dogs ( dog:dogs ( id, name, breed ) ) )`,
         )
         .eq("status", "scheduled")
         .overlaps("period", toRangeLiteral(from, to))
@@ -30,7 +31,16 @@ export function useAgenda(from: Date, to: Date) {
       return data.map((row) => ({
         ...row,
         ...parseRange(row.period as string),
-        bookings: row.bookings.filter((booking) => booking.status === "confirmed"),
+        bookings: row.bookings
+          .filter((booking) => booking.status === "confirmed")
+          .map(({ booking_dogs, ...booking }) => ({
+            ...booking,
+            // Réservation du parc : plusieurs chiens dans booking_dogs (dog_id ne garde que le premier).
+            dogs: [booking.dog, ...booking_dogs.map((link) => link.dog)].filter(
+              (dog, index, list): dog is NonNullable<typeof dog> =>
+                dog != null && list.findIndex((other) => other?.id === dog.id) === index,
+            ),
+          })),
       }));
     },
   });
@@ -227,6 +237,16 @@ export function useUpdateDiscountCode() {
   return useAdminMutation(
     async ({ id, ...values }: TablesUpdate<"discount_codes"> & { id: string }) => {
       await run(supabase.from("discount_codes").update(values).eq("id", id).select("id"));
+    },
+    [adminKeys.codes],
+  );
+}
+
+/** Suppression d’un code jamais utilisé (un code utilisé se désactive, pour garder l’historique). */
+export function useDeleteDiscountCode() {
+  return useAdminMutation(
+    async (id: string) => {
+      await run(supabase.from("discount_codes").delete().eq("id", id).select("id"));
     },
     [adminKeys.codes],
   );

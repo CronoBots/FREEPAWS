@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
   heading: { fontFamily: fonts.serif, fontSize: 19, lineHeight: 25 },
   body: { fontFamily: fonts.sans, fontSize: 16, lineHeight: 24, color: colors.inkSoft },
   bodyStrong: { fontFamily: fonts.sansMedium, fontSize: 16, lineHeight: 24 },
-  caption: { fontFamily: fonts.sans, fontSize: 13, lineHeight: 18, color: colors.inkSoft },
+  caption: { fontFamily: fonts.sans, fontSize: 14, lineHeight: 20, color: colors.inkSoft },
   eyebrow: {
     fontFamily: fonts.sansMedium,
     fontSize: 12,

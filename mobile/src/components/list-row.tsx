@@ -1,3 +1,4 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/text";
@@ -12,13 +13,27 @@ type Props = {
   last?: boolean;
   /** false pour une ligne qui déclenche une action au lieu d’ouvrir un écran (ex. Se déconnecter). */
   chevron?: boolean;
+  /** Ouvre une autre application (e-mail, navigateur) : icône de lien externe au lieu de la flèche. */
+  external?: boolean;
+  /** Complément lu par les lecteurs d’écran (ex. « s’ouvre hors de l’application »). */
+  accessibilityHint?: string;
 };
 
-export function ListRow({ label, detail, onPress, destructive, last, chevron = true }: Props) {
+export function ListRow({
+  label,
+  detail,
+  onPress,
+  destructive,
+  last,
+  chevron = true,
+  external,
+  accessibilityHint,
+}: Props) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={detail ? `${label}, ${detail}` : label}
+      accessibilityHint={accessibilityHint}
       onPress={onPress}
       style={({ pressed }) => [styles.row, last && styles.last, pressed && styles.pressed]}
     >
@@ -28,7 +43,11 @@ export function ListRow({ label, detail, onPress, destructive, last, chevron = t
         </AppText>
         {detail ? <AppText variant="caption">{detail}</AppText> : null}
       </View>
-      {!destructive && chevron ? <AppText style={styles.chevron}>›</AppText> : null}
+      {destructive ? null : external ? (
+        <Ionicons name="open-outline" size={18} color={colors.inkSoft} style={styles.external} />
+      ) : chevron ? (
+        <AppText style={styles.chevron}>›</AppText>
+      ) : null}
     </Pressable>
   );
 }
@@ -47,4 +66,5 @@ const styles = StyleSheet.create({
   texts: { flex: 1, gap: 2 },
   destructive: { color: colors.danger },
   chevron: { fontSize: 24, color: colors.inkSoft, paddingLeft: space.md },
+  external: { paddingLeft: space.md },
 });

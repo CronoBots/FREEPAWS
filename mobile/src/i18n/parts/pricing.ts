@@ -3,7 +3,7 @@ import type { Widen } from "@/i18n/fr";
 // Textes « pricing » (tarifs, jours fériés, agendas importés) : mêmes clés en français et en anglais.
 export const fr = {
   // Liste des prestations
-  intro: "Le prix de base se règle dans la fiche de chaque prestation. Les règles ci-dessous l’adaptent.",
+  intro: "Le prix de base se règle dans la fiche de chaque prestation. Les règles ci‑dessous l’adaptent.",
   orderTitle: "Ordre de calcul",
   orderStep1: "1. Forfait groupe (remplace le prix de base)",
   orderStep2: "2. Période, par exemple heures creuses",
@@ -75,8 +75,8 @@ export const fr = {
   untilOnly: "jusqu’à {to}",
   percentValue: "{value} %",
   fixedValue: "prix {price}",
-  extraDogSummary_one: "{count} chien inclus, puis {amount} par chien",
-  extraDogSummary_other: "{count} chiens inclus, puis {amount} par chien",
+  extraDogSummary_one: "{count} chien inclus, puis {amount} par chien",
+  extraDogSummary_other: "{count} chiens inclus, puis {amount} par chien",
   groupSummary_one: "À partir de {count} invité : {amount}",
   groupSummary_other: "À partir de {count} invités : {amount}",
 
@@ -117,7 +117,7 @@ export const fr = {
   addFeed: "Ajouter un agenda",
   fieldResource: "Agenda FreePaws à bloquer",
   fieldFeedLabel: "Libellé",
-  feedLabelPlaceholder: "Par exemple : Agenda personnel",
+  feedLabelPlaceholder: "Agenda personnel",
   fieldUrl: "Adresse de l’agenda",
   fieldUrlHint: "Commence par https:// ou webcal://",
   errorUrl: "Adresse invalide : elle doit commencer par https:// ou webcal://.",
@@ -135,11 +135,12 @@ export const fr = {
   deleteFeedTitle: "Supprimer cet agenda ?",
   deleteFeedMessage: "Les indisponibilités importées depuis cet agenda seront supprimées.",
   closuresExternalNote:
-    "Les indisponibilités importées de votre agenda personnel n’apparaissent pas ici : elles sont gérées dans « Agenda personnel ».",
+    "Les indisponibilités importées de votre agenda personnel n’apparaissent pas ici : elles sont gérées dans « Synchroniser mon agenda ».",
   resourceLabel: "Agenda concerné",
   availabilityNoDays: "Choisissez au moins un jour.",
   deleteRangeTitle: "Supprimer cette plage horaire ?",
   deleteRangeMessage: "Ces horaires ne seront plus proposés à la réservation en ligne.",
+  deleteRangeA11y: "Supprimer la plage {day} {from}–{to}",
   deleteClosureTitle: "Supprimer cette période bloquée ?",
   deleteClosureMessage: "Les créneaux de cette période pourront de nouveau être réservés.",
   closureStart: "Début",
@@ -162,6 +163,11 @@ export const fr = {
   capField: "Réservations par mois (facultatif)",
   capHint:
     "Nombre maximum de réservations par mois avec un code de tarif social, tous codes confondus. Laissez vide pour ne pas limiter.",
+  editCode: "Modifier",
+  editCodeTitle: "Modifier le code",
+  deleteCodeTitle: "Supprimer ce code ?",
+  deleteCodeMessage: "Le code {code} ne pourra plus être utilisé.",
+  codeUsedHint: "Ce code a déjà servi : décochez « Actif » pour ne plus l’accepter.",
 };
 
 export const en: Widen<typeof fr> = {
@@ -232,8 +238,8 @@ export const en: Widen<typeof fr> = {
   untilOnly: "until {to}",
   percentValue: "{value}%",
   fixedValue: "price {price}",
-  extraDogSummary_one: "{count} dog included, then {amount} per dog",
-  extraDogSummary_other: "{count} dogs included, then {amount} per dog",
+  extraDogSummary_one: "{count} dog included, then {amount} per dog",
+  extraDogSummary_other: "{count} dogs included, then {amount} per dog",
   groupSummary_one: "From {count} guest: {amount}",
   groupSummary_other: "From {count} guests: {amount}",
 
@@ -272,7 +278,7 @@ export const en: Widen<typeof fr> = {
   addFeed: "Add a calendar",
   fieldResource: "FreePaws calendar to block",
   fieldFeedLabel: "Label",
-  feedLabelPlaceholder: "For example: Personal calendar",
+  feedLabelPlaceholder: "Personal calendar",
   fieldUrl: "Calendar address",
   fieldUrlHint: "Starts with https:// or webcal://",
   errorUrl: "Invalid address: it must start with https:// or webcal://.",
@@ -290,11 +296,12 @@ export const en: Widen<typeof fr> = {
   deleteFeedTitle: "Delete this calendar?",
   deleteFeedMessage: "Events imported from this calendar will be removed.",
   closuresExternalNote:
-    "Events imported from your personal calendar are not listed here: they are managed in “Personal calendar”.",
+    "Events imported from your personal calendar are not listed here: they are managed in “Sync my calendar”.",
   resourceLabel: "Calendar",
   availabilityNoDays: "Choose at least one day.",
   deleteRangeTitle: "Delete this time range?",
   deleteRangeMessage: "These hours will no longer be offered for online booking.",
+  deleteRangeA11y: "Delete the range {day} {from}–{to}",
   deleteClosureTitle: "Delete this blocked period?",
   deleteClosureMessage: "Slots in this period can be booked again.",
   closureStart: "Start",
@@ -317,4 +324,9 @@ export const en: Widen<typeof fr> = {
   capField: "Bookings per month (optional)",
   capHint:
     "Maximum number of bookings per month with a social rate code, all codes combined. Leave empty for no limit.",
+  editCode: "Edit",
+  editCodeTitle: "Edit the code",
+  deleteCodeTitle: "Delete this code?",
+  deleteCodeMessage: "The code {code} can no longer be used.",
+  codeUsedHint: "This code has already been used: untick “Active” to stop accepting it.",
 };

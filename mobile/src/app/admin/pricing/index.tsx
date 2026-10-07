@@ -4,6 +4,7 @@ import { View } from "react-native";
 
 import { useAdminServices } from "@/api/admin";
 import { pricingKeys } from "@/api/pricing";
+import { localizeContent } from "@/api/services";
 import { AdminGuard } from "@/components/admin-guard";
 import { Card } from "@/components/card";
 import { ListRow } from "@/components/list-row";
@@ -37,7 +38,7 @@ function useRuleCounts() {
 }
 
 function Pricing() {
-  const { t, tp } = useLanguage();
+  const { t, tp, language } = useLanguage();
   const services = useAdminServices();
   const counts = useRuleCounts();
 
@@ -84,7 +85,7 @@ function Pricing() {
             <ListRow
               key={service.id}
               last={index === list.length - 1}
-              label={service.name}
+              label={localizeContent(service, language).name}
               detail={[
                 formatPrice(service.price_cents) ?? t("pricing.noPrice"),
                 counts.data ? tp("pricing.ruleCount", counts.data.get(service.id) ?? 0) : null,

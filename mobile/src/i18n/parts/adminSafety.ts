@@ -3,6 +3,7 @@ import type { Widen } from "@/i18n/fr";
 // Textes « adminSafety » : le français fait référence, l’anglais doit avoir exactement les mêmes clés.
 export const fr = {
   // Tableau de bord
+  periodLabel: "Période",
   periodWeek: "7 jours",
   period30: "30 jours",
   periodMonth: "Mois en cours",
@@ -31,7 +32,7 @@ export const fr = {
   csvService: "Prestation",
   csvStatus: "Statut",
   csvClient: "Client",
-  csvEmail: "Email",
+  csvEmail: "E-mail",
   csvPhone: "Téléphone",
   csvAdults: "Adultes",
   csvChildren: "Enfants",
@@ -69,7 +70,7 @@ export const fr = {
   fieldRuleHint: "Texte libre, facultatif.",
   peopleTitle: "Personnes concernées",
   searchPeople: "Rechercher une personne",
-  searchHint: "Nom, email ou téléphone.",
+  searchHint: "Nom, e-mail ou téléphone.",
   noPeopleFound: "Aucune personne trouvée.",
   add: "Ajouter",
   remove: "Retirer {name}",
@@ -95,7 +96,7 @@ export const fr = {
   acknowledge: "Prise en charge",
   call112: "Appeler le 112",
   call112Hint: "Numéro d’appel d’urgence européen (ambulance, pompiers, police).",
-  onSiteTitle: "Sur place ou attendus dans les 2 h",
+  onSiteTitle: "Sur place ou attendus dans les 2 h",
   autoRefresh: "Mis à jour automatiquement toutes les 30 secondes.",
   nothingOnSite: "Aucune réservation en cours ni dans les 2 prochaines heures.",
   inProgress: "En cours",
@@ -120,7 +121,7 @@ export const fr = {
   guestEmergencyContact: "Contact d’urgence de {name}",
   guestNoEmergencyContact: "Aucun contact d’urgence renseigné pour {name}",
   guestDog: "Chien : {dog}",
-  downloadSheet: "Télécharger la fiche secours",
+  downloadSheet: "Télécharger la fiche",
   downloadSheetHint:
     "Fichier texte : fiche secours, personnes sur place ou attendues, contacts d’urgence, chiens et avertissements de santé.",
   downloadFailed: "Téléchargement impossible",
@@ -152,15 +153,15 @@ export const fr = {
   rulesTitle: "Conditions d’accès des chiens",
   minAge: "Âge minimum des chiens (mois)",
   minAgeHint: "Laissez vide pour ne fixer aucun âge minimum (0 à 60).",
-  refuseHeat: "Chienne en chaleurs",
+  refuseHeat: "Chienne en chaleur",
   refuseIll: "Chien signalé malade (maladie contagieuse)",
   requireAntiparasitic: "Traitement antiparasitaire échu ou non renseigné",
   ruleMinAge: "Chien plus jeune que l’âge minimum",
   rulesModesText:
-    "Pour chaque règle : désactivée, simple avertissement (la réservation passe, l’avertissement vous est signalé) ou bloquante (la réservation est refusée).",
-  modeOff: "Désactivée",
-  modeWarn: "Avertissement",
-  modeBlock: "Bloquante",
+    "Pour chaque règle : Non (règle désactivée), Avertir (la réservation passe, l’avertissement vous est signalé) ou Bloquer (la réservation est refusée).",
+  modeOff: "Non",
+  modeWarn: "Avertir",
+  modeBlock: "Bloquer",
   expiryDays: "Délai des alertes d’échéance (jours)",
   expiryHint: "Le client est prévenu ce nombre de jours avant l’expiration de son assurance ou d’un vaccin (1 à 120).",
   rescueField: "Texte de la fiche secours",
@@ -171,13 +172,13 @@ export const fr = {
 
   // Prestation (champs ajoutés)
   requiresParkProfile: "Exiger la fiche du parc (assurance, vaccins, chiens)",
-  maxPeople: "Personnes maximum (adultes + enfants)",
-  maxPeopleHint: "Laissez vide pour ne fixer aucun plafond (1 à 100).",
+  maxPeople: "Personnes maximum",
+  maxPeopleHint: "Adultes et enfants. Laissez vide pour ne fixer aucun plafond (1 à 100).",
 
   // Double authentification
   securityTitle: "Double authentification",
   securityIntro:
-    "En plus du code reçu par email, un code à 6 chiffres généré par une application d’authentification installée sur votre téléphone sera demandé.",
+    "Une fois activée, un code à 6 chiffres de votre application d’authentification vous sera demandé, en plus du code reçu par e-mail, pour ouvrir l’administration.",
   statusOn: "Activée",
   statusOff: "Désactivée",
   activate: "Activer",
@@ -191,15 +192,15 @@ export const fr = {
   step2: "2. Saisissez le code à 6 chiffres affiché par l’application.",
   confirmActivation: "Confirmer l’activation",
   activated: "Double authentification activée",
-  afterText:
-    "Une fois activée, un code de votre application d’authentification vous sera demandé pour ouvrir l’administration.",
-  enabledText: "Un code de votre application d’authentification est demandé pour ouvrir l’administration.",
+  enabledText:
+    "Un code à 6 chiffres de votre application d’authentification est demandé, en plus du code reçu par e-mail, pour ouvrir l’administration.",
   disable: "Désactiver",
   disableTitle: "Désactiver la double authentification ?",
-  disableText: "L’administration ne sera plus protégée que par le code reçu par email.",
+  disableText: "L’administration ne sera plus protégée que par le code reçu par e-mail.",
 };
 
 export const en: Widen<typeof fr> = {
+  periodLabel: "Period",
   periodWeek: "7 days",
   period30: "30 days",
   periodMonth: "This month",
@@ -315,11 +316,11 @@ export const en: Widen<typeof fr> = {
   guestEmergencyContact: "{name}’s emergency contact",
   guestNoEmergencyContact: "No emergency contact provided for {name}",
   guestDog: "Dog: {dog}",
-  downloadSheet: "Download the rescue sheet",
+  downloadSheet: "Download the sheet",
   downloadSheetHint:
-    "Text file: rescue sheet, people on site or expected, emergency contacts, dogs and health warnings.",
+    "Text file: emergency sheet, people on site or expected, emergency contacts, dogs and health warnings.",
   downloadFailed: "Could not download",
-  sheetTitle: "FreePaws – rescue sheet",
+  sheetTitle: "FreePaws – emergency sheet",
   sheetGenerated: "Prepared on {date} at {time}",
   sheetRescue: "Information for emergency services",
   sheetOnSite: "People on site or expected",
@@ -335,12 +336,12 @@ export const en: Widen<typeof fr> = {
   sheetProtocol: "protocol dog",
   sheetBite: "bite history",
   sheetNone: "not provided",
-  rescueTitle: "Rescue sheet",
+  rescueTitle: "Emergency sheet",
   rescueEmpty:
-    "The rescue sheet is empty. Write it in “Park rules” so you can quickly pass it on to the emergency services.",
+    "The emergency sheet is empty. Write it in “Park rules” so you can quickly pass it on to the emergency services.",
   openParkRules: "Open park rules",
   share: "Share",
-  copied: "Rescue sheet copied",
+  copied: "Emergency sheet copied",
   copiedText: "Paste it into a message to pass it on.",
 
   rulesTitle: "Dog access conditions",
@@ -351,25 +352,25 @@ export const en: Widen<typeof fr> = {
   requireAntiparasitic: "Antiparasitic treatment expired or missing",
   ruleMinAge: "Dog younger than the minimum age",
   rulesModesText:
-    "For each rule: off, warning only (the booking goes through and you are notified) or blocking (the booking is refused).",
+    "For each rule: Off (rule disabled), Warning (the booking goes through and you are notified) or Blocking (the booking is refused).",
   modeOff: "Off",
   modeWarn: "Warning",
   modeBlock: "Blocking",
   expiryDays: "Expiry alert notice (days)",
   expiryHint: "The client is notified this many days before their insurance or a vaccine expires (1 to 120).",
-  rescueField: "Rescue sheet text",
+  rescueField: "Emergency sheet text",
   rescueHint:
     "Address, GPS coordinates, access for emergency services, location of the first-aid kit… It is shown in emergency mode.",
   invalidNumber: "Invalid value: {field}",
   saved: "Saved",
 
   requiresParkProfile: "Require the park profile (insurance, vaccines, dogs)",
-  maxPeople: "Maximum people (adults + children)",
-  maxPeopleHint: "Leave empty for no limit (1 to 100).",
+  maxPeople: "Maximum people",
+  maxPeopleHint: "Adults and children. Leave empty for no limit (1 to 100).",
 
   securityTitle: "Two-factor authentication",
   securityIntro:
-    "In addition to the code sent by email, a 6-digit code generated by an authenticator app on your phone will be required.",
+    "Once it is on, a 6-digit code from your authenticator app will be required, in addition to the code sent by email, to open the administration.",
   statusOn: "On",
   statusOff: "Off",
   activate: "Turn on",
@@ -383,8 +384,8 @@ export const en: Widen<typeof fr> = {
   step2: "2. Enter the 6-digit code shown by the app.",
   confirmActivation: "Confirm",
   activated: "Two-factor authentication turned on",
-  afterText: "Once it is on, a code from your authenticator app will be required to open the administration.",
-  enabledText: "A code from your authenticator app is required to open the administration.",
+  enabledText:
+    "A 6-digit code from your authenticator app is required, in addition to the code sent by email, to open the administration.",
   disable: "Turn off",
   disableTitle: "Turn off two-factor authentication?",
   disableText: "The administration will only be protected by the code sent by email.",

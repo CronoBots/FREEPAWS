@@ -14,7 +14,7 @@ import { TextField } from "@/components/text-field";
 import { useLanguage } from "@/i18n";
 import { confirm, notify } from "@/lib/confirm";
 import type { Json } from "@/types/database";
-import { colors } from "@/theme";
+import { colors, space } from "@/theme";
 import { toUserMessage } from "@/utils/errors";
 
 type VaccineType = NonNullable<ReturnType<typeof useAllVaccineTypes>["data"]>[number];
@@ -83,7 +83,15 @@ function VaccineTypes() {
       ) : !types.data?.length ? (
         <EmptyView title={t("adminClients.noTypes")} message={t("adminClients.noTypesText")} />
       ) : (
-        types.data.map((item) => <VaccineTypeCard key={item.id} item={item} />)
+        <>
+          {/* Titre qui sépare le formulaire d’ajout des vaccins déjà enregistrés. */}
+          <AppText variant="heading" accessibilityRole="header" style={styles.listTitle}>
+            {t("adminClients.typesTitle")}
+          </AppText>
+          {types.data.map((item) => (
+            <VaccineTypeCard key={item.id} item={item} />
+          ))}
+        </>
       )}
     </Screen>
   );
@@ -128,8 +136,12 @@ function VaccineTypeCard({ item }: { item: VaccineType }) {
   return (
     <Card style={!item.active && styles.inactive}>
       <AppText variant="heading">{item.name}</AppText>
-      {english ? <AppText variant="caption">{t("adminClients.englishName", { name: english })}</AppText> : null}
-      <View>
+      {/* Toujours une ligne « EN : » : toutes les cartes ont la même structure. */}
+      <AppText variant="caption">
+        {t("adminClients.englishName", { name: english ?? t("adminClients.englishSame") })}
+      </AppText>
+      {/* La zone tactile des cases (44 px) laisse un vide sous la dernière : on le compense. */}
+      <View style={!saved && styles.checks}>
         <Checkbox
           label={t("adminClients.requiredForPark")}
           checked={item.required}
@@ -152,4 +164,6 @@ function VaccineTypeCard({ item }: { item: VaccineType }) {
 
 const styles = StyleSheet.create({
   inactive: { borderColor: colors.line, opacity: 0.8 },
+  listTitle: { marginTop: space.sm },
+  checks: { marginBottom: -space.sm },
 });

@@ -13,7 +13,7 @@ import { useLanguage } from "@/i18n";
 import { confirm, notify } from "@/lib/confirm";
 import { appLink } from "@/lib/links";
 import { colors, space } from "@/theme";
-import { formatDate, formatTime } from "@/utils/dates";
+import { formatDateTime } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 
 const DURATIONS = [2, 6, 24, 72];
@@ -80,7 +80,8 @@ export function RescueAccessCard() {
         value={hours}
         onChange={setHours}
       />
-      <Button label={t("adminExtra.rescueCreate")} loading={create.isPending} onPress={submit} />
+      {/* Écart plus grand que celui des durées : le bouton ne se lit pas comme une cinquième option. */}
+      <Button label={t("adminExtra.rescueCreate")} loading={create.isPending} onPress={submit} style={styles.create} />
 
       <AppText variant="heading" style={styles.activeTitle}>
         {t("adminExtra.rescueActiveTitle")}
@@ -98,10 +99,7 @@ export function RescueAccessCard() {
           <View key={access.id} style={styles.access}>
             {access.label ? <AppText variant="bodyStrong">{access.label}</AppText> : null}
             <AppText variant="caption">
-              {t("adminExtra.rescueUntil", {
-                date: formatDate(access.expires_at),
-                time: formatTime(access.expires_at),
-              })}
+              {t("adminExtra.rescueUntil", { date: formatDateTime(access.expires_at) })}
             </AppText>
             <View style={styles.actions}>
               <Button
@@ -126,6 +124,7 @@ export function RescueAccessCard() {
 }
 
 const styles = StyleSheet.create({
+  create: { marginTop: space.sm },
   activeTitle: { marginTop: space.md },
   empty: { color: colors.inkSoft },
   // Deux boutons de même forme ; « Révoquer » en contour rouge, car l’action coupe l’accès des secours.

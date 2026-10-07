@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { type ReactNode, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
 import { useBooking } from "@/api/bookings";
 import {
@@ -13,14 +13,16 @@ import {
 } from "@/api/v11-client";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
+import { Checkbox } from "@/components/checkbox";
 import { Chip } from "@/components/chip";
+import { DateField, isoToDisplay } from "@/components/date-field";
 import { Screen } from "@/components/screen";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { useLanguage } from "@/i18n";
 import { notify } from "@/lib/confirm";
-import { colors, space } from "@/theme";
+import { colors, fonts, space } from "@/theme";
 import { formatDayLong, formatTime } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 
@@ -219,25 +221,24 @@ function QuestionField({
   const text = typeof value === "string" ? value : "";
 
   switch (question.kind) {
+    case "date":
+      // Même saisie JJ/MM/AAAA que « Mes informations » ; la réponse reste au format AAAA-MM-JJ.
+      return (
+        <DateField label={label} hint={question.help ?? undefined} error={errorText} value={text} onChange={onChange} />
+      );
     case "text":
     case "long_text":
     case "number":
-    case "date":
       return (
         <TextField
           label={label}
-          hint={
-            question.kind === "date"
-              ? [question.help, t("v11Client.qDateHint")].filter(Boolean).join(" · ")
-              : (question.help ?? undefined)
-          }
+          hint={question.help ?? undefined}
           error={errorText}
           value={text}
           onChangeText={onChange}
           multiline={question.kind === "long_text"}
           maxLength={question.kind === "long_text" ? 2000 : question.kind === "text" ? 300 : 20}
           keyboardType={question.kind === "number" ? "decimal-pad" : "default"}
-          placeholder={question.kind === "date" ? "2026-01-31" : undefined}
           autoCorrect={question.kind === "text" || question.kind === "long_text"}
         />
       );
@@ -250,9 +251,9 @@ function QuestionField({
       );
     case "single_choice":
       return (
-        <ChoiceBlock label={label} help={question.help} error={errorText}>
+        <ChoiceBlock label={label} help={question.help} error={errorText} list>
           {question.options.map((option) => (
-            <Chip
+            <RadioRow
               key={option.value}
               label={option.label}
               selected={value === option.value}
@@ -268,16 +269,16 @@ function QuestionField({
           label={label}
           help={[question.help, t("v11Client.qMultiHint")].filter(Boolean).join(" · ")}
           error={errorText}
+          list
         >
           {question.options.map((option) => {
             const checked = selected.includes(option.value);
             return (
-              <Chip
+              <Checkbox
                 key={option.value}
-                label={checked ? `✓ ${option.label}` : option.label}
-                accessibilityLabel={option.label}
-                selected={checked}
-                onPress={() =>
+                label={option.label}
+                checked={checked}
+                onChange={() =>
                   onChange(checked ? selected.filter((item) => item !== option.value) : [...selected, option.value])
                 }
               />
@@ -293,24 +294,47 @@ function ChoiceBlock({
   label,
   help,
   error,
+  list = false,
   children,
 }: {
   label: string;
   help: string | null;
   error?: string;
+  /** Options en liste verticale (texte aligné à gauche) plutôt qu’en pastilles. */
+  list?: boolean;
   children: ReactNode;
 }) {
   return (
     <View style={styles.block}>
       <AppText variant="bodyStrong">{label}</AppText>
       {help ? <AppText variant="caption">{help}</AppText> : null}
-      <View style={styles.chips}>{children}</View>
+      <View style={list ? styles.list : styles.chips}>{children}</View>
       {error ? (
         <AppText variant="caption" style={styles.error} accessibilityLiveRegion="polite">
           {error}
         </AppText>
       ) : null}
     </View>
+  );
+}
+
+/** Option à choix unique : point plein quand elle est choisie (comme la coche des choix multiples). */
+function RadioRow({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{ selected, checked: selected }}
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => [styles.radioRow, pressed && styles.pressed]}
+    >
+      <View style={[styles.radio, selected && styles.radioSelected]}>
+        {selected ? <View style={styles.radioDot} /> : null}
+      </View>
+      <AppText variant="body" style={styles.radioLabel}>
+        {label}
+      </AppText>
+    </Pressable>
   );
 }
 
@@ -321,7 +345,9 @@ function ReadOnlyAnswer({ question, value }: { question: Question; value: Draft[
   if (isEmpty(value) || value === undefined) answer = t("v11Client.qNoAnswer");
   else if (typeof value === "boolean") answer = value ? t("v11Client.qYes") : t("v11Client.qNo");
   else if (Array.isArray(value)) answer = value.map(optionLabel).join(", ");
-  else answer = question.kind === "single_choice" ? optionLabel(value) : value;
+  else if (question.kind === "single_choice") answer = optionLabel(value);
+  else if (question.kind === "date") answer = isoToDisplay(value) || value;
+  else answer = value;
   return (
     <View style={styles.block}>
       <AppText variant="bodyStrong">{question.label}</AppText>
@@ -333,5 +359,22 @@ function ReadOnlyAnswer({ question, value }: { question: Question; value: Draft[
 const styles = StyleSheet.create({
   block: { gap: space.sm },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  list: { gap: space.xs },
+  radioRow: { flexDirection: "row", alignItems: "flex-start", gap: space.md, minHeight: 44, paddingVertical: 2 },
+  pressed: { opacity: 0.7 },
+  radio: {
+    width: 26,
+    height: 26,
+    marginTop: 1,
+    borderRadius: 13,
+    borderWidth: 1.5,
+    borderColor: colors.ink,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  radioSelected: { borderColor: colors.ink },
+  radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.ink },
+  radioLabel: { flex: 1, fontFamily: fonts.sansMedium, color: colors.ink },
   error: { color: colors.danger },
 });

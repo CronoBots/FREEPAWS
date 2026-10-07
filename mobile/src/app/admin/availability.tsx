@@ -1,5 +1,6 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 
 import { useAddRules, useAvailabilityRules, useDeleteRule } from "@/api/admin";
 import { AdminGuard } from "@/components/admin-guard";
@@ -106,13 +107,24 @@ function Availability() {
                   {rule.end_time.slice(0, 5)}
                 </AppText>
               </View>
-              <Button
-                label={t("admin.delete")}
-                variant="dangerText"
-                style={styles.delete}
-                loading={deleteRule.isPending && deleteRule.variables === rule.id}
-                onPress={() => void askDelete(rule.id)}
-              />
+              {/* Corbeille plutôt qu’une colonne de « Supprimer » rouges qui attirent l’œil avant les horaires. */}
+              {deleteRule.isPending && deleteRule.variables === rule.id ? (
+                <ActivityIndicator color={colors.danger} style={styles.delete} />
+              ) : (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("pricing.deleteRangeA11y", {
+                    day: weekdayName(rule.weekday),
+                    from: rule.start_time.slice(0, 5),
+                    to: rule.end_time.slice(0, 5),
+                  })}
+                  hitSlop={4}
+                  onPress={() => void askDelete(rule.id)}
+                  style={({ pressed }) => [styles.delete, pressed && styles.pressed]}
+                >
+                  <Ionicons name="trash-outline" size={20} color={colors.danger} />
+                </Pressable>
+              )}
             </View>
           ))}
         </Card>
@@ -150,7 +162,7 @@ function Availability() {
             {error}
           </AppText>
         ) : null}
-        <Button label={t("admin.addRule")} loading={addRules.isPending} onPress={add} />
+        <Button label={t("pricing.add")} loading={addRules.isPending} onPress={add} />
       </Card>
     </Screen>
   );
@@ -169,7 +181,8 @@ const styles = StyleSheet.create({
   lastRow: { borderBottomWidth: 0 },
   rowText: { flex: 1, flexDirection: "row", flexWrap: "wrap", columnGap: space.md, paddingVertical: space.sm },
   dayName: { minWidth: 96 },
-  delete: { paddingHorizontal: 0, minHeight: 44 },
+  delete: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  pressed: { opacity: 0.6 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   times: { flexDirection: "row", gap: space.md },
   time: { flex: 1 },

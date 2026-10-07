@@ -6,15 +6,15 @@ import { AdminGuard } from "@/components/admin-guard";
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
-import { Chip } from "@/components/chip";
 import { Screen } from "@/components/screen";
+import { Segmented } from "@/components/segmented";
 import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { DateField } from "@/components/date-field";
 import { TextField } from "@/components/text-field";
 import { useLanguage } from "@/i18n";
 import { confirm, notify } from "@/lib/confirm";
-import { colors, space } from "@/theme";
+import { colors } from "@/theme";
 import { addDays, formatDate } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 
@@ -115,18 +115,16 @@ function CalendarDays() {
         <DateField label={t("pricing.fieldFrom")} value={from} onChange={setFrom} />
         <DateField label={t("pricing.fieldTo")} hint={t("pricing.fieldToHint")} value={to} onChange={setTo} />
         <AppText variant="bodyStrong">{t("pricing.dayKind")}</AppText>
-        <View style={styles.chips}>
-          <Chip
-            label={t("pricing.kindPublicHoliday")}
-            selected={kind === "public_holiday"}
-            onPress={() => setKind("public_holiday")}
-          />
-          <Chip
-            label={t("pricing.kindSchoolHoliday")}
-            selected={kind === "school_holiday"}
-            onPress={() => setKind("school_holiday")}
-          />
-        </View>
+        {/* Choix entre deux options : deux segments de même largeur, jamais empilés de travers. */}
+        <Segmented<Kind>
+          accessibilityLabel={t("pricing.dayKind")}
+          options={[
+            { value: "public_holiday", label: t("pricing.kindPublicHoliday") },
+            { value: "school_holiday", label: t("pricing.kindSchoolHoliday") },
+          ]}
+          value={kind}
+          onChange={setKind}
+        />
         <TextField label={t("pricing.fieldDayLabel")} value={label} onChangeText={setLabel} maxLength={120} />
         {error ? (
           <AppText variant="bodyStrong" style={styles.error} accessibilityRole="alert">
@@ -177,7 +175,6 @@ function CalendarDays() {
 }
 
 const styles = StyleSheet.create({
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   actions: { flexDirection: "row", justifyContent: "flex-end" },
   error: { color: colors.danger },
 });

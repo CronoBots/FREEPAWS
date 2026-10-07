@@ -107,8 +107,10 @@ function Closures() {
             ["pricing.closureEnd", endDay, setEndDay, endTime, setEndTime],
           ] as const
         ).map(([title, day, setDay, time, setTime]) => (
-          <View key={title} style={styles.group}>
-            <AppText variant="bodyStrong">{t(title)}</AppText>
+          <View key={title} style={[styles.group, title === "pricing.closureEnd" && styles.groupEnd]}>
+            <AppText variant="heading" style={styles.groupTitle}>
+              {t(title)}
+            </AppText>
             <View style={styles.pair}>
               <View style={styles.date}>
                 <DateField label={t("pricing.fieldDate")} value={day} onChange={setDay} />
@@ -183,11 +185,15 @@ function Closures() {
 const styles = StyleSheet.create({
   resource: { gap: space.sm },
   group: { gap: space.xs },
+  // « Fin » se détache du bloc « Début » ; titres plus marqués que les libellés de champ.
+  groupEnd: { marginTop: space.sm },
+  groupTitle: { fontSize: 17, lineHeight: 22 },
   // Champs alignés en bas : un libellé qui passerait sur deux lignes ne décale plus la saisie.
   pair: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-end", gap: space.md },
   date: { flexGrow: 1, flexBasis: 140 },
   time: { flexGrow: 0, flexBasis: 100 },
-  actions: { flexDirection: "row", justifyContent: "flex-end" },
+  // Même position que sur les autres écrans admin : « Supprimer » à gauche.
+  actions: { flexDirection: "row" },
   warning: { color: colors.reserved },
   error: { color: colors.danger },
 });

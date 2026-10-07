@@ -7,7 +7,7 @@ import { Button } from "@/components/button";
 import { AppText } from "@/components/text";
 import { type TranslationKey, useLanguage } from "@/i18n";
 import { colors, space } from "@/theme";
-import { formatDate, formatTime } from "@/utils/dates";
+import { formatDateTime } from "@/utils/dates";
 
 const PAGE = 15;
 const MAX_LENGTH = 60;
@@ -118,7 +118,7 @@ export function ClientHistory({ history, dogNames }: { history: AuditEntry[]; do
         return (
           <View key={entry.id} style={styles.entry}>
             <AppText variant="bodyStrong">{`${table} · ${action}`}</AppText>
-            <AppText variant="caption">{`${formatDate(entry.created_at)} ${formatTime(entry.created_at)} · ${by}`}</AppText>
+            <AppText variant="caption">{`${formatDateTime(entry.created_at)} · ${by}`}</AppText>
             {entry.action !== "DELETE"
               ? changes.map(([field, change]) => (
                   <AppText key={field} variant="caption" style={styles.change}>

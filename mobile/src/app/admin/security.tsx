@@ -56,7 +56,8 @@ function Security() {
             />
           </View>
         ) : null}
-        <AppText variant="body">{t("adminSafety.securityIntro")}</AppText>
+        {/* Une seule explication : ce qui sera demandé (désactivée) ou ce qui est demandé (activée). */}
+        <AppText variant="body">{t(verified ? "adminSafety.enabledText" : "adminSafety.securityIntro")}</AppText>
         {factors.isLoading ? (
           <LoadingView />
         ) : factors.isError ? (
@@ -90,7 +91,6 @@ function Enabled({ factorId }: { factorId: string }) {
 
   return (
     <>
-      <AppText variant="body">{t("adminSafety.enabledText")}</AppText>
       {error ? (
         <AppText variant="bodyStrong" style={styles.error} accessibilityRole="alert">
           {error}
@@ -146,7 +146,6 @@ function Activation() {
   if (!enrollment) {
     return (
       <>
-        <AppText variant="body">{t("adminSafety.afterText")}</AppText>
         {error ? (
           <AppText variant="bodyStrong" style={styles.error} accessibilityRole="alert">
             {error}
@@ -203,7 +202,6 @@ function Activation() {
         </AppText>
       ) : null}
       <Button label={t("adminSafety.confirmActivation")} loading={verify.isPending} onPress={submit} />
-      <AppText variant="caption">{t("adminSafety.afterText")}</AppText>
       <Button
         label={t("common.cancel")}
         variant="ghost"

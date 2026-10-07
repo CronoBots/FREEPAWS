@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { fetchBookingsForExport, type Stats, useStats } from "@/api/admin-park";
 import { BarList, ProgressBar, StatTile } from "@/components/admin/safety/charts";
 import { AdminGuard } from "@/components/admin-guard";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
-import { Chip } from "@/components/chip";
 import { Screen } from "@/components/screen";
+import { Segmented } from "@/components/segmented";
 import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { getLocale, type TranslationKey, useLanguage } from "@/i18n";
@@ -133,12 +133,13 @@ function Dashboard() {
 
   return (
     <Screen underHeader refreshing={stats.isRefetching} onRefresh={() => void stats.refetch()}>
-      {/* Une seule ligne qui défile : aucun filtre ne se retrouve seul sur une deuxième ligne. */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        {PERIODS.map(([key, label]) => (
-          <Chip key={key} label={t(label)} selected={period === key} onPress={() => setPeriod(key)} />
-        ))}
-      </ScrollView>
+      {/* Segments de même largeur : une ligne quand la place suffit, sinon 2 × 2 ; aucun choix caché. */}
+      <Segmented<Period>
+        accessibilityLabel={t("adminSafety.periodLabel")}
+        options={PERIODS.map(([key, label]) => ({ value: key, label: t(label) }))}
+        value={period}
+        onChange={setPeriod}
+      />
       <AppText variant="caption">
         {t("adminSafety.periodRange", { from: formatDate(`${from}T12:00:00Z`), to: formatDate(`${to}T12:00:00Z`) })}
       </AppText>
@@ -264,7 +265,6 @@ function StatsContent({ stats }: { stats: Stats }) {
 }
 
 const styles = StyleSheet.create({
-  chips: { flexDirection: "row", gap: space.sm },
   muted: { color: colors.inkSoft },
   tiles: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   fillRow: { gap: space.xs, paddingVertical: space.xs },

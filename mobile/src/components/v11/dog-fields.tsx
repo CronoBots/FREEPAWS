@@ -2,7 +2,7 @@ import { StyleSheet, View } from "react-native";
 
 import { DOG_SIZES, type DogSize, type GroupDog } from "@/api/v11-client";
 import { Checkbox } from "@/components/checkbox";
-import { Chip } from "@/components/chip";
+import { Segmented } from "@/components/segmented";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { type TranslationKey, useLanguage } from "@/i18n";
@@ -36,15 +36,9 @@ export function sizeLabel(size: DogSize, t: (key: TranslationKey) => string) {
 }
 
 /** « Rex · Labrador · Grand · protocole » */
+/** Nom · race · gabarit (le protocole s’affiche à part, en badge). */
 export function describeDog(dog: GroupDog, t: (key: TranslationKey) => string) {
-  return [
-    dog.name,
-    dog.breed,
-    dog.size ? sizeLabel(dog.size, t) : null,
-    dog.protocol ? t("v11Client.protocolShort") : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  return [dog.name, dog.breed, dog.size ? sizeLabel(dog.size, t) : null].filter(Boolean).join(" · ");
 }
 
 type Props = {
@@ -74,26 +68,29 @@ export function DogFields({ value, onChange, nameError }: Props) {
         maxLength={80}
       />
       <AppText variant="bodyStrong">{t("v11Client.dogSize")}</AppText>
-      <View style={styles.chips}>
-        {DOG_SIZES.map((size) => (
-          <Chip
-            key={size}
-            label={sizeLabel(size, t)}
-            selected={value.size === size}
-            onPress={() => onChange({ size: value.size === size ? null : size })}
-          />
-        ))}
-      </View>
-      <Checkbox
-        label={t("v11Client.dogProtocol")}
-        checked={value.protocol}
-        onChange={(protocol) => onChange({ protocol })}
+      {/* Grille 2 × 2 quand la place manque : jamais « Très grand » seul sur sa ligne. */}
+      <Segmented
+        accessibilityLabel={t("v11Client.dogSize")}
+        options={DOG_SIZES.map((size) => ({ value: size, label: sizeLabel(size, t) }))}
+        value={value.size}
+        onChange={(size) => onChange({ size })}
       />
+      <View>
+        <Checkbox
+          label={t("v11Client.dogProtocol")}
+          checked={value.protocol}
+          onChange={(protocol) => onChange({ protocol })}
+        />
+        <AppText variant="caption" style={styles.checkboxHint}>
+          {t("v11Client.dogProtocolHint")}
+        </AppText>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   fields: { gap: space.sm },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  // Aide alignée sous le libellé de la case (case de 26 px + écart).
+  checkboxHint: { marginLeft: 26 + space.md, marginTop: -space.sm },
 });

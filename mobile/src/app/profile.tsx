@@ -17,7 +17,6 @@ import { notify } from "@/lib/confirm";
 import { type PickedFile, removeStoredFile, uploadFile } from "@/lib/files";
 import { colors, space } from "@/theme";
 import type { Tables } from "@/types/database";
-import { formatDate } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 import { useLanguage } from "@/i18n";
 
@@ -100,8 +99,13 @@ function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcom
     );
   };
 
+  // Bouton fixé en bas, comme dans le questionnaire : le formulaire est long.
+  const footer = (
+    <Button label={t("common.save")} loading={uploading || update.isPending} onPress={() => void save()} />
+  );
+
   return (
-    <Screen underHeader>
+    <Screen underHeader footer={footer}>
       {welcome ? <AppText variant="body">{t("profile.welcome")}</AppText> : null}
       <Card>
         <AppText variant="body">{t("fiche.intro")}</AppText>
@@ -146,7 +150,7 @@ function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcom
         />
       </View>
 
-      <View style={styles.section}>
+      <View style={[styles.section, styles.sectionBreak]}>
         <AppText variant="heading" accessibilityRole="header">
           {t("fiche.sectionEmergency")}
         </AppText>
@@ -167,7 +171,7 @@ function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcom
         />
       </View>
 
-      <View style={styles.section}>
+      <View style={[styles.section, styles.sectionBreak]}>
         <AppText variant="heading" accessibilityRole="header">
           {t("fiche.sectionInsurance")}
         </AppText>
@@ -182,8 +186,6 @@ function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcom
           onPick={setProof}
         />
       </View>
-
-      <Button label={t("common.save")} loading={uploading || update.isPending} onPress={() => void save()} />
     </Screen>
   );
 }
@@ -193,19 +195,21 @@ function InsuranceBadge({ profile }: { profile: Tables<"profiles"> }) {
   const { t } = useLanguage();
   const until = profile.insurance_valid_until;
   if (!profile.insurance_company || !until) return <Badge tone="danger" label={t("fiche.insuranceMissing")} />;
-  const date = formatDate(until);
+  // Sans date : elle figure déjà dans le champ « Fin de validité » juste en dessous.
   switch (validityState(until)) {
     case "expired":
-      return <Badge tone="danger" label={t("fiche.insuranceExpired", { date })} />;
+      return <Badge tone="danger" label={t("fiche.insuranceExpired")} />;
     case "expiring":
-      return <Badge tone="warning" label={t("fiche.insuranceExpiring", { date })} />;
+      return <Badge tone="warning" label={t("fiche.insuranceExpiring")} />;
     default:
-      return <Badge tone="success" label={t("fiche.insuranceValid", { date })} />;
+      return <Badge tone="success" label={t("fiche.insuranceValid")} />;
   }
 }
 
 const styles = StyleSheet.create({
   section: { gap: space.md },
+  // Même respiration avant chaque titre de section que sur la fiche chien.
+  sectionBreak: { marginTop: space.md },
   // Lecture seule : pas de fond blanc, pour ne pas ressembler à un champ modifiable.
   readOnly: { backgroundColor: "transparent", color: colors.inkSoft },
 });

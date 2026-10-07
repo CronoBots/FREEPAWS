@@ -10,6 +10,7 @@ import { DateField } from "@/components/date-field";
 import { ChoiceRow, todayIso, YesNoUnknown } from "@/components/fiche/form-parts";
 import { VaccinationsSection } from "@/components/fiche/vaccinations-section";
 import { Screen } from "@/components/screen";
+import { Segmented } from "@/components/segmented";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
@@ -148,17 +149,21 @@ function DogForm({ dog }: { dog?: Dog }) {
             { value: "female", label: t("fiche.female") },
           ]}
         />
-        <ChoiceRow
-          label={t("fiche.size")}
-          value={size}
-          onChange={setSize}
-          options={[
-            { value: "small", label: t("fiche.sizeSmall") },
-            { value: "medium", label: t("fiche.sizeMedium") },
-            { value: "large", label: t("fiche.sizeLarge") },
-            { value: "giant", label: t("fiche.sizeGiant") },
-          ]}
-        />
+        <View style={styles.field}>
+          <AppText variant="bodyStrong">{t("fiche.size")}</AppText>
+          {/* Grille 2 × 2 quand la place manque : jamais « Très grand » seul sur sa ligne. */}
+          <Segmented
+            accessibilityLabel={t("fiche.size")}
+            value={size}
+            onChange={setSize}
+            options={[
+              { value: "small", label: t("fiche.sizeSmall") },
+              { value: "medium", label: t("fiche.sizeMedium") },
+              { value: "large", label: t("fiche.sizeLarge") },
+              { value: "giant", label: t("fiche.sizeGiant") },
+            ]}
+          />
+        </View>
         <TextField
           label={t("fiche.chipNumber")}
           value={chipNumber}
@@ -171,7 +176,7 @@ function DogForm({ dog }: { dog?: Dog }) {
         <Checkbox label={t("fiche.dogid")} checked={dogidRegistered} onChange={setDogidRegistered} />
       </View>
 
-      <View style={styles.section}>
+      <View style={[styles.section, styles.sectionBreak]}>
         <AppText variant="heading" accessibilityRole="header">
           {t("fiche.sectionHealth")}
         </AppText>
@@ -189,7 +194,7 @@ function DogForm({ dog }: { dog?: Dog }) {
         />
       </View>
 
-      <View style={styles.section}>
+      <View style={[styles.section, styles.sectionBreak]}>
         <AppText variant="heading" accessibilityRole="header">
           {t("fiche.sectionVet")}
         </AppText>
@@ -203,7 +208,7 @@ function DogForm({ dog }: { dog?: Dog }) {
         />
       </View>
 
-      <View style={styles.section}>
+      <View style={[styles.section, styles.sectionBreak]}>
         <AppText variant="heading" accessibilityRole="header">
           {t("fiche.sectionAdmission")}
         </AppText>
@@ -252,4 +257,7 @@ function DogForm({ dog }: { dog?: Dog }) {
 
 const styles = StyleSheet.create({
   section: { gap: space.md },
+  field: { gap: space.sm },
+  // Même respiration avant chaque titre de section, plus marquée que l’écart entre deux champs.
+  sectionBreak: { marginTop: space.md },
 });

@@ -1,3 +1,4 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Clipboard from "expo-clipboard";
 import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -100,7 +101,8 @@ function CalendarSync() {
           <ErrorView error={settings.error} onRetry={() => void settings.refetch()} />
         ) : feedUrl ? (
           <>
-            <AppText variant="caption" style={styles.help} selectable>
+            {/* Une ligne tronquée : le bouton Copier donne l’adresse complète. */}
+            <AppText variant="caption" numberOfLines={1} ellipsizeMode="tail" selectable>
               {feedUrl}
             </AppText>
             <Button
@@ -124,7 +126,7 @@ function CalendarSync() {
           <AppText variant="bodyStrong" style={styles.disclosureText}>
             {t("pricing.syncHowTitle")}
           </AppText>
-          <AppText variant="bodyStrong">{howOpen ? "▴" : "▾"}</AppText>
+          <Ionicons name={howOpen ? "chevron-up" : "chevron-down"} size={18} color={colors.olive} />
         </Pressable>
         {howOpen ? (
           <View style={styles.how}>
@@ -148,7 +150,7 @@ function CalendarSync() {
         />
         <TextField
           label={t("pricing.fieldUrl")}
-          hint={`${t("pricing.fieldUrlHint")} · ${t("pricing.syncSecret")}`}
+          hint={t("pricing.fieldUrlHint")}
           value={url}
           onChangeText={setUrl}
           autoCapitalize="none"
@@ -156,6 +158,7 @@ function CalendarSync() {
           keyboardType="url"
           maxLength={1000}
         />
+        <AppText variant="caption">{t("pricing.syncSecret")}</AppText>
         {error ? (
           <AppText variant="bodyStrong" style={styles.error} accessibilityRole="alert">
             {error}
@@ -217,11 +220,11 @@ function CalendarSync() {
 
 const styles = StyleSheet.create({
   badges: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
-  help: { fontSize: 14, lineHeight: 20 },
-  disclosure: { flexDirection: "row", alignItems: "center", gap: space.sm, minHeight: 44 },
-  disclosureText: { flex: 1, color: colors.olive },
+  // Chevron collé au libellé, comme sur les autres écrans.
+  disclosure: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: space.xs, minHeight: 44 },
+  disclosureText: { flexShrink: 1, color: colors.olive },
   pressed: { opacity: 0.6 },
   how: { gap: space.sm },
-  actions: { flexDirection: "row", justifyContent: "flex-end" },
+  actions: { flexDirection: "row" },
   error: { color: colors.danger },
 });

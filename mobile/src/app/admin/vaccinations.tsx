@@ -101,7 +101,6 @@ function PendingCard({ item }: { item: Pending }) {
       ) : (
         <View style={styles.row}>
           <Badge label={t("adminClients.noProofBadge")} tone="warning" />
-          <AppText variant="caption">{t("adminClients.noProof")}</AppText>
         </View>
       )}
 

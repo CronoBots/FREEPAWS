@@ -9,7 +9,7 @@ export const fr = {
   dogsSelected_one: "{count} chien sélectionné",
   dogsSelected_other: "{count} chiens sélectionnés",
   dogRequired: "Choisissez au moins un chien.",
-  maxPeople: "{count} personnes au plus, adultes et enfants compris.",
+  maxPeople: "Adultes et enfants : {count} au plus. Les invités déclarés plus bas ne sont pas comptés dans ce nombre.",
   guestNamesRequired: "Indiquez le nom de chaque invité, ou retirez les lignes vides.",
 
   // Invités
@@ -18,12 +18,12 @@ export const fr = {
   guestsEmpty: "Aucun invité.",
   guestLabel: "Invité {n}",
   guestName: "Nom et prénom",
-  guestEmail: "Email (facultatif)",
+  guestEmail: "E-mail (facultatif)",
   guestPhone: "Téléphone (facultatif)",
   guestNameError: "Nom obligatoire",
   guestRemove: "Retirer",
   guestAdd: "Ajouter un invité",
-  guestsMax: "{count} invités au plus.",
+  guestsMax: "Jusqu’à {count} invités, en plus des adultes et enfants indiqués plus haut.",
   guestsEdit: "Modifier les invités",
   guestsSave: "Enregistrer les invités",
   guestsSaved: "Invités enregistrés",
@@ -76,8 +76,8 @@ export const fr = {
   // Détail d’une réservation
   extrasDogs: "Chiens",
   extrasGuests: "Invités",
-  guestLinkEmail: "Un lien personnel vers le direct du parc lui sera envoyé par email 30 minutes avant le créneau.",
-  guestLinkNoEmail: "Pas d’email : copiez son lien vers le direct et transmettez-le-lui.",
+  guestLinkEmail: "Un lien personnel vers le direct du parc lui sera envoyé par e-mail 30 minutes avant le créneau.",
+  guestLinkNoEmail: "Pas d’e-mail : copiez son lien vers le direct et transmettez-le-lui.",
   guestLinkCopy: "Copier son lien",
   guestLinkCopied: "Lien copié",
   guestLinkPersonal:
@@ -102,7 +102,7 @@ export const en: Widen<typeof fr> = {
   dogsSelected_one: "{count} dog selected",
   dogsSelected_other: "{count} dogs selected",
   dogRequired: "Choose at least one dog.",
-  maxPeople: "{count} people at most, adults and children included.",
+  maxPeople: "Adults and children: {count} at most. Guests listed below are not counted in this number.",
   guestNamesRequired: "Enter each guest’s name, or remove the empty rows.",
 
   guestsTitle: "Guests",
@@ -115,7 +115,7 @@ export const en: Widen<typeof fr> = {
   guestNameError: "Name required",
   guestRemove: "Remove",
   guestAdd: "Add a guest",
-  guestsMax: "{count} guests at most.",
+  guestsMax: "Up to {count} guests, in addition to the adults and children entered above.",
   guestsEdit: "Edit guests",
   guestsSave: "Save guests",
   guestsSaved: "Guests saved",

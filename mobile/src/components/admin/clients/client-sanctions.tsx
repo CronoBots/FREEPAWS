@@ -5,8 +5,8 @@ import { isActiveSanction, type Sanction, type SanctionLevel, useAddSanction, us
 import { BadgeRow, ErrorText, Section, todayIso } from "@/components/admin/clients/shared";
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
-import { Chip } from "@/components/chip";
 import { DateField } from "@/components/date-field";
+import { Segmented } from "@/components/segmented";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { type TranslationKey, useLanguage } from "@/i18n";
@@ -150,17 +150,13 @@ function SanctionForm({ userId, incident }: { userId: string; incident?: Sanctio
           {t("adminClients.incidentLinked", { date: formatDate(incident.date) })}
         </AppText>
       ) : null}
-      <View style={styles.chips}>
-        {LEVELS.map((item) => (
-          <Chip
-            key={item.level}
-            label={t(item.key)}
-            selected={level === item.level}
-            onPress={() => setLevel(item.level)}
-            style={styles.chip}
-          />
-        ))}
-      </View>
+      {/* Trois colonnes de même largeur, quelle que soit la longueur des libellés. */}
+      <Segmented
+        accessibilityLabel={t("adminClients.newSanction")}
+        options={LEVELS.map((item) => ({ value: item.level, label: t(item.key) }))}
+        value={level}
+        onChange={setLevel}
+      />
       <TextField label={t("adminClients.reason")} value={reason} onChangeText={setReason} multiline maxLength={1000} />
       {level === "suspension" ? (
         <DateField
@@ -191,7 +187,5 @@ const styles = StyleSheet.create({
   },
   reason: { color: colors.ink },
   form: { gap: space.sm, paddingTop: space.sm },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
-  chip: { flexGrow: 1 },
   incident: { color: colors.ink },
 });

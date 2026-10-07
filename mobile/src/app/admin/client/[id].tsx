@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo } from "react";
-import { Linking, Pressable, StyleSheet, View } from "react-native";
+import { Linking, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 
 import {
   type ClientDetails,
@@ -33,7 +33,7 @@ import { AppText } from "@/components/text";
 import { type TranslationKey, useLanguage } from "@/i18n";
 import { confirm, notify } from "@/lib/confirm";
 import { colors, space } from "@/theme";
-import { formatDate, formatTime } from "@/utils/dates";
+import { formatDate, formatDateTime } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 import { parseRange } from "@/utils/range";
 
@@ -152,8 +152,35 @@ function isMinor(birthDate: string) {
   return `${Number(y) + 18}-${m}-${d}` > todayIso();
 }
 
+/**
+ * Adresse e-mail : la partie « @domaine » passe à la ligne d’un bloc si la place manque, au lieu d’une
+ * coupure au milieu du domaine.
+ */
+function Email({ email }: { email: string }) {
+  const at = email.lastIndexOf("@");
+  if (at <= 0) {
+    return (
+      <AppText variant="body" style={styles.ink} selectable>
+        {email}
+      </AppText>
+    );
+  }
+  return (
+    <View style={styles.email} accessible accessibilityLabel={email}>
+      <AppText variant="body" style={styles.ink} selectable>
+        {email.slice(0, at)}
+      </AppText>
+      <AppText variant="body" style={styles.ink} selectable>
+        {email.slice(at)}
+      </AppText>
+    </View>
+  );
+}
+
 function Identity({ profile }: { profile: Profile }) {
   const { t } = useLanguage();
+  // « Appeler » et « Envoyer un e-mail » côte à côte, de même largeur ; empilés sur très petit écran.
+  const narrow = useWindowDimensions().width < 340;
   const emergency = [
     profile.emergency_contact_name,
     profile.emergency_contact_phone ? keepTogether(profile.emergency_contact_phone) : null,
@@ -162,25 +189,23 @@ function Identity({ profile }: { profile: Profile }) {
     .join(" · ");
   return (
     <Section title={t("adminClients.identity")}>
-      <AppText variant="body" style={styles.ink} selectable>
-        {profile.email}
-      </AppText>
+      <Email email={profile.email} />
       <AppText variant="body" style={styles.ink} selectable>
         {profile.phone ? keepTogether(profile.phone) : t("adminClients.noPhone")}
       </AppText>
-      <View style={styles.actions}>
+      <View style={[styles.actions, narrow && styles.actionsStacked]}>
         {profile.phone ? (
           <Button
             label={t("adminClients.call")}
             variant="secondary"
-            style={styles.action}
+            style={narrow ? undefined : styles.action}
             onPress={() => void Linking.openURL(`tel:${profile.phone!.replace(/[^\d+]/g, "")}`)}
           />
         ) : null}
         <Button
           label={t("adminClients.write")}
           variant="secondary"
-          style={styles.action}
+          style={narrow ? undefined : styles.action}
           onPress={() => void Linking.openURL(`mailto:${profile.email}`)}
         />
       </View>
@@ -285,7 +310,7 @@ function Incidents({ incidents }: { incidents: ClientDetails["incidents"] }) {
     <Section title={t("adminClients.incidents")}>
       {incidents.length === 0 ? <AppText variant="body">{t("adminClients.noIncidents")}</AppText> : null}
       {shown.map((incident, index) => {
-        const when = `${formatDate(incident.occurred_at)}, ${formatTime(incident.occurred_at)}`;
+        const when = formatDateTime(incident.occurred_at);
         return (
           <Pressable
             key={incident.id}
@@ -320,7 +345,7 @@ function bookingDate(period: unknown) {
   if (typeof period !== "string") return null;
   try {
     const { start } = parseRange(period);
-    return `${formatDate(start)} · ${formatTime(start)}`;
+    return formatDateTime(start);
   } catch {
     return null;
   }
@@ -365,8 +390,10 @@ function Bookings({ bookings }: { bookings: ClientDetails["bookings"] }) {
 
 const styles = StyleSheet.create({
   ink: { color: colors.ink },
-  actions: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
-  action: { minWidth: 150 },
+  email: { flexDirection: "row", flexWrap: "wrap" },
+  actions: { flexDirection: "row", gap: space.sm },
+  actionsStacked: { flexDirection: "column" },
+  action: { flexGrow: 1, flexBasis: 0, paddingHorizontal: space.sm },
   wrapRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: space.sm },
   flex: { flexShrink: 1, flexGrow: 1 },
   line: {

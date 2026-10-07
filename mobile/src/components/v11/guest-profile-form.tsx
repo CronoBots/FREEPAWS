@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
 import { type GuestInvitation, useCompleteGuestProfile } from "@/api/v11-client";
 import { Button } from "@/components/button";
@@ -127,12 +127,17 @@ export function GuestProfileForm({ token, invitation }: { token: string; invitat
                 checked={Boolean(accepted[document.id])}
                 onChange={(checked) => setAccepted((prev) => ({ ...prev, [document.id]: checked }))}
               />
-              <Button
-                label={t(openDocument === document.id ? "v11Client.guestDocumentHide" : "v11Client.guestDocumentRead")}
-                variant="ghost"
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ expanded: openDocument === document.id }}
+                hitSlop={space.sm}
                 onPress={() => setOpenDocument(openDocument === document.id ? null : document.id)}
-                style={styles.documentLink}
-              />
+                style={({ pressed }) => [styles.documentLink, pressed && styles.pressed]}
+              >
+                <AppText variant="bodyStrong" style={styles.linkText}>
+                  {t(openDocument === document.id ? "v11Client.guestDocumentHide" : "v11Client.guestDocumentRead")}
+                </AppText>
+              </Pressable>
               {openDocument === document.id ? (
                 <AppText variant="caption" style={styles.documentBody}>
                   {document.body}
@@ -148,7 +153,12 @@ export function GuestProfileForm({ token, invitation }: { token: string; invitat
           {error}
         </AppText>
       ) : null}
-      <Button label={t("v11Client.guestSubmit")} loading={complete.isPending} onPress={onSubmit} />
+      <Button
+        label={t("v11Client.guestSubmit")}
+        loading={complete.isPending}
+        onPress={onSubmit}
+        style={styles.submit}
+      />
     </View>
   );
 }
@@ -156,8 +166,13 @@ export function GuestProfileForm({ token, invitation }: { token: string; invitat
 const styles = StyleSheet.create({
   form: { gap: space.md },
   document: { gap: space.xs },
-  // Lien aligné sous le libellé de la case (case de 26 px + écart).
-  documentLink: { alignSelf: "flex-start", minHeight: 44, paddingHorizontal: 0, marginLeft: 26 + space.md },
+  // Lien aligné sous le libellé de la case (case de 26 px + écart), collé à elle.
+  documentLink: { alignSelf: "flex-start", marginLeft: 26 + space.md, marginTop: -space.sm },
+  // Même style de lien que « Lire la politique de confidentialité » (connexion).
+  linkText: { color: colors.ink, textDecorationLine: "underline" },
+  pressed: { opacity: 0.6 },
+  // Bouton un peu détaché de la dernière carte.
+  submit: { marginTop: space.sm },
   documentBody: { padding: space.sm, backgroundColor: colors.cream, borderRadius: radius.sm },
   error: { color: colors.danger },
 });

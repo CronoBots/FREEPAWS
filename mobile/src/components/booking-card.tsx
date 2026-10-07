@@ -6,7 +6,7 @@ import { Badge } from "@/components/badge";
 import { AppText } from "@/components/text";
 import { colors, radius, space } from "@/theme";
 import { formatDayLong, formatTime } from "@/utils/dates";
-import { t, useLanguage } from "@/i18n";
+import { t, tp, useLanguage } from "@/i18n";
 
 export function bookingBadge(booking: Booking): { label: string; tone: "success" | "neutral" | "danger" } {
   if (booking.status === "cancelled") return { label: t("booking.badgeCancelled"), tone: "danger" };
@@ -28,7 +28,12 @@ export function BookingCard({ booking }: { booking: Booking }) {
       <Badge label={badge.label} tone={badge.tone} />
       <AppText variant="heading">{booking.service.name}</AppText>
       <AppText variant="body">{when}</AppText>
-      {booking.dog ? <AppText variant="caption">{t("common.with", { name: booking.dog.name })}</AppText> : null}
+      {(booking.dogs_count ?? 0) > 1 ? (
+        // Plusieurs chiens (parc) : le nom d’un seul serait trompeur, on donne le nombre.
+        <AppText variant="caption">{tp("booking.peopleDogs", booking.dogs_count ?? 0)}</AppText>
+      ) : booking.dog ? (
+        <AppText variant="caption">{t("common.with", { name: booking.dog.name })}</AppText>
+      ) : null}
     </Pressable>
   );
 }

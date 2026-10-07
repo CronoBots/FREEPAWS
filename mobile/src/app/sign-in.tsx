@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useRef, useState } from "react";
-import { Platform, StyleSheet, type TextInput } from "react-native";
+import { Platform, Pressable, StyleSheet, type TextInput } from "react-native";
 
 import { Button } from "@/components/button";
 import { Screen } from "@/components/screen";
@@ -8,6 +8,7 @@ import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { env } from "@/lib/env";
 import { supabase } from "@/lib/supabase";
+import { colors, space } from "@/theme";
 import { toUserMessage } from "@/utils/errors";
 import { useLanguage } from "@/i18n";
 
@@ -94,12 +95,16 @@ export default function SignInRoute() {
           <AppText variant="body" style={styles.consent}>
             {t("signIn.consent")}
           </AppText>
-          <Button
-            label={t("signIn.readPolicy")}
-            variant="ghost"
+          <Pressable
+            accessibilityRole="link"
+            hitSlop={space.sm}
             onPress={() => router.push("/legal")}
-            style={styles.link}
-          />
+            style={({ pressed }) => [styles.link, pressed && styles.pressed]}
+          >
+            <AppText variant="bodyStrong" style={styles.linkText}>
+              {t("signIn.readPolicy")}
+            </AppText>
+          </Pressable>
         </>
       ) : step === "password" ? (
         <>
@@ -157,6 +162,8 @@ export default function SignInRoute() {
 
 const styles = StyleSheet.create({
   consent: { fontSize: 14, lineHeight: 20 },
-  // Lien aligné à gauche comme le reste de l’écran.
-  link: { alignSelf: "flex-start", paddingHorizontal: 0, minHeight: 44 },
+  // Lien aligné à gauche, juste sous la mention (même style que « Lire le document » de l’invitation).
+  link: { alignSelf: "flex-start", marginTop: -space.sm },
+  linkText: { color: colors.ink, textDecorationLine: "underline" },
+  pressed: { opacity: 0.6 },
 });

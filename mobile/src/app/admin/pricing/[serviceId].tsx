@@ -3,6 +3,7 @@ import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
 import { useAdminServices } from "@/api/admin";
+import { localizeContent } from "@/api/services";
 import { type PricingRule, useDeletePricingRule, usePricingRules, useSavePricingRule } from "@/api/pricing";
 import { ruleSummary } from "@/components/admin/pricing/format";
 import { RuleForm } from "@/components/admin/pricing/rule-form";
@@ -37,7 +38,7 @@ export default function AdminPricingRulesRoute() {
 }
 
 function PricingRules() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { serviceId } = useLocalSearchParams<{ serviceId: string }>();
   const services = useAdminServices();
   const rules = usePricingRules(serviceId);
@@ -100,7 +101,12 @@ function PricingRules() {
   };
 
   return (
-    <Screen underHeader heading={service.name} refreshing={rules.isRefetching} onRefresh={() => void rules.refetch()}>
+    <Screen
+      underHeader
+      heading={localizeContent(service, language).name}
+      refreshing={rules.isRefetching}
+      onRefresh={() => void rules.refetch()}
+    >
       <Card>
         <AppText variant="bodyStrong">
           {service.price_cents == null

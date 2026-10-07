@@ -18,6 +18,7 @@ import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { describeDog } from "@/components/v11/dog-fields";
 import { useLanguage } from "@/i18n";
+import { openContactEmail } from "@/lib/contact";
 import { appLink } from "@/lib/links";
 import { confirm, notify } from "@/lib/confirm";
 import { colors, radius, space } from "@/theme";
@@ -26,7 +27,7 @@ import { toUserMessage } from "@/utils/errors";
 import { formatPrice } from "@/utils/format";
 
 export default function BookingRoute() {
-  const { t } = useLanguage();
+  const { t, tp } = useLanguage();
   const { id, created } = useLocalSearchParams<{ id: string; created?: string }>();
   const booking = useBooking(id);
   const cancel = useCancelBooking();
@@ -104,18 +105,28 @@ export default function BookingRoute() {
         {!data.visit_address && data.service.location ? (
           <AppText variant="body">{data.service.location}</AppText>
         ) : null}
-        {data.dog ? <AppText variant="body">{t("common.with", { name: data.dog.name })}</AppText> : null}
+        {/* Un seul chien : « Avec Nami ». Plusieurs (parc) : ils sont listés dans la carte Chiens. */}
+        {data.dog && (data.dogs_count ?? 0) <= 1 ? (
+          <AppText variant="body">{t("common.with", { name: data.dog.name })}</AppText>
+        ) : null}
         {data.children_count != null || data.dogs_count != null ? (
           <AppText variant="caption">
-            {t("admin.people", {
-              adults: data.adults_count ?? "—",
-              children: data.children_count ?? 0,
-              dogs: data.dogs_count ?? 0,
-            })}
+            {[
+              data.adults_count != null ? tp("booking.peopleAdults", data.adults_count) : null,
+              tp("booking.peopleChildren", data.children_count ?? 0),
+              tp("booking.peopleDogs", data.dogs_count ?? 0),
+            ]
+              .filter(Boolean)
+              .join(", ")}
           </AppText>
         ) : null}
         {price ? <AppText variant="bodyStrong">{t("booking.priceLine", { price })}</AppText> : null}
-        {data.client_notes ? <AppText variant="caption">« {data.client_notes} »</AppText> : null}
+        {data.client_notes ? (
+          <View style={styles.notes}>
+            <AppText variant="caption">{t("booking.notesLabel")}</AppText>
+            <AppText variant="body">{t("booking.notesQuoted", { text: data.client_notes })}</AppText>
+          </View>
+        ) : null}
       </Card>
 
       <EmergencyButton booking={data} />
@@ -140,16 +151,28 @@ export default function BookingRoute() {
             ) : null}
             <Button
               label={t("booking.cancelButton")}
-              variant="secondary"
+              variant="dangerText"
               loading={cancel.isPending}
               onPress={() => void onCancel()}
+              style={styles.cancel}
             />
             <AppText variant="caption">
               {t("booking.cancelPolicy", { hours: data.service.cancel_notice_hours })}
             </AppText>
           </View>
         ) : data.start > new Date() ? (
-          <AppText variant="caption">{t("booking.tooLate", { hours: data.service.cancel_notice_hours })}</AppText>
+          <View style={styles.actions}>
+            <AppText variant="caption">{t("booking.tooLate", { hours: data.service.cancel_notice_hours })}</AppText>
+            <Button
+              label={t("booking.contactUs")}
+              variant="secondary"
+              onPress={() =>
+                void openContactEmail(
+                  `${data.service.name} · ${formatDayLong(data.start)} ${formatTime(data.start)}`,
+                ).catch(() => undefined)
+              }
+            />
+          </View>
         ) : null
       ) : null}
     </Screen>
@@ -222,9 +245,10 @@ function BookingExtras({ booking }: { booking: Booking }) {
         <Card>
           <AppText variant="heading">{t("v11Client.groupTitle")}</AppText>
           {groupDogs.map((dog, index) => (
-            <AppText key={`${dog.name}-${index}`} variant="body">
-              {describeDog(dog, t)}
-            </AppText>
+            <View key={`${dog.name}-${index}`} style={styles.groupDog}>
+              <AppText variant="body">{describeDog(dog, t)}</AppText>
+              {dog.protocol ? <Badge label={t("v11Client.dogProtocol")} tone="warning" /> : null}
+            </View>
           ))}
           {group.data?.certifiedAt ? <AppText variant="caption">{t("v11Client.groupCertified")}</AppText> : null}
         </Card>
@@ -252,7 +276,7 @@ function BookingExtras({ booking }: { booking: Booking }) {
       ) : guests.length > 0 || editable ? (
         <Card>
           <AppText variant="heading">{t("parkBooking.extrasGuests")}</AppText>
-          {guests.length === 0 ? <AppText variant="body">{t("parkBooking.guestsEmpty")}</AppText> : null}
+          {guests.length === 0 ? <AppText variant="caption">{t("parkBooking.guestsEmpty")}</AppText> : null}
           {guests.map((guest) => (
             <View key={guest.id} style={styles.guest}>
               <AppText variant="bodyStrong">{guest.full_name}</AppText>
@@ -264,9 +288,9 @@ function BookingExtras({ booking }: { booking: Booking }) {
                   tone={guest.profile_completed_at ? "success" : "warning"}
                 />
               ) : null}
-              {guest.email || guest.phone ? (
-                <AppText variant="caption">{[guest.email, guest.phone].filter(Boolean).join(" · ")}</AppText>
-              ) : null}
+              {/* E-mail et téléphone sur deux lignes ; le numéro ne se coupe jamais. */}
+              {guest.email ? <AppText variant="caption">{guest.email}</AppText> : null}
+              {guest.phone ? <AppText variant="caption">{guest.phone.replace(/ /g, "\u00a0")}</AppText> : null}
               {showLinks ? (
                 guest.email ? (
                   <AppText variant="caption">{t("parkBooking.guestLinkEmail")}</AppText>
@@ -353,7 +377,18 @@ function QuestionnaireCard({ booking }: { booking: Booking }) {
 }
 
 const styles = StyleSheet.create({
-  guest: { gap: space.xs },
+  // Chaque invité dans son encadré : deux invités ne se confondent pas.
+  guest: {
+    gap: space.xs,
+    padding: space.md,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.white,
+  },
+  groupDog: { gap: space.xs, alignItems: "flex-start" },
+  notes: { gap: 2 },
+  cancel: { borderWidth: 1, borderColor: colors.danger },
   error: { color: colors.danger },
   success: { backgroundColor: colors.freeSoft, borderRadius: radius.lg, padding: space.lg, gap: space.xs },
   successText: { color: colors.free },

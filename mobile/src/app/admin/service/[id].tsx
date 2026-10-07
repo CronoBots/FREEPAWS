@@ -58,8 +58,14 @@ const NUMBER_FIELDS = [
 
 type NumberField = (typeof NUMBER_FIELDS)[number][0];
 
+// Libellés courts (une ligne dans la grille à 2 colonnes, sinon les champs d’une rangée se décalent) :
+// le détail va dans l’aide, sous le champ.
 const NUMBER_HINTS: Partial<Record<NumberField, TranslationKey>> = {
+  slot_step_minutes: "admin.fieldStepHint",
   buffer_minutes: "admin.fieldBufferHint",
+  min_notice_hours: "admin.fieldMinNoticeHint",
+  max_advance_days: "admin.fieldMaxAdvanceHint",
+  cancel_notice_hours: "admin.fieldCancelNoticeHint",
   max_dogs: "admin.fieldMaxDogsHint",
 };
 
@@ -208,11 +214,13 @@ function ServiceForm({ service }: { service: Service }) {
             keyboardType="decimal-pad"
           />
           <Checkbox label={t("admin.fieldPriceVisible")} checked={priceVisible} onChange={setPriceVisible} />
-          {/* Champs courts (1 à 4 chiffres) : deux colonnes sur grand écran, une seule sur téléphone. */}
+          {/* Champs courts (1 à 4 chiffres) : deux colonnes sur grand écran, une seule sur téléphone.
+              Les deux plafonds (chiens, personnes) restent côte à côte. */}
           <View style={styles.numbers}>
             {NUMBER_FIELDS.map(([key, label]) => {
               const hint = NUMBER_HINTS[key];
-              return key === "default_capacity" && service.mode !== "event" ? null : (
+              if (key === "default_capacity" && service.mode !== "event") return null;
+              const field = (
                 <View key={key} style={styles.numberField}>
                   <TextField
                     label={t(label)}
@@ -224,6 +232,20 @@ function ServiceForm({ service }: { service: Service }) {
                   />
                 </View>
               );
+              if (key !== "max_dogs") return field;
+              return [
+                field,
+                <View key="max_people" style={styles.numberField}>
+                  <TextField
+                    label={t("adminSafety.maxPeople")}
+                    hint={t("adminSafety.maxPeopleHint")}
+                    value={maxPeople}
+                    onChangeText={(value) => setMaxPeople(value.replace(/\D/g, ""))}
+                    keyboardType="number-pad"
+                    maxLength={3}
+                  />
+                </View>,
+              ];
             })}
           </View>
           <Checkbox label={t("admin.fieldRequiresAddress")} checked={requiresAddress} onChange={setRequiresAddress} />
@@ -231,14 +253,6 @@ function ServiceForm({ service }: { service: Service }) {
             label={t("adminSafety.requiresParkProfile")}
             checked={requiresParkProfile}
             onChange={setRequiresParkProfile}
-          />
-          <TextField
-            label={t("adminSafety.maxPeople")}
-            hint={t("adminSafety.maxPeopleHint")}
-            value={maxPeople}
-            onChangeText={(value) => setMaxPeople(value.replace(/\D/g, ""))}
-            keyboardType="number-pad"
-            maxLength={3}
           />
           {availableKinds.length > 0 ? (
             <View style={styles.kinds}>
