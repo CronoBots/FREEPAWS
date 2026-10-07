@@ -13,7 +13,9 @@ export const supabase = createClient<Database>(
       storage: sessionStorage,
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: false,
+      // Web : accepte aussi la connexion par le lien de l’email (modèle par défaut de Supabase tant que
+      // l’envoi n’est pas configuré avec le serveur mail de FreePaws).
+      detectSessionInUrl: Platform.OS === "web",
     },
   },
 );
