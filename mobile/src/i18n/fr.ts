@@ -1,3 +1,9 @@
+import { fr as mfaFr } from "@/i18n/parts/mfa";
+import { fr as ficheFr } from "@/i18n/parts/fiche";
+import { fr as parkBookingFr } from "@/i18n/parts/parkBooking";
+import { fr as adminClientsFr } from "@/i18n/parts/adminClients";
+import { fr as adminSafetyFr } from "@/i18n/parts/adminSafety";
+
 // Dictionnaire de référence (français). Les autres langues doivent avoir exactement les mêmes clés.
 // Les contenus FreePaws (textes du parc, du coaching) sont repris de www.freepaws.be.
 export const fr = {
@@ -382,6 +388,11 @@ export const fr = {
     title: "Configuration requise",
     text: "Les variables EXPO_PUBLIC_SUPABASE_URL et EXPO_PUBLIC_SUPABASE_KEY ne sont pas définies. Copiez mobile/.env.example en mobile/.env.local, renseignez les valeurs du projet Supabase, puis relancez l’app.",
   },
+  mfa: mfaFr,
+  fiche: ficheFr,
+  parkBooking: parkBookingFr,
+  adminClients: adminClientsFr,
+  adminSafety: adminSafetyFr,
   errors: {
     slot_unavailable: "Ce créneau n’est plus disponible. Choisissez-en un autre.",
     appointment_full: "Il n’y a plus assez de places pour cette séance.",
@@ -406,11 +417,26 @@ export const fr = {
     documents_not_accepted: "Acceptez les documents demandés pour réserver.",
     not_authorized: "Action réservée à l’administration.",
     reschedule_not_allowed: "Cette réservation ne peut pas être reportée en ligne. Contactez-nous.",
+    profile_incomplete: "Complétez votre fiche (date de naissance et contact d’urgence) avant de réserver le parc.",
+    not_adult: "La personne qui réserve le parc doit être majeure.",
+    insurance_missing: "Ajoutez votre assurance responsabilité civile familiale avant de réserver le parc.",
+    insurance_expired: "Votre assurance n’est plus valable à cette date. Mettez à jour votre fiche.",
+    dog_required: "Choisissez le ou les chiens qui viennent au parc.",
+    dog_too_young: "Un des chiens n’a pas l’âge minimum requis pour le parc.",
+    dog_in_heat: "Les chiennes en chaleur ne peuvent pas venir au parc pour le moment.",
+    vaccination_missing: "Un vaccin exigé manque, n’est pas encore validé ou ne sera plus valable à cette date.",
+    too_many_people: "Trop de personnes pour ce créneau.",
+    account_suspended: "Votre compte ne permet pas de réserver pour le moment. Contactez FreePaws.",
+    no_current_booking: "Aucune réservation en cours.",
+    last_admin: "Il doit rester au moins une administratrice.",
+    user_not_found: "Compte introuvable.",
+    invalid_guests: "Liste d’invités invalide (20 au maximum).",
+    file_too_large: "Fichier trop lourd (10 Mo au maximum).",
     otp_expired: "Ce code a expiré ou est incorrect. Demandez-en un nouveau.",
     over_email_send_rate_limit: "Trop de demandes. Patientez une minute avant de redemander un code.",
     email_address_invalid: "Adresse email invalide.",
   },
 };
 
-type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };
+export type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };
 export type Dictionary = Widen<typeof fr>;

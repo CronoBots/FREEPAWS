@@ -5,6 +5,21 @@ import { queryKeys } from "@/api/keys";
 import { useLanguage } from "@/i18n";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import type { TablesUpdate } from "@/types/database";
+
+/** Champs modifiables par l’utilisateur (droits par colonne côté base). */
+export type ProfileUpdate = Pick<
+  TablesUpdate<"profiles">,
+  | "full_name"
+  | "phone"
+  | "birth_date"
+  | "emergency_contact_name"
+  | "emergency_contact_phone"
+  | "insurance_company"
+  | "insurance_policy"
+  | "insurance_valid_until"
+  | "insurance_proof_path"
+>;
 
 export function useProfile() {
   const { userId } = useAuth();
@@ -27,7 +42,7 @@ export function useUpdateProfile() {
   const client = useQueryClient();
   const { userId } = useAuth();
   return useMutation({
-    mutationFn: async (input: { full_name: string; phone: string | null }) => {
+    mutationFn: async (input: ProfileUpdate) => {
       const { error } = await supabase.from("profiles").update(input).eq("id", userId!);
       if (error) throw error;
     },

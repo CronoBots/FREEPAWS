@@ -6,7 +6,24 @@ import { supabase } from "@/lib/supabase";
 import type { Tables, TablesInsert } from "@/types/database";
 
 export type Dog = Tables<"dogs">;
-export type DogInput = Pick<TablesInsert<"dogs">, "name" | "breed" | "birth_date" | "notes">;
+export type DogInput = Pick<
+  TablesInsert<"dogs">,
+  | "name"
+  | "breed"
+  | "birth_date"
+  | "notes"
+  | "sex"
+  | "size"
+  | "chip_number"
+  | "dogid_registered"
+  | "sterilised"
+  | "in_heat"
+  | "vet_name"
+  | "vet_phone"
+  | "bite_history"
+  | "reactivity"
+  | "special_needs"
+>;
 
 export function useDogs() {
   const { userId } = useAuth();

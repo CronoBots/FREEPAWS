@@ -1,4 +1,9 @@
 import type { Dictionary } from "./fr";
+import { en as mfaEn } from "@/i18n/parts/mfa";
+import { en as ficheEn } from "@/i18n/parts/fiche";
+import { en as parkBookingEn } from "@/i18n/parts/parkBooking";
+import { en as adminClientsEn } from "@/i18n/parts/adminClients";
+import { en as adminSafetyEn } from "@/i18n/parts/adminSafety";
 
 // Traduction anglaise. Les textes FreePaws (parc, coaching) sont des traductions du site
 // www.freepaws.be, à faire valider par FreePaws.
@@ -382,6 +387,11 @@ export const en: Dictionary = {
     title: "Configuration required",
     text: "EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_KEY are not set. Copy mobile/.env.example to mobile/.env.local, fill in the Supabase project values, then restart the app.",
   },
+  mfa: mfaEn,
+  fiche: ficheEn,
+  parkBooking: parkBookingEn,
+  adminClients: adminClientsEn,
+  adminSafety: adminSafetyEn,
   errors: {
     slot_unavailable: "This time is no longer available. Please choose another one.",
     appointment_full: "There are not enough places left for this session.",
@@ -405,6 +415,21 @@ export const en: Dictionary = {
     documents_not_accepted: "Accept the requested documents to book.",
     not_authorized: "This action is restricted to administrators.",
     reschedule_not_allowed: "This booking cannot be rescheduled online. Please contact us.",
+    profile_incomplete: "Complete your details (date of birth and emergency contact) before booking the park.",
+    not_adult: "The person booking the park must be an adult.",
+    insurance_missing: "Add your family liability insurance before booking the park.",
+    insurance_expired: "Your insurance is no longer valid on that date. Please update your details.",
+    dog_required: "Choose the dog(s) coming to the park.",
+    dog_too_young: "One of the dogs is under the minimum age for the park.",
+    dog_in_heat: "Females in heat cannot come to the park for now.",
+    vaccination_missing: "A required vaccine is missing, not yet approved, or no longer valid on that date.",
+    too_many_people: "Too many people for this slot.",
+    account_suspended: "Your account cannot book at the moment. Please contact FreePaws.",
+    no_current_booking: "No booking in progress.",
+    last_admin: "There must be at least one administrator.",
+    user_not_found: "Account not found.",
+    invalid_guests: "Invalid guest list (20 at most).",
+    file_too_large: "File too large (10 MB at most).",
     otp_expired: "This code has expired or is incorrect. Request a new one.",
     over_email_send_rate_limit: "Too many requests. Wait a minute before requesting a new code.",
     email_address_invalid: "Invalid email address.",
