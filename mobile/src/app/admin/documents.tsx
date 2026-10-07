@@ -14,7 +14,7 @@ import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { LANGUAGES, type Language, useLanguage } from "@/i18n";
 import { colors, space } from "@/theme";
-import { formatDayLong } from "@/utils/dates";
+import { formatDate } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 
 const KIND = /^[a-z0-9_]{2,40}$/;
@@ -114,7 +114,7 @@ function Documents() {
             <Badge
               label={
                 document.published_at
-                  ? t("admin.publishedOn", { date: formatDayLong(document.published_at) })
+                  ? t("admin.publishedOn", { date: formatDate(document.published_at) })
                   : t("admin.draft")
               }
               tone={document.published_at ? "success" : "neutral"}

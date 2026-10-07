@@ -41,6 +41,11 @@ export function formatDayLong(date: Date | string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
+/** "14 octobre 2026" (s’insère au milieu d’une phrase, sans majuscule). */
+export function formatDate(date: Date | string): string {
+  return formatter({ timeZone: TIME_ZONE, day: "numeric", month: "long", year: "numeric" }).format(new Date(date));
+}
+
 /** Jour calendaire à Bruxelles au format AAAA-MM-JJ. */
 export function toIsoDay(date: Date | string): string {
   return isoDayFormat.format(new Date(date));

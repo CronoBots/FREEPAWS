@@ -14,8 +14,9 @@ import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { useLanguage } from "@/i18n";
 import { notify } from "@/lib/confirm";
+import { useCompact } from "@/hooks/use-compact";
 import { colors, space } from "@/theme";
-import { brusselsDateTime, formatDayLong, formatTime } from "@/utils/dates";
+import { brusselsDateTime, formatDate, formatTime } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 
 export default function AdminClosuresRoute() {
@@ -28,6 +29,10 @@ export default function AdminClosuresRoute() {
 
 function Closures() {
   const { t, tp } = useLanguage();
+  const compact = useCompact();
+  const pair = compact ? styles.stack : styles.pair;
+  const time = compact ? undefined : styles.time;
+  const flex = compact ? undefined : styles.flex;
   const [picked, setPicked] = useState<string | null>(null);
   const resourceId = useDefaultResource(picked);
   const blackouts = useBlackouts();
@@ -80,8 +85,8 @@ function Closures() {
 
       <Card>
         <AppText variant="heading">{t("admin.closeTitle")}</AppText>
-        <View style={styles.pair}>
-          <View style={styles.flex}>
+        <View style={pair}>
+          <View style={flex}>
             <TextField
               label={t("admin.startDate")}
               placeholder={t("dogs.datePlaceholder")}
@@ -90,12 +95,12 @@ function Closures() {
               maxLength={10}
             />
           </View>
-          <View style={styles.time}>
+          <View style={time}>
             <TextField label={t("admin.startTime")} value={startTime} onChangeText={setStartTime} maxLength={5} />
           </View>
         </View>
-        <View style={styles.pair}>
-          <View style={styles.flex}>
+        <View style={pair}>
+          <View style={flex}>
             <TextField
               label={t("admin.endDate")}
               placeholder={t("dogs.datePlaceholder")}
@@ -104,7 +109,7 @@ function Closures() {
               maxLength={10}
             />
           </View>
-          <View style={styles.time}>
+          <View style={time}>
             <TextField label={t("admin.endTime")} value={endTime} onChangeText={setEndTime} maxLength={5} />
           </View>
         </View>
@@ -136,9 +141,9 @@ function Closures() {
         mine.map((blackout) => (
           <Card key={blackout.id}>
             <AppText variant="bodyStrong">
-              {formatDayLong(blackout.start)} {formatTime(blackout.start)}
+              {formatDate(blackout.start)} {formatTime(blackout.start)}
               {" –⁠ "}
-              {formatDayLong(blackout.end)} {formatTime(blackout.end)}
+              {formatDate(blackout.end)} {formatTime(blackout.end)}
             </AppText>
             {blackout.reason ? <AppText variant="body">{blackout.reason}</AppText> : null}
             <Button
@@ -156,6 +161,7 @@ function Closures() {
 
 const styles = StyleSheet.create({
   pair: { flexDirection: "row", gap: space.md },
+  stack: { gap: space.md },
   flex: { flex: 1 },
   time: { width: 110 },
   warning: { color: colors.reserved },
