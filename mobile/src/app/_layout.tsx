@@ -91,6 +91,16 @@ function AppStack() {
       <Stack.Screen name="admin/closures" options={{ title: t("admin.hubClosures") }} />
       <Stack.Screen name="admin/discounts" options={{ title: t("admin.hubDiscounts") }} />
       <Stack.Screen name="admin/documents" options={{ title: t("admin.hubDocuments") }} />
+      <Stack.Screen name="admin/dashboard" options={{ title: t("admin.hubDashboard") }} />
+      <Stack.Screen name="admin/clients" options={{ title: t("admin.hubClients") }} />
+      <Stack.Screen name="admin/client/[id]" options={{ title: t("admin.clientTitle") }} />
+      <Stack.Screen name="admin/vaccinations" options={{ title: t("admin.hubVaccinations") }} />
+      <Stack.Screen name="admin/vaccine-types" options={{ title: t("admin.hubVaccineTypes") }} />
+      <Stack.Screen name="admin/incidents" options={{ title: t("admin.hubIncidents") }} />
+      <Stack.Screen name="admin/incident/[id]" options={{ title: t("admin.incidentTitle") }} />
+      <Stack.Screen name="admin/emergency" options={{ title: t("admin.hubEmergency") }} />
+      <Stack.Screen name="admin/park-rules" options={{ title: t("admin.hubParkRules") }} />
+      <Stack.Screen name="admin/security" options={{ title: t("admin.hubSecurity") }} />
       <Stack.Screen name="admin/new-event" options={{ presentation: "modal", title: t("titles.newEvent") }} />
     </Stack>
   );

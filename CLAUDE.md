@@ -71,6 +71,22 @@ All booking logic lives in SQL (`supabase/migrations/`), not in the app:
   (column grants); admin is granted from the Supabase dashboard.
 - Times are `timestamptz`; availability rules are in `Europe/Brussels` local time.
 
+### Park profiles and safety (`*_park_profiles.sql`, `*_safety_admin.sql`)
+
+- `services.requires_park_profile` makes `book_slot`/`book_event` call `assert_eligibility`: adult with
+  emergency contact, valid insurance on the day, at least one dog (`p_dog_ids`, stored in `booking_dogs`),
+  every required `vaccine_types` validated by the admin and valid on the day, `settings.min_dog_age_months`
+  and `refuse_dogs_in_heat`. `assert_not_sanctioned` (active suspension/ban) applies to every booking.
+- Owners can't change `dogs.protocol*` or a vaccination's review status (triggers). Proofs live in the private
+  Storage bucket `proofs` under `<user_id>/`; incident photos in `incidents` (admin only).
+- `audit_log` is filled by `audit_row()` triggers (history of a profile, admin action log).
+- `is_admin()` requires an `aal2` session once the admin has a verified TOTP factor; the app asks for the
+  code in `AdminGuard`. `my_role()` gives the raw role.
+- `raise_emergency()` (current booking only) alerts the admin; `get_emergency_overview()` lists people on
+  site with emergency contacts and protocol dogs. `enqueue_expiry_alerts()` runs daily via pg_cron.
+- i18n: large features keep their strings in `src/i18n/parts/<namespace>.ts` (`fr` + `en`), wired into
+  `fr.ts`/`en.ts`.
+
 ### Notifications (`*_notifications.sql`, `functions/send-notifications`, `docs/NOTIFICATIONS.md`)
 
 Triggers on `bookings` fill the `notifications` outbox (confirmation, reschedule, cancellation,
