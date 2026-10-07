@@ -162,7 +162,7 @@ export const en: Widen<typeof fr> = {
   guestSubmit: "Confirm and watch live",
   guestSaved: "Profile saved",
   guestProfileDone: "Profile completed",
-  guestProfilePending: "Guest must complete their profile",
+  guestProfilePending: "Profile to complete",
 
   qIntro: "Your answers help prepare the visit.",
   qRequiredLegend: "* Required answer",

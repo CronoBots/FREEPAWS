@@ -73,7 +73,7 @@ export function DateField({ label, value, onChange, hint, error, editable }: Pro
       maxLength={10}
       // Le format reste visible une fois le champ rempli (le texte d’exemple disparaît) : 04/05 est ambigu en anglais.
       // Format rappelé sous le champ une fois rempli (le texte grisé le montre quand il est vide).
-      hint={hint ?? (text ? t("common.datePlaceholder") : undefined)}
+      hint={text ? [t("common.datePlaceholder"), hint].filter(Boolean).join(" · ") : hint}
       error={error ?? (invalid ? t("common.dateInvalid") : undefined)}
       editable={editable}
       onBlur={() => setBlurred(true)}

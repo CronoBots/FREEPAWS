@@ -117,7 +117,8 @@ export function DayPicker({ days, selected, onSelect, counts, fullDays, marks, m
     </ScrollView>
   );
 
-  if (!arrows) return list;
+  // Flèches inutiles quand tous les jours tiennent dans la largeur.
+  if (!arrows || (scroll.content > 0 && scroll.content <= scroll.view + 1)) return list;
   return (
     <View style={styles.withArrows}>
       <Arrow symbol="‹" label={t("booking.daysPrevious")} disabled={scroll.x <= 1} onPress={() => scrollBy(-page)} />

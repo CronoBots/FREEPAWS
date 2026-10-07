@@ -212,7 +212,7 @@ export const en: Dictionary = {
     myInfo: "My details",
     myInfoDetail: "Name, phone",
     myDogs: "My dogs",
-    admin: "Administration",
+    admin: "Admin area",
     adminDetail: "Schedule, services, hours",
     contact: "Contact us",
     website: "FreePaws website",

@@ -212,7 +212,7 @@ export const fr = {
     myInfo: "Mes informations",
     myInfoDetail: "Nom, téléphone",
     myDogs: "Mes chiens",
-    admin: "Administration",
+    admin: "Espace administration",
     adminDetail: "Agenda, prestations, horaires",
     contact: "Nous contacter",
     website: "Site FreePaws",
