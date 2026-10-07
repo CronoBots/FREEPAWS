@@ -1,9 +1,10 @@
 import * as Clipboard from "expo-clipboard";
-import { router } from "expo-router";
+import { type Href, router } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
 import { useSettings, useUpdateSettings } from "@/api/admin";
+import { useTotpFactors } from "@/api/mfa";
 import { AdminGuard } from "@/components/admin-guard";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
@@ -11,13 +12,56 @@ import { ListRow } from "@/components/list-row";
 import { Screen } from "@/components/screen";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
-import { useLanguage } from "@/i18n";
+import { type TranslationKey, useLanguage } from "@/i18n";
 import { notify } from "@/lib/confirm";
 import { env } from "@/lib/env";
-import { colors } from "@/theme";
+import { colors, space } from "@/theme";
 import { toUserMessage } from "@/utils/errors";
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+type HubKey =
+  | "hubAgenda"
+  | "hubServices"
+  | "hubAvailability"
+  | "hubClosures"
+  | "hubDiscounts"
+  | "hubDocuments"
+  | "hubDashboard"
+  | "hubClients"
+  | "hubVaccinations"
+  | "hubVaccineTypes"
+  | "hubIncidents"
+  | "hubEmergency"
+  | "hubParkRules"
+  | "hubSecurity";
+
+const SECTIONS: { title: TranslationKey; rows: [HubKey, Href][] }[] = [
+  {
+    title: "admin.sectionGeneral",
+    rows: [
+      ["hubAgenda", "/admin/agenda"],
+      ["hubDashboard", "/admin/dashboard"],
+      ["hubServices", "/admin/services"],
+      ["hubAvailability", "/admin/availability"],
+      ["hubClosures", "/admin/closures"],
+      ["hubDiscounts", "/admin/discounts"],
+      ["hubDocuments", "/admin/documents"],
+    ],
+  },
+  {
+    title: "admin.sectionPark",
+    rows: [
+      ["hubEmergency", "/admin/emergency"],
+      ["hubClients", "/admin/clients"],
+      ["hubVaccinations", "/admin/vaccinations"],
+      ["hubVaccineTypes", "/admin/vaccine-types"],
+      ["hubIncidents", "/admin/incidents"],
+      ["hubParkRules", "/admin/park-rules"],
+      ["hubSecurity", "/admin/security"],
+    ],
+  },
+];
 
 export default function AdminHubRoute() {
   return (
@@ -30,6 +74,8 @@ export default function AdminHubRoute() {
 function AdminHub() {
   const { t } = useLanguage();
   const settings = useSettings();
+  const factors = useTotpFactors();
+  const mfaMissing = factors.data != null && !factors.data.some((factor) => factor.status === "verified");
   const updateSettings = useUpdateSettings();
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
   const [reminder, setReminder] = useState<string | null>(null);
@@ -56,38 +102,28 @@ function AdminHub() {
 
   return (
     <Screen underHeader>
-      <View>
-        <ListRow
-          label={t("admin.hubAgenda")}
-          detail={t("admin.hubAgendaDetail")}
-          onPress={() => router.push("/admin/agenda")}
-        />
-        <ListRow
-          label={t("admin.hubServices")}
-          detail={t("admin.hubServicesDetail")}
-          onPress={() => router.push("/admin/services")}
-        />
-        <ListRow
-          label={t("admin.hubAvailability")}
-          detail={t("admin.hubAvailabilityDetail")}
-          onPress={() => router.push("/admin/availability")}
-        />
-        <ListRow
-          label={t("admin.hubClosures")}
-          detail={t("admin.hubClosuresDetail")}
-          onPress={() => router.push("/admin/closures")}
-        />
-        <ListRow
-          label={t("admin.hubDiscounts")}
-          detail={t("admin.hubDiscountsDetail")}
-          onPress={() => router.push("/admin/discounts")}
-        />
-        <ListRow
-          label={t("admin.hubDocuments")}
-          detail={t("admin.hubDocumentsDetail")}
-          onPress={() => router.push("/admin/documents")}
-        />
-      </View>
+      {mfaMissing ? (
+        <Card>
+          <AppText variant="bodyStrong">{t("admin.mfaBanner")}</AppText>
+          <Button label={t("admin.hubSecurity")} variant="secondary" onPress={() => router.push("/admin/security")} />
+        </Card>
+      ) : null}
+
+      {SECTIONS.map((section) => (
+        <View key={section.title} style={styles.section}>
+          <AppText variant="heading">{t(section.title)}</AppText>
+          <View>
+            {section.rows.map(([key, href]) => (
+              <ListRow
+                key={key}
+                label={t(`admin.${key}`)}
+                detail={t(`admin.${key}Detail`)}
+                onPress={() => router.push(href)}
+              />
+            ))}
+          </View>
+        </View>
+      ))}
 
       {settings.data ? (
         <Card>
@@ -142,5 +178,6 @@ function AdminHub() {
 }
 
 const styles = StyleSheet.create({
+  section: { gap: space.sm },
   error: { color: colors.danger },
 });

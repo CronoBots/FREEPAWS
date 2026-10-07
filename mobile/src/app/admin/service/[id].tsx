@@ -77,6 +77,8 @@ function ServiceForm({ service }: { service: Service }) {
       ) as Record<NumberField, string>,
   );
   const [requiresAddress, setRequiresAddress] = useState(service.requires_address);
+  const [requiresParkProfile, setRequiresParkProfile] = useState(service.requires_park_profile);
+  const [maxPeople, setMaxPeople] = useState(service.max_people == null ? "" : String(service.max_people));
   const [bookingEnabled, setBookingEnabled] = useState(service.booking_enabled);
   const [active, setActive] = useState(service.active);
   const [kinds, setKinds] = useState<string[]>(service.required_document_kinds);
@@ -107,6 +109,10 @@ function ServiceForm({ service }: { service: Service }) {
     if (bookingEnabled && parsed.duration_minutes == null) {
       return setError(t("admin.invalidNumber", { field: t("admin.fieldDuration") }));
     }
+    const maxPeopleValue = maxPeople.trim() === "" ? null : Number(maxPeople);
+    if (maxPeopleValue != null && (!Number.isInteger(maxPeopleValue) || maxPeopleValue < 1 || maxPeopleValue > 100)) {
+      return setError(t("admin.invalidNumber", { field: t("adminSafety.maxPeople") }));
+    }
     const cleanEn = Object.fromEntries(Object.entries(en).filter(([, value]) => value?.trim()));
 
     update.mutate(
@@ -128,6 +134,8 @@ function ServiceForm({ service }: { service: Service }) {
         max_dogs: parsed.max_dogs ?? null,
         default_capacity: parsed.default_capacity ?? service.default_capacity,
         requires_address: requiresAddress,
+        requires_park_profile: requiresParkProfile,
+        max_people: maxPeopleValue,
         booking_enabled: bookingEnabled,
         active,
         required_document_kinds: kinds,
@@ -206,6 +214,19 @@ function ServiceForm({ service }: { service: Service }) {
             ),
           )}
           <Checkbox label={t("admin.fieldRequiresAddress")} checked={requiresAddress} onChange={setRequiresAddress} />
+          <Checkbox
+            label={t("adminSafety.requiresParkProfile")}
+            checked={requiresParkProfile}
+            onChange={setRequiresParkProfile}
+          />
+          <TextField
+            label={t("adminSafety.maxPeople")}
+            hint={t("adminSafety.maxPeopleHint")}
+            value={maxPeople}
+            onChangeText={(value) => setMaxPeople(value.replace(/\D/g, ""))}
+            keyboardType="number-pad"
+            maxLength={3}
+          />
           {availableKinds.length > 0 ? (
             <View style={styles.kinds}>
               <AppText variant="bodyStrong">{t("admin.fieldDocuments")}</AppText>
