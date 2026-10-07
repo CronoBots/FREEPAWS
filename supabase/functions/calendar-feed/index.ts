@@ -5,6 +5,21 @@
 // Le jeton est secret (visible par l'administratrice dans l'app) ; le changer coupe les anciens abonnements.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+type AppointmentRow = {
+  id: string;
+  period: string;
+  updated_at: string;
+  service: { name: string } | null;
+  bookings: {
+    status: string;
+    visit_address: string | null;
+    children_count: number | null;
+    dogs_count: number | null;
+    client_notes: string | null;
+    client: { full_name: string; phone: string | null } | null;
+  }[];
+};
+
 const DAYS_BACK = 30;
 const DAYS_AHEAD = 365;
 
@@ -50,7 +65,7 @@ Deno.serve(async (req) => {
 
   const from = new Date(Date.now() - DAYS_BACK * 86_400_000).toISOString();
   const to = new Date(Date.now() + DAYS_AHEAD * 86_400_000).toISOString();
-  const { data: appointments, error } = await db
+  const { data, error } = await db
     .from("appointments")
     .select(
       `id, period, updated_at,
@@ -61,6 +76,7 @@ Deno.serve(async (req) => {
     .eq("status", "scheduled")
     .overlaps("period", `[${from},${to})`);
   if (error) return new Response("error", { status: 500 });
+  const appointments = data as unknown as AppointmentRow[];
 
   const events = (appointments ?? []).map((appointment) => {
     const [start, end] = String(appointment.period)

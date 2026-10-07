@@ -272,6 +272,12 @@ export const en: Dictionary = {
       "Add this link to Google Calendar, Apple Calendar or Outlook (“subscribe by URL”) to see your appointments there.",
     copyLink: "Copy link",
     linkCopied: "Link copied",
+    notifyTitle: "Email notifications",
+    notifyText:
+      "Clients receive a confirmation, a reminder before the appointment and a message if it is moved or cancelled. Enter the address that receives booking alerts.",
+    adminEmail: "Alert address",
+    reminderHours: "Reminder (hours before the appointment)",
+    invalidEmail: "Invalid email address.",
     resourceCoach: "Coaching",
     resourcePark: "Park",
     sectionContent: "Content (French)",

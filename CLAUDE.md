@@ -71,6 +71,13 @@ All booking logic lives in SQL (`supabase/migrations/`), not in the app:
   (column grants); admin is granted from the Supabase dashboard.
 - Times are `timestamptz`; availability rules are in `Europe/Brussels` local time.
 
+### Notifications (`*_notifications.sql`, `functions/send-notifications`, `docs/NOTIFICATIONS.md`)
+
+Triggers on `bookings` fill the `notifications` outbox (confirmation, reschedule, cancellation,
+reminder `settings.reminder_hours` before, admin alerts to `settings.admin_email`). The Edge Function,
+called every minute by pg_cron, claims due rows with `claim_notifications()` and sends them via Resend in
+`profiles.language` (synced from the app). Without its secrets it answers 503 and the queue waits.
+
 ### Two-time camera (`supabase/migrations/*_park_live.sql`, `functions/live-stream`, `docs/CAMERA.md`)
 
 `get_resource_status('park')` → `free | reserved | closed`. `camera_access('park')` → `public`

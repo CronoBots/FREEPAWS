@@ -272,6 +272,12 @@ export const fr = {
       "Ajoutez ce lien dans Google Agenda, Apple Calendrier ou Outlook (« s’abonner par URL ») pour y voir vos rendez-vous.",
     copyLink: "Copier le lien",
     linkCopied: "Lien copié",
+    notifyTitle: "Notifications par email",
+    notifyText:
+      "Les clients reçoivent une confirmation, un rappel avant le rendez-vous et un message en cas de report ou d’annulation. Indiquez l’adresse qui reçoit les alertes de réservation.",
+    adminEmail: "Adresse des alertes",
+    reminderHours: "Rappel (heures avant le rendez-vous)",
+    invalidEmail: "Adresse email invalide.",
     resourceCoach: "Coaching",
     resourcePark: "Parc",
     sectionContent: "Contenu (français)",

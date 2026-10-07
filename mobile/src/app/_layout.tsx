@@ -10,6 +10,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 
+import { useSyncProfileLanguage } from "@/api/profile";
 import { ConfigMissing } from "@/screens/config-missing";
 import { loadStoredLanguage, useLanguage } from "@/i18n";
 import { AuthProvider, useAuth } from "@/lib/auth";
@@ -40,7 +41,6 @@ export default function RootLayout() {
 
 function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   const { ready } = useAuth();
-  const { t } = useLanguage();
   const [languageReady, setLanguageReady] = useState(false);
   const appReady = fontsReady && ready && languageReady;
 
@@ -55,6 +55,12 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   // On garde le splash tant que la session persistée n’est pas relue (évite un flash « déconnecté »).
   if (!appReady) return null;
   if (!isSupabaseConfigured) return <ConfigMissing />;
+  return <AppStack />;
+}
+
+function AppStack() {
+  const { t } = useLanguage();
+  useSyncProfileLanguage();
 
   return (
     <Stack

@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 import { queryKeys } from "@/api/keys";
+import { useLanguage } from "@/i18n";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
@@ -31,6 +33,25 @@ export function useUpdateProfile() {
     },
     onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.profile(userId) }),
   });
+}
+
+/** Garde profiles.language aligné sur la langue de l’app : les emails partent dans cette langue. */
+export function useSyncProfileLanguage() {
+  const { language } = useLanguage();
+  const { userId } = useAuth();
+  const profile = useProfile();
+  const client = useQueryClient();
+  const stored = profile.data?.language;
+  useEffect(() => {
+    if (!userId || !stored || stored === language) return;
+    void supabase
+      .from("profiles")
+      .update({ language })
+      .eq("id", userId)
+      .then(({ error }) => {
+        if (!error) void client.invalidateQueries({ queryKey: queryKeys.profile(userId) });
+      });
+  }, [client, language, stored, userId]);
 }
 
 export function useDeleteAccount() {

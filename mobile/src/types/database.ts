@@ -1,6 +1,3 @@
-// Généré par : npx supabase gen types typescript --local > mobile/src/types/database.ts
-// Ne pas modifier à la main : régénérer après chaque migration.
-
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
@@ -465,12 +462,61 @@ export type Database = {
         };
         Relationships: [];
       };
+      notifications: {
+        Row: {
+          attempts: number;
+          audience: string;
+          booking_id: string;
+          created_at: string;
+          id: string;
+          kind: Database["public"]["Enums"]["notification_kind"];
+          last_error: string | null;
+          locked_until: string | null;
+          send_after: string;
+          sent_at: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          attempts?: number;
+          audience: string;
+          booking_id: string;
+          created_at?: string;
+          id?: string;
+          kind: Database["public"]["Enums"]["notification_kind"];
+          last_error?: string | null;
+          locked_until?: string | null;
+          send_after?: string;
+          sent_at?: string | null;
+        };
+        Update: {
+          attempts?: number;
+          audience?: string;
+          booking_id?: string;
+          created_at?: string;
+          id?: string;
+          kind?: Database["public"]["Enums"]["notification_kind"];
+          last_error?: string | null;
+          locked_until?: string | null;
+          send_after?: string;
+          sent_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           created_at: string;
           email: string;
           full_name: string;
           id: string;
+          language: string;
           phone: string | null;
           role: Database["public"]["Enums"]["user_role"];
           updated_at: string;
@@ -481,6 +527,7 @@ export type Database = {
           email?: string;
           full_name?: string;
           id: string;
+          language?: string;
           phone?: string | null;
           role?: Database["public"]["Enums"]["user_role"];
           updated_at?: string;
@@ -490,6 +537,7 @@ export type Database = {
           email?: string;
           full_name?: string;
           id?: string;
+          language?: string;
           phone?: string | null;
           role?: Database["public"]["Enums"]["user_role"];
           updated_at?: string;
@@ -619,21 +667,27 @@ export type Database = {
       };
       settings: {
         Row: {
+          admin_email: string | null;
           calendar_token: string;
           id: boolean;
+          reminder_hours: number;
           social_monthly_cap: number | null;
           updated_at: string;
         };
         ComputedFields: never;
         Insert: {
+          admin_email?: string | null;
           calendar_token?: string;
           id?: boolean;
+          reminder_hours?: number;
           social_monthly_cap?: number | null;
           updated_at?: string;
         };
         Update: {
+          admin_email?: string | null;
           calendar_token?: string;
           id?: boolean;
+          reminder_hours?: number;
           social_monthly_cap?: number | null;
           updated_at?: string;
         };
@@ -690,6 +744,27 @@ export type Database = {
           price_cents: number;
           valid: boolean;
         }[];
+      };
+      claim_notifications: {
+        Args: { p_limit?: number };
+        Returns: {
+          attempts: number;
+          audience: string;
+          booking_id: string;
+          created_at: string;
+          id: string;
+          kind: Database["public"]["Enums"]["notification_kind"];
+          last_error: string | null;
+          locked_until: string | null;
+          send_after: string;
+          sent_at: string | null;
+        }[];
+        SetofOptions: {
+          from: "*";
+          to: "notifications";
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
       };
       close_period: {
         Args: {
@@ -757,12 +832,21 @@ export type Database = {
         Returns: undefined;
       };
       reschedule_booking: { Args: { p_booking_id: string; p_starts_at: string }; Returns: undefined };
+      schedule_booking_reminder: { Args: { p_booking_id: string; p_starts_at: string }; Returns: undefined };
     };
     Enums: {
       appointment_status: "scheduled" | "cancelled";
       booking_mode: "slot" | "event";
       booking_status: "confirmed" | "cancelled";
       discount_kind: "percent" | "amount";
+      notification_kind:
+        | "booking_confirmed"
+        | "booking_rescheduled"
+        | "booking_cancelled"
+        | "booking_reminder"
+        | "admin_new_booking"
+        | "admin_booking_rescheduled"
+        | "admin_booking_cancelled";
       user_role: "client" | "admin";
     };
     CompositeTypes: {
@@ -878,6 +962,15 @@ export const Constants = {
       booking_mode: ["slot", "event"],
       booking_status: ["confirmed", "cancelled"],
       discount_kind: ["percent", "amount"],
+      notification_kind: [
+        "booking_confirmed",
+        "booking_rescheduled",
+        "booking_cancelled",
+        "booking_reminder",
+        "admin_new_booking",
+        "admin_booking_rescheduled",
+        "admin_booking_cancelled",
+      ],
       user_role: ["client", "admin"],
     },
   },

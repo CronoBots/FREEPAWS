@@ -431,3 +431,7 @@ verify_jwt = false
 # Flux iCal : protégé par le jeton secret de settings.calendar_token, pas par une session.
 [functions.calendar-feed]
 verify_jwt = false
+
+# Envoi des emails : protégé par NOTIFY_CRON_SECRET (appel pg_cron), pas par une session.
+[functions.send-notifications]
+verify_jwt = false
