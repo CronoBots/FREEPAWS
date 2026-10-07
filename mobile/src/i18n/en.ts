@@ -478,5 +478,9 @@ export const en: Dictionary = {
     otp_expired: "This code has expired or is incorrect. Request a new one.",
     over_email_send_rate_limit: "Too many requests. Wait a minute before requesting a new code.",
     email_address_invalid: "Invalid email address.",
+    group_certification_required: "Certify that the dogs from other households are identified and vaccinated.",
+    invalid_group_dogs: "Invalid list of dogs from other households (20 at most).",
+    questionnaire_incomplete: "Please answer all the required questions in the questionnaire.",
+    invalid_answers: "Invalid answers.",
   },
 };

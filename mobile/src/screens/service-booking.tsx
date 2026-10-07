@@ -8,6 +8,7 @@ import { useDogs } from "@/api/dogs";
 import { useFullDays, useQuote } from "@/api/pricing";
 import { PARK_SERVICE_SLUG, type Service } from "@/api/services";
 import { type Slot, useSlots } from "@/api/slots";
+import { useParkEligibility } from "@/api/v11-client";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { Checkbox } from "@/components/checkbox";
@@ -21,6 +22,9 @@ import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { Stepper } from "@/components/stepper";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
+import { type DogDraft, toGroupDog } from "@/components/v11/dog-fields";
+import { EligibilityPreview } from "@/components/v11/eligibility-preview";
+import { GroupDogsEditor, groupDogsValid } from "@/components/v11/group-dogs-editor";
 import { WaitlistButton, WaitlistEntries } from "@/components/waitlist-button";
 import { useLanguage } from "@/i18n";
 import { useAuth } from "@/lib/auth";
@@ -64,6 +68,9 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
   const [dogIds, setDogIds] = useState<string[]>([]);
   const [guests, setGuests] = useState<GuestDraft[]>([]);
   const [showGuestErrors, setShowGuestErrors] = useState(false);
+  const [groupDogs, setGroupDogs] = useState<DogDraft[]>([]);
+  const [groupCertified, setGroupCertified] = useState(false);
+  const [showGroupErrors, setShowGroupErrors] = useState(false);
   const [codeInput, setCodeInput] = useState("");
   const [discount, setDiscount] = useState<DiscountState>(null);
   const [accepted, setAccepted] = useState<Record<string, boolean>>({});
@@ -105,10 +112,29 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
 
   const guestInputs = useMemo(() => (parkProfile ? toGuestInputs(guests) : []), [parkProfile, guests]);
 
+  // Parc : chiens du compte + chiens d’autres foyers, sous le même plafond (M2-06).
+  const groupCount = parkProfile ? groupDogs.length : 0;
+  const totalDogs = dogIds.length + groupCount;
+  const dogsFull = totalDogs >= maxDogs;
+
   const toggleDog = (id: string) =>
     setDogIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : prev.length >= maxDogs ? prev : [...prev, id],
+      prev.includes(id)
+        ? prev.filter((item) => item !== id)
+        : prev.length + groupCount >= maxDogs
+          ? prev
+          : [...prev, id],
     );
+
+  // Aperçu des règles de santé dès qu’un créneau et des chiens sont choisis (M2-09).
+  const eligibility = useParkEligibility({
+    serviceId: service.id,
+    startsAt: selected?.startsAt ?? null,
+    dogIds,
+    groupCount,
+    enabled: Boolean(userId) && parkProfile && !rescheduling && totalDogs > 0,
+  });
+  const eligibilityBlocked = Boolean(eligibility.data?.error);
 
   const onCheckCode = async () => {
     const code = codeInput.trim();
@@ -145,7 +171,13 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
 
     if (!addressOk) return setError(t("errors.address_required"));
     if (!documentsOk) return setError(t("booking.documentsRequired"));
-    if (parkProfile && dogIds.length === 0) return setError(t("parkBooking.dogRequired"));
+    if (parkProfile && totalDogs === 0) return setError(t("parkBooking.dogRequired"));
+    if (parkProfile && groupDogs.length > 0 && (!groupDogsValid(groupDogs) || !groupCertified)) {
+      setShowGroupErrors(true);
+      return setError(
+        groupDogsValid(groupDogs) ? t("v11Client.groupCertifyRequired") : t("v11Client.groupNamesRequired"),
+      );
+    }
     if (parkProfile && !guestsValid(guests)) {
       setShowGuestErrors(true);
       return setError(t("parkBooking.guestNamesRequired"));
@@ -158,10 +190,12 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
       visitAddress: service.requires_address ? address : undefined,
       adultsCount: showAdults ? adults : undefined,
       childrenCount: children,
-      dogsCount: parkProfile ? dogIds.length : dogsCount,
+      dogsCount: parkProfile ? totalDogs : dogsCount,
       discountCode: discount?.valid ? discount.code : undefined,
       documentIds: pendingDocuments.map((document) => document.documentId),
       guests: guestInputs,
+      groupDogs: parkProfile ? groupDogs.map(toGroupDog) : undefined,
+      groupCertified: parkProfile && groupDogs.length > 0 ? groupCertified : undefined,
     };
     const onSuccess = (bookingId: string) =>
       router.replace({ pathname: "/booking/[id]", params: { id: bookingId, created: "1" } });
@@ -184,13 +218,18 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
   const footer = !userId ? (
     <Button label={t("booking.signInToBook")} onPress={() => router.push("/sign-in")} />
   ) : (
-    <Button label={confirmLabel} disabled={!selected} loading={submitting} onPress={onConfirm} />
+    <Button
+      label={confirmLabel}
+      disabled={!selected || (!rescheduling && eligibilityBlocked)}
+      loading={submitting}
+      onPress={onConfirm}
+    />
   );
 
   const quote = useQuote({
     serviceId: service.id,
     startsAt: userId && selected && !rescheduling ? selected.startsAt : null,
-    dogs: parkProfile ? Math.max(1, dogIds.length) : dogsCount,
+    dogs: parkProfile ? Math.max(1, totalDogs) : dogsCount,
     guests: guestInputs.length,
     discountCode: discount?.valid ? discount.code : undefined,
   });
@@ -335,7 +374,7 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
                         label={checked ? `✓ ${dog.name}` : dog.name}
                         accessibilityLabel={dog.name}
                         selected={checked}
-                        disabled={!checked && dogIds.length >= maxDogs}
+                        disabled={!checked && dogsFull}
                         onPress={() => toggleDog(dog.id)}
                       />
                     );
@@ -365,7 +404,29 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
               </>
             )}
 
-            {parkProfile ? <GuestsEditor value={guests} onChange={setGuests} showErrors={showGuestErrors} /> : null}
+            {parkProfile ? (
+              <>
+                <GroupDogsEditor
+                  value={groupDogs}
+                  onChange={setGroupDogs}
+                  certified={groupCertified}
+                  onCertifiedChange={setGroupCertified}
+                  canAdd={!dogsFull}
+                  showErrors={showGroupErrors}
+                />
+                <View style={styles.total} accessibilityLiveRegion="polite">
+                  <AppText variant="bodyStrong">{tp("v11Client.dogsTotal", totalDogs)}</AppText>
+                  {dogsFull ? (
+                    <AppText variant="caption">{t("v11Client.dogsMaxReached", { max: maxDogs })}</AppText>
+                  ) : null}
+                </View>
+                <EligibilityPreview
+                  loading={eligibility.isLoading && eligibility.fetchStatus !== "idle"}
+                  data={totalDogs > 0 ? eligibility.data : undefined}
+                />
+                <GuestsEditor value={guests} onChange={setGuests} showErrors={showGuestErrors} />
+              </>
+            ) : null}
 
             <TextField
               label={t("booking.notes")}
@@ -458,6 +519,7 @@ const styles = StyleSheet.create({
   codeButton: { minWidth: 64 },
   document: { gap: space.xs },
   price: { gap: 2 },
+  total: { gap: 2 },
   documentBody: { padding: space.sm, backgroundColor: colors.cream, borderRadius: 8 },
   error: { color: colors.danger },
   ok: { color: colors.free },

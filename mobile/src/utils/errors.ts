@@ -45,6 +45,10 @@ const CODES = [
   "otp_expired",
   "over_email_send_rate_limit",
   "email_address_invalid",
+  "group_certification_required",
+  "invalid_group_dogs",
+  "questionnaire_incomplete",
+  "invalid_answers",
 ] as const;
 
 export function toUserMessage(error: unknown): string {

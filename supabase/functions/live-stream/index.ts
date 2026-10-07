@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
   const rescueToken = typeof body.rescue_token === "string" ? body.rescue_token : null;
 
   type Access = {
-    mode: "public" | "private" | "admin" | "denied" | "not_started" | "rescue";
+    mode: "public" | "private" | "admin" | "denied" | "not_started" | "rescue" | "profile_required";
     expires_at: string | null;
     starts_at?: string | null;
     ends_at?: string | null;
@@ -80,6 +80,9 @@ Deno.serve(async (req) => {
       : await asCaller.rpc("camera_access", { p_resource_slug: RESOURCE_SLUG }).single<Access>();
   if (accessError) return json({ error: "access_check_failed" }, 502);
 
+  if (access.mode === "profile_required") {
+    return json({ mode: "profile_required", startsAt: access.starts_at, endsAt: access.ends_at, guestName: access.guest_name, streams: [] });
+  }
   if (access.mode === "not_started") {
     return json({ mode: "not_started", startsAt: access.starts_at, endsAt: access.ends_at, guestName: access.guest_name, streams: [] });
   }

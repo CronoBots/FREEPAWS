@@ -1,11 +1,12 @@
 import * as Clipboard from "expo-clipboard";
-import { router, useLocalSearchParams } from "expo-router";
+import { type Href, router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
 import { type Booking, canCancel, canReschedule, useBooking, useCancelBooking } from "@/api/bookings";
 import { useBookingExtras, useSetBookingGuests } from "@/api/park-profile";
 import { useService } from "@/api/services";
+import { useBookingGroup, useQuestionnaireResponse, useQuestions } from "@/api/v11-client";
 import { Badge } from "@/components/badge";
 import { bookingBadge } from "@/components/booking-card";
 import { Button } from "@/components/button";
@@ -15,11 +16,12 @@ import { type GuestDraft, GuestsEditor, guestsValid, toGuestDrafts, toGuestInput
 import { Screen } from "@/components/screen";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
+import { describeDog } from "@/components/v11/dog-fields";
 import { useLanguage } from "@/i18n";
 import { appLink } from "@/lib/links";
 import { confirm, notify } from "@/lib/confirm";
 import { colors, radius, space } from "@/theme";
-import { formatDayLong, formatTime } from "@/utils/dates";
+import { formatDate, formatDayLong, formatTime } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 import { formatPrice } from "@/utils/format";
 
@@ -120,6 +122,8 @@ export default function BookingRoute() {
 
       <BookingExtras booking={data} />
 
+      <QuestionnaireCard booking={data} />
+
       {data.status === "confirmed" ? (
         cancellable ? (
           <View style={styles.actions}>
@@ -157,6 +161,7 @@ function BookingExtras({ booking }: { booking: Booking }) {
   const { t } = useLanguage();
   const extras = useBookingExtras(booking.id);
   const service = useService(booking.service.slug);
+  const group = useBookingGroup(booking.id);
   const save = useSetBookingGuests();
   const [drafts, setDrafts] = useState<GuestDraft[] | null>(null);
   const [showErrors, setShowErrors] = useState(false);
@@ -167,9 +172,10 @@ function BookingExtras({ booking }: { booking: Booking }) {
   if (extras.isError) return <ErrorView error={extras.error} onRetry={() => void extras.refetch()} />;
   const dogs = extras.data?.dogs ?? [];
   const guests = extras.data?.guests ?? [];
+  const groupDogs = group.data?.dogs ?? [];
   const parkLike = Boolean(service.data?.requires_park_profile);
   const editable = booking.status === "confirmed" && booking.start > new Date() && (parkLike || guests.length > 0);
-  if (dogs.length === 0 && guests.length === 0 && !editable) return null;
+  if (dogs.length === 0 && guests.length === 0 && groupDogs.length === 0 && !editable) return null;
   // Lien live personnel : seulement pour le parc, tant que la réservation n’est pas passée.
   const showLinks = parkLike && booking.status === "confirmed" && booking.end > new Date();
 
@@ -212,6 +218,18 @@ function BookingExtras({ booking }: { booking: Booking }) {
         </Card>
       ) : null}
 
+      {groupDogs.length > 0 ? (
+        <Card>
+          <AppText variant="heading">{t("v11Client.groupTitle")}</AppText>
+          {groupDogs.map((dog, index) => (
+            <AppText key={`${dog.name}-${index}`} variant="body">
+              {describeDog(dog, t)}
+            </AppText>
+          ))}
+          {group.data?.certifiedAt ? <AppText variant="caption">{t("v11Client.groupCertified")}</AppText> : null}
+        </Card>
+      ) : null}
+
       {drafts ? (
         <View style={styles.actions}>
           <GuestsEditor value={drafts} onChange={setDrafts} showErrors={showErrors} />
@@ -238,6 +256,14 @@ function BookingExtras({ booking }: { booking: Booking }) {
           {guests.map((guest) => (
             <View key={guest.id} style={styles.guest}>
               <AppText variant="bodyStrong">{guest.full_name}</AppText>
+              {parkLike && booking.status === "confirmed" ? (
+                <Badge
+                  label={
+                    guest.profile_completed_at ? t("v11Client.guestProfileDone") : t("v11Client.guestProfilePending")
+                  }
+                  tone={guest.profile_completed_at ? "success" : "warning"}
+                />
+              ) : null}
               {guest.email || guest.phone ? (
                 <AppText variant="caption">{[guest.email, guest.phone].filter(Boolean).join(" · ")}</AppText>
               ) : null}
@@ -274,6 +300,55 @@ function BookingExtras({ booking }: { booking: Booking }) {
         </Card>
       ) : null}
     </>
+  );
+}
+
+/** Questionnaire pré-visite (M1-05) : état et accès, si la prestation en a un. */
+function QuestionnaireCard({ booking }: { booking: Booking }) {
+  const { t } = useLanguage();
+  const questions = useQuestions(booking.service.id);
+  const response = useQuestionnaireResponse(booking.id);
+
+  if (questions.isLoading || response.isLoading) return null;
+  if (questions.isError || response.isError) {
+    return (
+      <ErrorView
+        error={questions.error ?? response.error}
+        onRetry={() => void Promise.all([questions.refetch(), response.refetch()])}
+      />
+    );
+  }
+  if (!questions.data?.length) return null;
+  const sent = response.data;
+  const editable = booking.status === "confirmed" && booking.start > new Date();
+  // Réservation annulée sans réponse : rien à montrer.
+  if (!editable && !sent && booking.status !== "confirmed") return null;
+  // Route ajoutée en v1.1 : le cast évite de dépendre des types de routes générés par le serveur de dev.
+  const open = () => router.push(`/booking/${booking.id}/questionnaire` as Href);
+
+  return (
+    <Card>
+      <AppText variant="heading">{t("v11Client.cardTitle")}</AppText>
+      <Badge
+        label={
+          sent
+            ? t("v11Client.cardSent", { date: formatDate(sent.updatedAt) })
+            : editable
+              ? t("v11Client.cardTodo")
+              : t("v11Client.cardNotSent")
+        }
+        tone={sent ? "success" : editable ? "warning" : "neutral"}
+      />
+      {editable ? (
+        <Button
+          label={sent ? t("v11Client.cardEdit") : t("v11Client.cardFill")}
+          variant={sent ? "secondary" : "primary"}
+          onPress={open}
+        />
+      ) : sent ? (
+        <Button label={t("v11Client.cardView")} variant="secondary" onPress={open} />
+      ) : null}
+    </Card>
   );
 }
 

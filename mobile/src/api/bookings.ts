@@ -95,6 +95,9 @@ export type BookingDetails = {
   documentIds?: string[];
   /** Invités enregistrés dans la réservation (le serveur en tient compte pour le prix). */
   guests?: GuestInput[];
+  /** Chiens d’autres foyers (parc), avec la certification de la personne qui réserve. */
+  groupDogs?: { name: string; breed: string | null; size: string | null; protocol: boolean }[];
+  groupCertified?: boolean;
 };
 
 function detailArgs(details: BookingDetails) {
@@ -108,6 +111,8 @@ function detailArgs(details: BookingDetails) {
     p_discount_code: details.discountCode?.trim() || undefined,
     p_document_ids: details.documentIds?.length ? details.documentIds : undefined,
     p_guests: details.guests?.length ? details.guests : undefined,
+    p_group_dogs: details.groupDogs?.length ? details.groupDogs : undefined,
+    p_group_certified: details.groupDogs?.length ? Boolean(details.groupCertified) : undefined,
   };
 }
 

@@ -480,6 +480,10 @@ export const fr = {
     otp_expired: "Ce code a expiré ou est incorrect. Demandez-en un nouveau.",
     over_email_send_rate_limit: "Trop de demandes. Patientez une minute avant de redemander un code.",
     email_address_invalid: "Adresse email invalide.",
+    group_certification_required: "Certifiez que les chiens d’autres foyers sont identifiés et vaccinés.",
+    invalid_group_dogs: "Liste des chiens d’autres foyers invalide (20 au maximum).",
+    questionnaire_incomplete: "Répondez à toutes les questions obligatoires du questionnaire.",
+    invalid_answers: "Réponses invalides.",
   },
 };
 

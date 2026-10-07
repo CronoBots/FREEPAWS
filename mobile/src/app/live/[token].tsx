@@ -2,25 +2,41 @@ import { useLocalSearchParams } from "expo-router";
 import { StyleSheet, View } from "react-native";
 
 import { useGuestLive } from "@/api/pricing";
+import { useGuestInvitation } from "@/api/v11-client";
 import { Card } from "@/components/card";
 import { LivePlayer } from "@/components/live-player";
 import { Screen } from "@/components/screen";
 import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
+import { GuestProfileForm } from "@/components/v11/guest-profile-form";
 import { useLanguage } from "@/i18n";
 import { colors, radius, space } from "@/theme";
 import { formatDayLong, formatTime, toIsoDay } from "@/utils/dates";
 
-/** Direct du parc pour un invité : lien personnel, sans compte, valable pendant le créneau. */
+/** Direct du parc pour un invité : lien personnel, sans compte, valable pendant le créneau.
+ *  L’invité complète d’abord un profil allégé (M2-10), puis accède au direct. */
 export default function GuestLiveRoute() {
   const { t } = useLanguage();
   const { token } = useLocalSearchParams<{ token: string }>();
-  const live = useGuestLive(token);
+  const invitation = useGuestInvitation(token);
+  const guest = invitation.data;
+  // Le direct n’est demandé qu’une fois le profil complété.
+  const live = useGuestLive(guest?.profileCompleted ? token : undefined);
   const data = live.data;
-  const firstName = data?.guestName?.trim().split(/\s+/)[0];
+  // Le serveur peut encore exiger le profil (mode « profile_required ») : on réaffiche le formulaire.
+  const profileRequired = Boolean(guest) && (!guest?.profileCompleted || (data?.mode as string) === "profile_required");
+  const firstName = (guest?.fullName || data?.guestName)?.trim().split(/\s+/)[0];
 
   let body;
-  if (live.isLoading) {
+  if (invitation.isLoading) {
+    body = <LoadingView label={t("parkBooking.liveLoading")} />;
+  } else if (invitation.isError) {
+    body = <ErrorView error={invitation.error} onRetry={() => void invitation.refetch()} />;
+  } else if (!guest) {
+    body = <Placeholder title={t("v11Client.guestInvalidTitle")} message={t("v11Client.guestInvalidText")} />;
+  } else if (profileRequired) {
+    body = null;
+  } else if (live.isLoading) {
     body = <LoadingView label={t("parkBooking.liveLoading")} />;
   } else if (live.isError) {
     body = <ErrorView error={live.error} onRetry={() => void live.refetch()} />;
@@ -50,13 +66,38 @@ export default function GuestLiveRoute() {
   }
 
   return (
-    <Screen underHeader refreshing={live.isRefetching} onRefresh={() => void live.refetch()}>
+    <Screen
+      underHeader
+      refreshing={invitation.isRefetching || live.isRefetching}
+      onRefresh={() => void Promise.all([invitation.refetch(), guest?.profileCompleted ? live.refetch() : null])}
+    >
       {firstName ? (
         <AppText variant="title" accessibilityRole="header">
           {t("parkBooking.liveHello", { name: firstName })}
         </AppText>
       ) : null}
-      <Card>{body}</Card>
+      {guest ? (
+        <View style={styles.reminder}>
+          {guest.hostName ? (
+            <AppText variant="bodyStrong">{t("v11Client.guestInvitedBy", { host: guest.hostName })}</AppText>
+          ) : null}
+          <AppText variant="body">{guest.serviceName}</AppText>
+          {guest.startsAt && guest.endsAt ? (
+            <AppText variant="body">
+              {t("v11Client.guestSlot", {
+                day: formatDayLong(guest.startsAt),
+                start: formatTime(guest.startsAt),
+                end: formatTime(guest.endsAt),
+              })}
+            </AppText>
+          ) : null}
+        </View>
+      ) : null}
+      {guest && profileRequired && token ? (
+        <GuestProfileForm key={token} token={token} invitation={guest} />
+      ) : (
+        <Card>{body}</Card>
+      )}
     </Screen>
   );
 }
@@ -78,6 +119,7 @@ function Placeholder({ title, message }: { title: string; message?: string }) {
 
 const styles = StyleSheet.create({
   streams: { gap: space.sm },
+  reminder: { gap: space.xs },
   placeholder: {
     minHeight: 180,
     borderRadius: radius.md,
