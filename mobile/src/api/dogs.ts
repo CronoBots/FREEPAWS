@@ -18,6 +18,8 @@ export type DogInput = Pick<
   | "dogid_registered"
   | "sterilised"
   | "in_heat"
+  | "currently_ill"
+  | "antiparasitic_until"
   | "vet_name"
   | "vet_phone"
   | "bite_history"

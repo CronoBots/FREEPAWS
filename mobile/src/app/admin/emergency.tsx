@@ -9,6 +9,7 @@ import {
   useEmergencyOverview,
   useParkSettings,
 } from "@/api/admin-park";
+import { RescueAccessCard } from "@/components/admin/extra/rescue-access";
 import { CallRow } from "@/components/admin/safety/call-button";
 import { AdminGuard } from "@/components/admin-guard";
 import { Badge } from "@/components/badge";
@@ -122,6 +123,8 @@ function Emergency() {
           </>
         )}
       </Card>
+
+      <RescueAccessCard />
     </Screen>
   );
 }

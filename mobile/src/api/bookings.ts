@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { queryKeys } from "@/api/keys";
+import type { GuestInput } from "@/api/park-profile";
 import { localizeContent } from "@/api/services";
 import { useLanguage } from "@/i18n";
 import { useAuth } from "@/lib/auth";
@@ -92,6 +93,8 @@ export type BookingDetails = {
   dogsCount?: number;
   discountCode?: string;
   documentIds?: string[];
+  /** Invités enregistrés dans la réservation (le serveur en tient compte pour le prix). */
+  guests?: GuestInput[];
 };
 
 function detailArgs(details: BookingDetails) {
@@ -104,6 +107,7 @@ function detailArgs(details: BookingDetails) {
     p_dogs_count: details.dogsCount,
     p_discount_code: details.discountCode?.trim() || undefined,
     p_document_ids: details.documentIds?.length ? details.documentIds : undefined,
+    p_guests: details.guests?.length ? details.guests : undefined,
   };
 }
 

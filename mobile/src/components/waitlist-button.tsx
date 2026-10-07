@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { useJoinWaitlist, useLeaveWaitlist, useMyWaitlist } from "@/api/park-profile";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
-import { Chip } from "@/components/chip";
 import { AppText } from "@/components/text";
 import { useLanguage } from "@/i18n";
 import { useAuth } from "@/lib/auth";
 import { colors, space } from "@/theme";
-import { dayParts, formatDayLong } from "@/utils/dates";
+import { formatDayLong } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 
 const dayLabel = (day: string) => formatDayLong(`${day}T12:00:00Z`);
@@ -64,20 +63,17 @@ export function WaitlistButton({ serviceId, day }: { serviceId: string; day: str
 }
 
 /**
- * Liste d’attente d’une prestation : les jours sans créneau libre sont désactivés dans le
- * sélecteur, on les propose donc ici. Rappelle aussi les inscriptions en cours.
+ * Inscriptions en cours à la liste d’attente d’une prestation (hors jour affiché, déjà traité
+ * par le calendrier). L’inscription se fait en choisissant un jour « Complet » dans le sélecteur.
  */
-export function WaitlistSection({ serviceId, fullDays }: { serviceId: string; fullDays: string[] }) {
+export function WaitlistEntries({ serviceId, exceptDay }: { serviceId: string; exceptDay?: string | null }) {
   const { t } = useLanguage();
   const { userId } = useAuth();
   const waitlist = useMyWaitlist();
-  const [open, setOpen] = useState(false);
-  const [day, setDay] = useState<string | null>(null);
 
   if (!userId) return null;
-  const entries = (waitlist.data ?? []).filter((row) => row.service_id === serviceId);
-  if (fullDays.length === 0 && entries.length === 0) return null;
-  const joinedDays = new Set(entries.map((row) => row.day));
+  const entries = (waitlist.data ?? []).filter((row) => row.service_id === serviceId && row.day !== exceptDay);
+  if (entries.length === 0) return null;
 
   return (
     <Card>
@@ -85,39 +81,12 @@ export function WaitlistSection({ serviceId, fullDays }: { serviceId: string; fu
       {entries.map((row) => (
         <WaitlistButton key={row.id} serviceId={serviceId} day={row.day} />
       ))}
-
-      {fullDays.length > 0 ? (
-        open ? (
-          <>
-            <AppText variant="caption">{t("parkBooking.waitlistIntro")}</AppText>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.days}>
-              {fullDays.map((item) => {
-                const parts = dayParts(item);
-                return (
-                  <Chip
-                    key={item}
-                    label={`${parts.weekday} ${parts.day} ${parts.month}`}
-                    accessibilityLabel={t("parkBooking.waitlistDayA11y", { day: dayLabel(item) })}
-                    selected={day === item}
-                    onPress={() => setDay(day === item ? null : item)}
-                  />
-                );
-              })}
-            </ScrollView>
-            {day && !joinedDays.has(day) ? <WaitlistButton serviceId={serviceId} day={day} /> : null}
-            <Button label={t("parkBooking.waitlistHideDays")} variant="ghost" onPress={() => setOpen(false)} />
-          </>
-        ) : (
-          <Button label={t("parkBooking.waitlistShowDays")} variant="secondary" onPress={() => setOpen(true)} />
-        )
-      ) : null}
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
   block: { gap: space.xs },
-  days: { gap: space.sm, paddingVertical: space.xs },
   ok: { color: colors.free },
   error: { color: colors.danger },
 });

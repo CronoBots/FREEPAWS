@@ -67,17 +67,23 @@ function DogForm({ dog }: { dog?: Dog }) {
   const [dogidRegistered, setDogidRegistered] = useState(dog?.dogid_registered ?? false);
   const [sterilised, setSterilised] = useState<boolean | null>(dog?.sterilised ?? null);
   const [inHeat, setInHeat] = useState(dog?.in_heat ?? false);
+  const [currentlyIll, setCurrentlyIll] = useState(dog?.currently_ill ?? false);
+  const [antiparasiticUntil, setAntiparasiticUntil] = useState(dog?.antiparasitic_until ?? "");
   const [vetName, setVetName] = useState(dog?.vet_name ?? "");
   const [vetPhone, setVetPhone] = useState(dog?.vet_phone ?? "");
   const [biteHistory, setBiteHistory] = useState<boolean | null>(dog?.bite_history ?? null);
   const [reactivity, setReactivity] = useState(dog?.reactivity ?? "");
   const [specialNeeds, setSpecialNeeds] = useState(dog?.special_needs ?? "");
-  const [errors, setErrors] = useState<{ name?: string; birthDate?: string; chip?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; birthDate?: string; chip?: string; antiparasitic?: string }>(
+    {},
+  );
 
   const onSave = () => {
     const next: typeof errors = {};
     if (!name.trim()) next.name = t("dogs.nameRequired");
     if (birthDate && (!isValidIsoDay(birthDate) || birthDate > todayIso())) next.birthDate = t("dogs.dateError");
+    const antiparasitic = antiparasiticUntil.trim();
+    if (antiparasitic && !isValidIsoDay(antiparasitic)) next.antiparasitic = t("dogs.dateError");
     const chip = chipNumber.replace(/\s+/g, "");
     if (chip && !CHIP_PATTERN.test(chip)) next.chip = t("fiche.chipError");
     setErrors(next);
@@ -94,6 +100,8 @@ function DogForm({ dog }: { dog?: Dog }) {
       dogid_registered: dogidRegistered,
       sterilised,
       in_heat: sex === "female" ? inHeat : false,
+      currently_ill: currentlyIll,
+      antiparasitic_until: antiparasitic || null,
       vet_name: vetName.trim() || null,
       vet_phone: vetPhone.trim() || null,
       bite_history: biteHistory,
@@ -178,6 +186,17 @@ function DogForm({ dog }: { dog?: Dog }) {
         </AppText>
         <YesNoUnknown label={t("fiche.sterilised")} value={sterilised} onChange={setSterilised} />
         {sex === "female" ? <Checkbox label={t("fiche.inHeat")} checked={inHeat} onChange={setInHeat} /> : null}
+        <Checkbox label={t("fiche.currentlyIll")} checked={currentlyIll} onChange={setCurrentlyIll} />
+        <TextField
+          label={t("fiche.antiparasiticUntil")}
+          hint={t("fiche.antiparasiticHint")}
+          placeholder={t("dogs.datePlaceholder")}
+          value={antiparasiticUntil}
+          onChangeText={setAntiparasiticUntil}
+          keyboardType="numbers-and-punctuation"
+          maxLength={10}
+          error={errors.antiparasitic}
+        />
         <TextField
           label={t("dogs.notes")}
           hint={t("dogs.notesHint")}

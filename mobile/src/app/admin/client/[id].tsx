@@ -14,6 +14,7 @@ import { AdminGuard } from "@/components/admin-guard";
 import { ClientDogs } from "@/components/admin/clients/client-dogs";
 import { ClientHistory } from "@/components/admin/clients/client-history";
 import { ClientSanctions } from "@/components/admin/clients/client-sanctions";
+import { ClientBookingForm } from "@/components/admin/extra/client-booking-form";
 import { BadgeRow, dayDate, InfoLine, openProof, Section, todayIso, validity } from "@/components/admin/clients/shared";
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
@@ -93,6 +94,7 @@ function ClientContent({ data, refreshing, onRefresh }: { data: Details; refresh
       <ClientSanctions userId={profile.id} sanctions={sanctions} />
       <RoleSection profile={profile} />
       <Incidents incidents={incidents} />
+      <ClientBookingForm clientId={profile.id} />
       <Bookings bookings={bookings} />
       <ClientHistory history={history} dogNames={dogNames} />
     </Screen>

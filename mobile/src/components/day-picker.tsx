@@ -11,34 +11,51 @@ type Props = {
   onSelect: (day: string) => void;
   /** Nombre de créneaux libres par jour ; 0 = jour grisé. */
   counts: Record<string, number>;
+  /** Jours complets (AAAA-MM-JJ) : sélectionnables pour s’inscrire en liste d’attente. */
+  fullDays?: string[];
 };
 
-export function DayPicker({ days, selected, onSelect, counts }: Props) {
+export function DayPicker({ days, selected, onSelect, counts, fullDays }: Props) {
   const { t, tp } = useLanguage();
+  const full = new Set(fullDays ?? []);
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
       {days.map((day) => {
         const parts = dayParts(day);
         const count = counts[day] ?? 0;
         const isSelected = day === selected;
-        const disabled = count === 0;
+        const isFull = count === 0 && full.has(day);
+        const disabled = count === 0 && !isFull;
+        const label = `${parts.weekday} ${parts.day} ${parts.month}`;
         return (
           <Pressable
             key={day}
             accessibilityRole="button"
             accessibilityLabel={
-              disabled
-                ? t("booking.dayFull", { day: `${parts.weekday} ${parts.day} ${parts.month}` })
-                : tp("booking.dayAvailable", count, { day: `${parts.weekday} ${parts.day} ${parts.month}` })
+              isFull
+                ? t("parkBooking.dayFullWaitlistA11y", { day: label })
+                : disabled
+                  ? t("booking.dayFull", { day: label })
+                  : tp("booking.dayAvailable", count, { day: label })
             }
             accessibilityState={{ selected: isSelected, disabled }}
             disabled={disabled}
             onPress={() => onSelect(day)}
-            style={[styles.day, isSelected && styles.selected, disabled && styles.disabled]}
+            style={[styles.day, isFull && styles.full, isSelected && styles.selected, disabled && styles.disabled]}
           >
             <AppText style={[styles.weekday, isSelected && styles.inverse]}>{parts.weekday}</AppText>
             <AppText style={[styles.number, isSelected && styles.inverse]}>{parts.day}</AppText>
             <AppText style={[styles.month, isSelected && styles.inverse]}>{parts.month}</AppText>
+            {isFull ? (
+              <AppText
+                style={[styles.fullTag, isSelected && styles.inverse]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                {t("parkBooking.dayFullShort")}
+              </AppText>
+            ) : null}
           </Pressable>
         );
       })}
@@ -58,6 +75,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 2,
   },
+  full: { backgroundColor: colors.reservedSoft, borderColor: colors.reserved, borderStyle: "dashed" },
+  fullTag: { fontFamily: fonts.sansSemiBold, fontSize: 11, color: colors.danger },
   selected: { backgroundColor: colors.ink, borderColor: colors.ink },
   disabled: { opacity: 0.35 },
   weekday: { fontFamily: fonts.sansMedium, fontSize: 12, textTransform: "uppercase", color: colors.inkSoft },

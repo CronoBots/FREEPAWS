@@ -4,6 +4,7 @@ import { fr as parkBookingFr } from "@/i18n/parts/parkBooking";
 import { fr as adminClientsFr } from "@/i18n/parts/adminClients";
 import { fr as adminSafetyFr } from "@/i18n/parts/adminSafety";
 import { fr as pricingFr } from "@/i18n/parts/pricing";
+import { fr as adminExtraFr } from "@/i18n/parts/adminExtra";
 
 // Dictionnaire de référence (français). Les autres langues doivent avoir exactement les mêmes clés.
 // Les contenus FreePaws (textes du parc, du coaching) sont repris de www.freepaws.be.
@@ -424,6 +425,7 @@ export const fr = {
   adminClients: adminClientsFr,
   adminSafety: adminSafetyFr,
   pricing: pricingFr,
+  adminExtra: adminExtraFr,
   errors: {
     slot_unavailable: "Ce créneau n’est plus disponible. Choisissez-en un autre.",
     appointment_full: "Il n’y a plus assez de places pour cette séance.",

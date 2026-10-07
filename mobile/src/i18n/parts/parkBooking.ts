@@ -11,8 +11,6 @@ export const fr = {
   dogRequired: "Choisissez au moins un chien.",
   maxPeople: "{count} personnes au plus, adultes et enfants compris.",
   guestNamesRequired: "Indiquez le nom de chaque invité, ou retirez les lignes vides.",
-  guestsSaveFailed:
-    "Votre réservation est confirmée, mais les invités n’ont pas pu être enregistrés. Vous pouvez les ajouter depuis la réservation.",
 
   // Invités
   guestsTitle: "Invités",
@@ -46,13 +44,19 @@ export const fr = {
 
   // Liste d’attente
   waitlistTitle: "Liste d’attente",
-  waitlistIntro: "Un jour est complet ? Choisissez-le : vous recevrez une notification si un créneau se libère.",
-  waitlistShowDays: "Un jour est complet ?",
-  waitlistHideDays: "Masquer les jours complets",
+  waitlistIntro:
+    "Tous les créneaux de ce jour sont pris. Inscrivez-vous : vous recevrez une notification si un créneau se libère.",
+  waitlistSignIn: "Connectez-vous pour être prévenu si un créneau se libère.",
+  dayFullShort: "Complet",
+  dayFullTitle: "Jour complet",
+  dayFullWaitlistA11y: "{day}, complet, liste d’attente possible",
+
+  // Prix calculé par le serveur
+  priceLoading: "Calcul du prix…",
+  priceDiscount: "Réduction appliquée : {amount}",
   waitlistJoin: "Me prévenir si un créneau se libère",
   waitlistJoined: "Vous recevrez une notification si un créneau se libère le {day}.",
   waitlistLeave: "Me désinscrire",
-  waitlistDayA11y: "{day}, aucun créneau libre",
 
   // Urgence
   emergencyTitle: "Urgence",
@@ -72,6 +76,23 @@ export const fr = {
   // Détail d’une réservation
   extrasDogs: "Chiens",
   extrasGuests: "Invités",
+  guestLinkEmail: "Un lien personnel vers le direct du parc lui sera envoyé par email 30 minutes avant le créneau.",
+  guestLinkNoEmail: "Pas d’email : copiez son lien vers le direct et transmettez-le-lui.",
+  guestLinkCopy: "Copier son lien",
+  guestLinkCopied: "Lien copié",
+  guestLinkPersonal:
+    "Chaque lien est personnel : il ne donne accès au direct que pendant votre créneau. Ne le partagez qu’avec l’invité concerné.",
+
+  // Direct d’un invité (lien personnel)
+  liveHello: "Bonjour {name}",
+  liveNotStarted: "Le direct ouvrira à {time}",
+  liveNotStartedDay: "Le direct ouvrira le {day} à {time}",
+  liveNotStartedText: "Revenez sur ce lien au début du créneau.",
+  liveSoon: "Direct bientôt disponible",
+  liveDenied: "Lien expiré ou invalide",
+  liveDeniedText: "Ce lien ne donne accès au direct que pendant le créneau réservé.",
+  liveUntil: "Accès jusqu’à {time}",
+  liveLoading: "Connexion au direct…",
 };
 
 export const en: Widen<typeof fr> = {
@@ -83,7 +104,6 @@ export const en: Widen<typeof fr> = {
   dogRequired: "Choose at least one dog.",
   maxPeople: "{count} people at most, adults and children included.",
   guestNamesRequired: "Enter each guest’s name, or remove the empty rows.",
-  guestsSaveFailed: "Your booking is confirmed, but the guests could not be saved. You can add them from the booking.",
 
   guestsTitle: "Guests",
   guestsResponsibility: "The person who books is responsible for the whole group, guests included.",
@@ -114,13 +134,17 @@ export const en: Widen<typeof fr> = {
   vaccinesReminder: "Each dog’s vaccinations must also be validated by FreePaws before your visit.",
 
   waitlistTitle: "Waiting list",
-  waitlistIntro: "Is a day fully booked? Choose it and you will be notified if a slot becomes free.",
-  waitlistShowDays: "Is a day fully booked?",
-  waitlistHideDays: "Hide fully booked days",
+  waitlistIntro: "Every slot on this day is taken. Sign up and you will be notified if a slot becomes free.",
+  waitlistSignIn: "Sign in to be notified if a slot becomes free.",
+  dayFullShort: "Full",
+  dayFullTitle: "Fully booked",
+  dayFullWaitlistA11y: "{day}, fully booked, waiting list available",
+
+  priceLoading: "Calculating the price…",
+  priceDiscount: "Discount applied: {amount}",
   waitlistJoin: "Notify me if a slot frees up",
   waitlistJoined: "You will be notified if a slot frees up on {day}.",
   waitlistLeave: "Unsubscribe",
-  waitlistDayA11y: "{day}, no free slot",
 
   emergencyTitle: "Emergency",
   emergencyButton: "Emergency",
@@ -138,4 +162,20 @@ export const en: Widen<typeof fr> = {
 
   extrasDogs: "Dogs",
   extrasGuests: "Guests",
+  guestLinkEmail: "A personal link to the park live view will be emailed to them 30 minutes before the slot.",
+  guestLinkNoEmail: "No email: copy their live link and send it to them.",
+  guestLinkCopy: "Copy their link",
+  guestLinkCopied: "Link copied",
+  guestLinkPersonal:
+    "Each link is personal: it only opens the live view during your slot. Share it only with that guest.",
+
+  liveHello: "Hello {name}",
+  liveNotStarted: "The live view opens at {time}",
+  liveNotStartedDay: "The live view opens on {day} at {time}",
+  liveNotStartedText: "Come back to this link when the slot starts.",
+  liveSoon: "Live view coming soon",
+  liveDenied: "Link expired or invalid",
+  liveDeniedText: "This link only opens the live view during the booked slot.",
+  liveUntil: "Access until {time}",
+  liveLoading: "Connecting to the live view…",
 };

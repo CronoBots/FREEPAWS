@@ -1,3 +1,4 @@
+import * as Clipboard from "expo-clipboard";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
@@ -15,6 +16,7 @@ import { Screen } from "@/components/screen";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { useLanguage } from "@/i18n";
+import { appLink } from "@/lib/links";
 import { confirm, notify } from "@/lib/confirm";
 import { colors, radius, space } from "@/theme";
 import { formatDayLong, formatTime } from "@/utils/dates";
@@ -159,6 +161,7 @@ function BookingExtras({ booking }: { booking: Booking }) {
   const [drafts, setDrafts] = useState<GuestDraft[] | null>(null);
   const [showErrors, setShowErrors] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
 
   if (extras.isLoading) return <LoadingView />;
   if (extras.isError) return <ErrorView error={extras.error} onRetry={() => void extras.refetch()} />;
@@ -167,6 +170,17 @@ function BookingExtras({ booking }: { booking: Booking }) {
   const parkLike = Boolean(service.data?.requires_park_profile);
   const editable = booking.status === "confirmed" && booking.start > new Date() && (parkLike || guests.length > 0);
   if (dogs.length === 0 && guests.length === 0 && !editable) return null;
+  // Lien live personnel : seulement pour le parc, tant que la réservation n’est pas passée.
+  const showLinks = parkLike && booking.status === "confirmed" && booking.end > new Date();
+
+  const onCopy = async (guestId: string, token: string) => {
+    try {
+      await Clipboard.setStringAsync(appLink(`live/${token}`));
+      setCopied(guestId);
+    } catch (err) {
+      notify(t("parkBooking.guestLinkCopy"), toUserMessage(err));
+    }
+  };
 
   const onSave = () => {
     if (!drafts) return;
@@ -227,8 +241,26 @@ function BookingExtras({ booking }: { booking: Booking }) {
               {guest.email || guest.phone ? (
                 <AppText variant="caption">{[guest.email, guest.phone].filter(Boolean).join(" · ")}</AppText>
               ) : null}
+              {showLinks ? (
+                guest.email ? (
+                  <AppText variant="caption">{t("parkBooking.guestLinkEmail")}</AppText>
+                ) : (
+                  <>
+                    <AppText variant="caption">{t("parkBooking.guestLinkNoEmail")}</AppText>
+                    <Button
+                      label={copied === guest.id ? t("parkBooking.guestLinkCopied") : t("parkBooking.guestLinkCopy")}
+                      accessibilityLabel={`${t("parkBooking.guestLinkCopy")} · ${guest.full_name}`}
+                      variant="secondary"
+                      onPress={() => void onCopy(guest.id, guest.access_token)}
+                    />
+                  </>
+                )
+              ) : null}
             </View>
           ))}
+          {showLinks && guests.length > 0 ? (
+            <AppText variant="caption">{t("parkBooking.guestLinkPersonal")}</AppText>
+          ) : null}
           {editable ? (
             <>
               <AppText variant="caption">{t("parkBooking.guestsResponsibility")}</AppText>
@@ -246,7 +278,7 @@ function BookingExtras({ booking }: { booking: Booking }) {
 }
 
 const styles = StyleSheet.create({
-  guest: { gap: 2 },
+  guest: { gap: space.xs },
   error: { color: colors.danger },
   success: { backgroundColor: colors.freeSoft, borderRadius: radius.lg, padding: space.lg, gap: space.xs },
   successText: { color: colors.free },

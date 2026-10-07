@@ -4,6 +4,11 @@ export const env = {
   contactEmail: "contact@freepaws.be",
   websiteUrl: "https://www.freepaws.be",
   /**
+   * Adresse web de l’app une fois publiée (ex. https://app.freepaws.be, hébergeable chez Infomaniak) :
+   * sert aux liens envoyés aux invités et aux secours. Sans elle, les liens ouvrent l’app (freepaws://).
+   */
+  appUrl: (process.env.EXPO_PUBLIC_APP_URL ?? "").trim().replace(/\/$/, ""),
+  /**
    * Compte de démonstration pour les équipes de review Apple / Google, qui ne peuvent pas
    * recevoir de code par email : cette adresse se connecte avec un mot de passe.
    */
