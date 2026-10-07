@@ -3,14 +3,12 @@ import * as Clipboard from "expo-clipboard";
 import { router } from "expo-router";
 import { Linking, Platform, Pressable, Share, StyleSheet, View } from "react-native";
 
-import {
-  type EmergencyBooking,
-  useAcknowledgeEmergency,
-  useEmergencyOverview,
-  useParkSettings,
-} from "@/api/admin-park";
+import { useAcknowledgeEmergency, useEmergencyOverview, useParkSettings } from "@/api/admin-park";
+import type { EmergencyBookingV11 } from "@/api/v11-admin";
 import { RescueAccessCard } from "@/components/admin/extra/rescue-access";
 import { CallRow } from "@/components/admin/safety/call-button";
+import { dogText, healthWarningText } from "@/components/admin/v11/format";
+import { buildRescueSheet } from "@/components/admin/v11/rescue-sheet";
 import { AdminGuard } from "@/components/admin-guard";
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
@@ -20,6 +18,7 @@ import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { useLanguage } from "@/i18n";
 import { notify } from "@/lib/confirm";
+import { shareTextFile } from "@/lib/share-file";
 import { colors, fonts, radius, space } from "@/theme";
 import { formatTime } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
@@ -38,10 +37,19 @@ function Emergency() {
   const settings = useParkSettings();
   const acknowledge = useAcknowledgeEmergency();
 
-  const bookings = overview.data ?? [];
+  const bookings = (overview.data ?? []) as EmergencyBookingV11[];
   const alerts = bookings
     .flatMap((booking) => booking.emergencies.map((alert) => ({ ...alert, booking })))
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+  const downloadSheet = async () => {
+    try {
+      const text = buildRescueSheet(bookings, settings.data?.rescue_info);
+      await shareTextFile("fiche-secours-freepaws.txt", text, "text/plain");
+    } catch (err) {
+      notify(t("adminSafety.downloadFailed"), toUserMessage(err));
+    }
+  };
 
   const refresh = () => {
     void overview.refetch();
@@ -104,6 +112,14 @@ function Emergency() {
         ))
       )}
 
+      <Button
+        label={t("adminSafety.downloadSheet")}
+        variant="secondary"
+        disabled={overview.isLoading || settings.isLoading}
+        onPress={() => void downloadSheet()}
+      />
+      <AppText variant="caption">{t("adminSafety.downloadSheetHint")}</AppText>
+
       <Card>
         <AppText variant="heading">{t("adminSafety.rescueTitle")}</AppText>
         {settings.isLoading ? (
@@ -154,7 +170,7 @@ function RescueInfo({ text }: { text: string }) {
 }
 
 /** `now` : instant du dernier rafraîchissement (toutes les 30 s), pour « en cours » / « à venir ». */
-function BookingCard({ booking, now }: { booking: EmergencyBooking; now: number }) {
+function BookingCard({ booking, now }: { booking: EmergencyBookingV11; now: number }) {
   const { t, tp } = useLanguage();
   const inProgress = new Date(booking.starts_at).getTime() <= now && now < new Date(booking.ends_at).getTime();
   const party = [
@@ -163,6 +179,8 @@ function BookingCard({ booking, now }: { booking: EmergencyBooking; now: number 
   ]
     .filter(Boolean)
     .join(" · ");
+  const groupDogs = booking.group_dogs ?? [];
+  const warnings = booking.health_warnings ?? [];
 
   return (
     <Card style={booking.emergencies.length > 0 && styles.cardDanger}>
@@ -210,11 +228,63 @@ function BookingCard({ booking, now }: { booking: EmergencyBooking; now: number 
         </View>
       ) : null}
 
+      {groupDogs.length > 0 ? (
+        <View style={styles.section}>
+          <AppText variant="bodyStrong">{t("adminSafety.groupDogs")}</AppText>
+          {groupDogs.map((dog, index) => (
+            <View key={`${dog.name}-${index}`} style={[styles.dog, dog.protocol && styles.dogProtocol]}>
+              <AppText variant="bodyStrong">{dogText(dog)}</AppText>
+              {dog.protocol ? <Badge label={t("adminSafety.protocolDog")} tone="danger" /> : null}
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {warnings.length > 0 ? (
+        <View style={[styles.section, styles.warnings]}>
+          <AppText variant="bodyStrong" style={styles.dangerText}>
+            {t("adminSafety.healthWarnings")}
+          </AppText>
+          {warnings.map((warning) => (
+            <AppText key={warning} variant="body">
+              • {healthWarningText(warning)}
+            </AppText>
+          ))}
+        </View>
+      ) : null}
+
       {booking.guests.length > 0 ? (
         <View style={styles.section}>
           <AppText variant="bodyStrong">{t("adminSafety.guests")}</AppText>
           {booking.guests.map((guest, index) => (
-            <CallRow key={`${guest.full_name}-${index}`} name={guest.full_name} phone={guest.phone} />
+            <View key={`${guest.full_name}-${index}`} style={styles.guest}>
+              <CallRow name={guest.full_name} phone={guest.phone} />
+              <Badge
+                label={
+                  guest.profile_completed
+                    ? t("adminSafety.guestProfileCompleted")
+                    : t("adminSafety.guestProfilePending")
+                }
+                tone={guest.profile_completed ? "success" : "warning"}
+              />
+              {guest.emergency_contact_name || guest.emergency_contact_phone ? (
+                <CallRow
+                  caption={t("adminSafety.guestEmergencyContact", { name: guest.full_name })}
+                  name={guest.emergency_contact_name || t("adminSafety.emergencyContact")}
+                  phone={guest.emergency_contact_phone ?? null}
+                />
+              ) : (
+                <AppText variant="caption">
+                  {t("adminSafety.guestNoEmergencyContact", { name: guest.full_name })}
+                </AppText>
+              )}
+              {guest.dog?.name ? (
+                <View style={styles.badges}>
+                  <AppText variant="body">{t("adminSafety.guestDog", { dog: dogText(guest.dog) })}</AppText>
+                  {guest.dog.protocol ? <Badge label={t("adminSafety.protocolDog")} tone="danger" /> : null}
+                </View>
+              ) : null}
+            </View>
           ))}
         </View>
       ) : null}
@@ -253,5 +323,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   dogProtocol: { borderColor: colors.danger, borderWidth: 1 },
-  badges: { flexDirection: "row", flexWrap: "wrap", gap: space.xs },
+  badges: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: space.xs },
+  warnings: { padding: space.sm, borderRadius: radius.md, backgroundColor: colors.dangerSoft },
+  guest: {
+    gap: space.xs,
+    paddingBottom: space.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+  },
 });

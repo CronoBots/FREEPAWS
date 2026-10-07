@@ -206,6 +206,13 @@ function ServiceForm({ service }: { service: Service }) {
             variant="secondary"
             onPress={() => router.push({ pathname: "/admin/pricing/[serviceId]", params: { serviceId: service.id } })}
           />
+          <Button
+            label={t("v11Admin.questionnaireButton")}
+            variant="secondary"
+            onPress={() =>
+              router.push({ pathname: "/admin/questionnaire/[serviceId]", params: { serviceId: service.id } })
+            }
+          />
           {NUMBER_FIELDS.map(([key, label]) =>
             key === "default_capacity" && service.mode !== "event" ? null : (
               <TextField

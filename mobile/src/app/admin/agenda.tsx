@@ -1,8 +1,11 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
-import { Linking, StyleSheet, View } from "react-native";
+import { Linking, Pressable, StyleSheet, View } from "react-native";
 
 import { type AgendaEntry, useAgenda, useCancelAppointment } from "@/api/admin";
+import { type BookingInfo, useBookingsInfo } from "@/api/v11-admin";
+import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { DayPicker } from "@/components/day-picker";
@@ -12,7 +15,7 @@ import { AppText } from "@/components/text";
 import { AdminGuard } from "@/components/admin-guard";
 import { useLanguage } from "@/i18n";
 import { confirm, notify } from "@/lib/confirm";
-import { space } from "@/theme";
+import { colors, radius, space } from "@/theme";
 import { addDays, formatDayLong, formatTime, toIsoDay } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 
@@ -39,6 +42,7 @@ function Agenda() {
 
   const agenda = useAgenda(from, to);
   const cancel = useCancelAppointment();
+  const info = useBookingsInfo((agenda.data ?? []).flatMap((entry) => entry.bookings.map((booking) => booking.id)));
 
   const entries = agenda.data ?? [];
   const counts = Object.fromEntries(days.map((d) => [d, entries.filter((e) => toIsoDay(e.start) === d).length]));
@@ -93,11 +97,23 @@ function Agenda() {
             ) : null}
             {entry.bookings.length === 0 ? <AppText variant="body">{t("admin.noAttendee")}</AppText> : null}
             {entry.bookings.map((booking) => (
-              <View key={booking.id} style={styles.booking}>
-                <AppText variant="bodyStrong">
-                  {booking.client?.full_name || booking.client?.email}
-                  {booking.dog ? ` · ${booking.dog.name}${booking.dog.breed ? ` (${booking.dog.breed})` : ""}` : ""}
-                </AppText>
+              <Pressable
+                key={booking.id}
+                accessibilityRole="button"
+                accessibilityLabel={t("v11Admin.openBooking", {
+                  name: booking.client?.full_name || booking.client?.email || "",
+                })}
+                onPress={() => router.push({ pathname: "/admin/booking/[id]", params: { id: booking.id } })}
+                style={({ pressed }) => [styles.booking, pressed && styles.pressed]}
+              >
+                <View style={styles.bookingHead}>
+                  <AppText variant="bodyStrong" style={styles.flex}>
+                    {booking.client?.full_name || booking.client?.email}
+                    {booking.dog ? ` · ${booking.dog.name}${booking.dog.breed ? ` (${booking.dog.breed})` : ""}` : ""}
+                  </AppText>
+                  <Ionicons name="chevron-forward" size={18} color={colors.inkSoft} />
+                </View>
+                <BookingBadges info={info.data?.get(booking.id)} />
                 {booking.client?.phone ? (
                   <AppText variant="caption" onPress={() => void Linking.openURL(`tel:${booking.client?.phone}`)}>
                     {booking.client.phone}
@@ -116,7 +132,7 @@ function Agenda() {
                   </AppText>
                 ) : null}
                 {booking.client_notes ? <AppText variant="caption">« {booking.client_notes} »</AppText> : null}
-              </View>
+              </Pressable>
             ))}
             <Button label={t("admin.cancel")} variant="ghost" onPress={() => void onCancel(entry)} />
           </Card>
@@ -126,6 +142,29 @@ function Agenda() {
   );
 }
 
+/** Questionnaire reçu / en attente (si la prestation en a un) et avertissements de santé. */
+function BookingBadges({ info }: { info: BookingInfo | undefined }) {
+  const { t, tp } = useLanguage();
+  if (!info || (!info.hasQuestionnaire && info.healthWarnings.length === 0)) return null;
+  return (
+    <View style={styles.badges}>
+      {info.hasQuestionnaire ? (
+        <Badge
+          label={info.questionnaireReceived ? t("v11Admin.questionnaireReceived") : t("v11Admin.questionnairePending")}
+          tone={info.questionnaireReceived ? "success" : "warning"}
+        />
+      ) : null}
+      {info.healthWarnings.length > 0 ? (
+        <Badge label={tp("v11Admin.badgeHealth", info.healthWarnings.length)} tone="danger" />
+      ) : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  booking: { gap: 2, paddingTop: space.xs },
+  booking: { gap: 2, paddingTop: space.xs, borderRadius: radius.sm },
+  bookingHead: { flexDirection: "row", alignItems: "center", gap: space.xs },
+  flex: { flex: 1, minWidth: 0 },
+  badges: { flexDirection: "row", flexWrap: "wrap", gap: space.xs, paddingVertical: 2 },
+  pressed: { opacity: 0.7 },
 });

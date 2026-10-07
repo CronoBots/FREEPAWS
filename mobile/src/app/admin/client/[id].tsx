@@ -1,6 +1,6 @@
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useMemo } from "react";
-import { Linking, StyleSheet, View } from "react-native";
+import { Linking, Pressable, StyleSheet, View } from "react-native";
 
 import {
   type ClientDetails,
@@ -280,7 +280,13 @@ function Bookings({ bookings }: { bookings: ClientDetails["bookings"] }) {
     <Section title={t("adminClients.bookings")}>
       {bookings.length === 0 ? <AppText variant="body">{t("adminClients.noBookings")}</AppText> : null}
       {bookings.slice(0, 15).map((booking) => (
-        <View key={booking.id} style={styles.line}>
+        <Pressable
+          key={booking.id}
+          accessibilityRole="button"
+          accessibilityLabel={booking.appointment?.service?.name ?? t("admin.bookingAdminTitle")}
+          onPress={() => router.push({ pathname: "/admin/booking/[id]", params: { id: booking.id } })}
+          style={({ pressed }) => [styles.line, pressed && styles.pressed]}
+        >
           <View style={styles.wrapRow}>
             <AppText variant="bodyStrong" style={styles.flex}>
               {booking.appointment?.service?.name ?? "—"}
@@ -295,7 +301,7 @@ function Bookings({ bookings }: { bookings: ClientDetails["bookings"] }) {
           <AppText variant="caption">
             {bookingDate(booking.appointment?.period) ?? formatDate(booking.created_at)}
           </AppText>
-        </View>
+        </Pressable>
       ))}
     </Section>
   );
@@ -313,4 +319,5 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
   },
+  pressed: { opacity: 0.7 },
 });
