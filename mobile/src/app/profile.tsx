@@ -10,6 +10,7 @@ import { TextField } from "@/components/text-field";
 import { notify } from "@/lib/confirm";
 import type { Tables } from "@/types/database";
 import { toUserMessage } from "@/utils/errors";
+import { useLanguage } from "@/i18n";
 
 export default function ProfileRoute() {
   const { welcome } = useLocalSearchParams<{ welcome?: string }>();
@@ -24,6 +25,7 @@ export default function ProfileRoute() {
 }
 
 function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcome: boolean }) {
+  const { t } = useLanguage();
   const update = useUpdateProfile();
   const [fullName, setFullName] = useState(profile.full_name);
   const [phone, setPhone] = useState(profile.phone ?? "");
@@ -31,7 +33,7 @@ function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcom
 
   const save = () => {
     if (fullName.trim().length < 2) {
-      setNameError("Indiquez votre nom pour que nous puissions vous accueillir.");
+      setNameError(t("profile.nameError"));
       return;
     }
     setNameError(undefined);
@@ -39,18 +41,16 @@ function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcom
       { full_name: fullName.trim(), phone: phone.trim() || null },
       {
         onSuccess: () => (router.canGoBack() ? router.back() : router.replace("/")),
-        onError: (error) => notify("Enregistrement impossible", toUserMessage(error)),
+        onError: (error) => notify(t("profile.saveFailed"), toUserMessage(error)),
       },
     );
   };
 
   return (
     <Screen underHeader>
-      {welcome ? (
-        <AppText variant="body">Bienvenue ! Encore une petite étape : comment pouvons-nous vous appeler ?</AppText>
-      ) : null}
+      {welcome ? <AppText variant="body">{t("profile.welcome")}</AppText> : null}
       <TextField
-        label="Nom et prénom"
+        label={t("profile.name")}
         value={fullName}
         onChangeText={setFullName}
         autoComplete="name"
@@ -59,8 +59,8 @@ function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcom
         error={nameError}
       />
       <TextField
-        label="Téléphone (facultatif)"
-        hint="Utile pour vous prévenir en cas d’imprévu."
+        label={t("profile.phone")}
+        hint={t("profile.phoneHint")}
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"
@@ -68,8 +68,8 @@ function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcom
         textContentType="telephoneNumber"
         maxLength={30}
       />
-      <AppText variant="caption">Email : {profile.email}</AppText>
-      <Button label="Enregistrer" loading={update.isPending} onPress={save} />
+      <AppText variant="caption">{t("profile.email", { email: profile.email })}</AppText>
+      <Button label={t("common.save")} loading={update.isPending} onPress={save} />
     </Screen>
   );
 }

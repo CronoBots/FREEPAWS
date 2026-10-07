@@ -5,8 +5,10 @@ import { Button } from "@/components/button";
 import { ListRow } from "@/components/list-row";
 import { Screen } from "@/components/screen";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
+import { useLanguage } from "@/i18n";
 
 export default function DogsRoute() {
+  const { t } = useLanguage();
   const dogs = useDogs();
   const add = () => router.push({ pathname: "/dogs/[id]", params: { id: "new" } });
 
@@ -18,9 +20,9 @@ export default function DogsRoute() {
         <ErrorView error={dogs.error} onRetry={() => void dogs.refetch()} />
       ) : dogs.data?.length === 0 ? (
         <EmptyView
-          title="Aucun chien enregistré"
-          message="Présentez-nous votre compagnon : nous préparerons mieux chaque session."
-          actionLabel="Ajouter un chien"
+          title={t("dogs.emptyTitle")}
+          message={t("dogs.emptyText")}
+          actionLabel={t("dogs.add")}
           onAction={add}
         />
       ) : (
@@ -33,7 +35,7 @@ export default function DogsRoute() {
               onPress={() => router.push({ pathname: "/dogs/[id]", params: { id: dog.id } })}
             />
           ))}
-          <Button label="Ajouter un chien" variant="secondary" onPress={add} />
+          <Button label={t("dogs.add")} variant="secondary" onPress={add} />
         </>
       )}
     </Screen>

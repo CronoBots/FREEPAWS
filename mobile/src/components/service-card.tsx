@@ -5,9 +5,11 @@ import type { Service } from "@/api/services";
 import { AppText } from "@/components/text";
 import { colors, radius, space } from "@/theme";
 import { formatPrice } from "@/utils/format";
+import { useLanguage } from "@/i18n";
 
 export function ServiceCard({ service }: { service: Service }) {
-  const price = formatPrice(service.price_cents);
+  const { t } = useLanguage();
+  const price = formatPrice(service.displayPriceCents);
   return (
     <Pressable
       onPress={() => router.push({ pathname: "/service/[slug]", params: { slug: service.slug } })}
@@ -19,7 +21,7 @@ export function ServiceCard({ service }: { service: Service }) {
       <AppText variant="body">{service.summary}</AppText>
       {price ? <AppText variant="bodyStrong">{price}</AppText> : null}
       <AppText variant="caption" style={styles.more}>
-        En savoir plus →
+        {t("coaching.more")}
       </AppText>
     </Pressable>
   );

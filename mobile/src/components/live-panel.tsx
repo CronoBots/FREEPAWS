@@ -5,51 +5,44 @@ import { Card } from "@/components/card";
 import { LivePlayer } from "@/components/live-player";
 import { LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
+import { useLanguage } from "@/i18n";
 import { colors, radius, space } from "@/theme";
 
 /** Caméra à deux temps (textes de freepaws.be/journal-de-bord.html). */
 export function LivePanel({ status, statusFailed }: { status: ParkStatus | undefined; statusFailed: boolean }) {
+  const { t } = useLanguage();
   const parkOpen = Boolean(status) && status?.status !== "not_open";
   const live = useLiveStream(parkOpen);
 
   if (status?.status === "not_open") {
     return (
       <Card>
-        <AppText variant="eyebrow">L’accès pensé pour la liberté et la sécurité</AppText>
-        <AppText variant="body">Une fois ouvert, le parc fonctionnera avec un système de caméra à deux temps.</AppText>
-        <AppText variant="bodyStrong">Parc libre</AppText>
-        <AppText variant="body">
-          Consultez le direct pour découvrir le parc à tout moment : sa disponibilité, mais aussi son état du moment —
-          pluie, neige, terrain praticable — avant de vous déplacer.
-        </AppText>
-        <AppText variant="bodyStrong">Parc réservé</AppText>
-        <AppText variant="body">
-          L’accès devient privé, conformément à la protection de la vie privée. Vous gardez un œil sur votre chien —
-          utile si le rappel n’est pas encore acquis — et je garde un accès en cas d’incident.
-        </AppText>
+        <AppText variant="eyebrow">{t("camera.accessTitle")}</AppText>
+        <AppText variant="body">{t("camera.twoTimes")}</AppText>
+        <AppText variant="bodyStrong">{t("camera.freeTitle")}</AppText>
+        <AppText variant="body">{t("camera.freeText")}</AppText>
+        <AppText variant="bodyStrong">{t("camera.reservedTitle")}</AppText>
+        <AppText variant="body">{t("camera.reservedText")}</AppText>
       </Card>
     );
   }
 
   let body;
   if (statusFailed) {
-    body = <Placeholder title="Direct indisponible" />;
+    body = <Placeholder title={t("camera.unavailable")} />;
   } else if (!status || live.isLoading) {
-    body = <LoadingView label="Connexion au direct…" />;
+    body = <LoadingView label={t("camera.connecting")} />;
   } else if (live.isError) {
-    body = <Placeholder title="Direct indisponible" />;
+    body = <Placeholder title={t("camera.unavailable")} />;
   } else if (!live.data || live.data.mode === "denied") {
     body =
       status.status === "reserved" ? (
-        <Placeholder
-          title="Parc réservé"
-          message="L’accès devient privé, conformément à la protection de la vie privée."
-        />
+        <Placeholder title={t("camera.reservedTitle")} message={t("camera.reservedShort")} />
       ) : (
-        <Placeholder title="Parc fermé" />
+        <Placeholder title={t("camera.closed")} />
       );
   } else if (live.data.streams.length === 0) {
-    body = <Placeholder title="Direct indisponible" />;
+    body = <Placeholder title={t("camera.unavailable")} />;
   } else {
     body = (
       <View style={styles.streams}>
@@ -62,7 +55,7 @@ export function LivePanel({ status, statusFailed }: { status: ParkStatus | undef
 
   return (
     <Card>
-      <AppText variant="eyebrow">Caméra</AppText>
+      <AppText variant="eyebrow">{t("camera.eyebrow")}</AppText>
       {body}
     </Card>
   );

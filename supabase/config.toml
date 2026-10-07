@@ -427,3 +427,7 @@ enabled = true
 # l'accès via camera_access() avec le jeton de l'appelant.
 [functions.live-stream]
 verify_jwt = false
+
+# Flux iCal : protégé par le jeton secret de settings.calendar_token, pas par une session.
+[functions.calendar-feed]
+verify_jwt = false

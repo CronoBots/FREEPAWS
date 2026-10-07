@@ -13,42 +13,24 @@ import { Screen } from "@/components/screen";
 import { ErrorView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { useCompact } from "@/hooks/use-compact";
+import { useLanguage } from "@/i18n";
 import { openContactEmail } from "@/lib/contact";
 import { space } from "@/theme";
 
-// Textes repris de freepaws.be (accueil et journal-de-bord.html).
-const STEPS: { state: string; tone: "success" | "warning" | "neutral"; title: string; text: string }[] = [
-  {
-    state: "Fait",
-    tone: "success",
-    title: "Formation",
-    text: "Accompagnement avec Alpi (SAACE) pour structurer le business plan et le plan financier — finalisation prévue en septembre.",
-  },
-  {
-    state: "Fait",
-    tone: "success",
-    title: "Communauté",
-    text: "Plus de 110 réponses à l’enquête menée auprès de propriétaires de chiens de la région, et une communauté grandissante sur les réseaux sociaux.",
-  },
-  {
-    state: "En cours",
-    tone: "warning",
-    title: "Recherche du terrain",
-    text: "L’étape la plus longue : entre les contraintes d’urbanisme wallonnes (CoDT) et le choix du bon lieu sur l’axe Liège–Huy–Waremme, je prends le temps de bien faire les choses.",
-  },
-  {
-    state: "À venir",
-    tone: "neutral",
-    title: "Ouverture",
-    text: "Réservation en ligne et accès par caméra en direct, pour savoir à tout moment si le parc est libre.",
-  },
-];
+// Textes repris de freepaws.be (accueil et journal-de-bord.html), traduits dans i18n/.
+const STEPS = [
+  { state: "park.stepDone", tone: "success", title: "park.step1Title", text: "park.step1Text" },
+  { state: "park.stepDone", tone: "success", title: "park.step2Title", text: "park.step2Text" },
+  { state: "park.stepInProgress", tone: "warning", title: "park.step3Title", text: "park.step3Text" },
+  { state: "park.stepUpcoming", tone: "neutral", title: "park.step4Title", text: "park.step4Text" },
+] as const;
 
 export default function ParkScreen() {
   const status = useParkStatus();
   const parkService = useService(PARK_SERVICE_SLUG).data;
   const notOpen = status.data?.status === "not_open";
   const compact = useCompact();
+  const { t } = useLanguage();
 
   return (
     <Screen refreshing={status.isRefetching} onRefresh={() => void status.refetch()}>
@@ -57,20 +39,17 @@ export default function ParkScreen() {
           source={require("@/assets/logo.png")}
           style={compact ? styles.logoCompact : styles.logo}
           contentFit="contain"
-          accessibilityLabel="Logo FreePaws"
+          accessibilityLabel={t("common.logoLabel")}
         />
         <View style={styles.brandText}>
-          <AppText variant="eyebrow">Un espace de liberté</AppText>
+          <AppText variant="eyebrow">{t("park.eyebrow")}</AppText>
           <AppText variant="display" accessibilityRole="header" style={compact && styles.titleCompact}>
             FreePaws Park
           </AppText>
         </View>
       </View>
 
-      <AppText variant="body">
-        Un lieu pensé pour que votre chien puisse enfin courir, jouer et se dépenser librement et en sécurité, entre
-        Liège, Huy et Waremme.
-      </AppText>
+      <AppText variant="body">{t("park.intro")}</AppText>
 
       {status.isError ? (
         <ErrorView error={status.error} onRetry={() => void status.refetch()} />
@@ -80,19 +59,13 @@ export default function ParkScreen() {
 
       {notOpen || !parkService?.booking_enabled ? (
         <Card>
-          <AppText variant="heading">Être tenu·e informé·e de l’ouverture</AppText>
-          <AppText variant="body">
-            Laissez votre email pour suivre l’avancée du projet et être prévenu·e dès que le terrain sera trouvé et le
-            parc en préparation.
-          </AppText>
-          <Button
-            label="Rejoindre la liste d’attente"
-            onPress={() => void openContactEmail("Liste d’attente FreePaws Park")}
-          />
+          <AppText variant="heading">{t("park.waitlistTitle")}</AppText>
+          <AppText variant="body">{t("park.waitlistText")}</AppText>
+          <Button label={t("park.waitlistButton")} onPress={() => void openContactEmail(t("park.waitlistSubject"))} />
         </Card>
       ) : (
         <Button
-          label="Réserver le parc"
+          label={t("park.book")}
           onPress={() => router.push({ pathname: "/service/[slug]", params: { slug: PARK_SERVICE_SLUG } })}
         />
       )}
@@ -101,12 +74,12 @@ export default function ParkScreen() {
 
       {notOpen ? (
         <Card>
-          <AppText variant="eyebrow">Où en est le projet</AppText>
+          <AppText variant="eyebrow">{t("park.projectTitle")}</AppText>
           {STEPS.map((step) => (
             <View key={step.title} style={styles.step}>
-              <Badge label={step.state} tone={step.tone} />
-              <AppText variant="bodyStrong">{step.title}</AppText>
-              <AppText variant="body">{step.text}</AppText>
+              <Badge label={t(step.state)} tone={step.tone} />
+              <AppText variant="bodyStrong">{t(step.title)}</AppText>
+              <AppText variant="body">{t(step.text)}</AppText>
             </View>
           ))}
         </Card>

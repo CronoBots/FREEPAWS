@@ -4,12 +4,14 @@ import type { Service } from "@/api/services";
 import { Button } from "@/components/button";
 import { Screen } from "@/components/screen";
 import { AppText } from "@/components/text";
+import { useLanguage } from "@/i18n";
 import { openContactEmail } from "@/lib/contact";
 import { formatPrice } from "@/utils/format";
 
 /** Prestation sans réservation en ligne : description du site + « Prendre rendez-vous » par email. */
 export function ServiceInfo({ service }: { service: Service }) {
-  const price = formatPrice(service.price_cents);
+  const { t } = useLanguage();
+  const price = formatPrice(service.displayPriceCents);
   const paragraphs = (service.description || service.summary).split(/\n{2,}/);
   return (
     <>
@@ -18,7 +20,10 @@ export function ServiceInfo({ service }: { service: Service }) {
         underHeader
         heading={service.name}
         footer={
-          <Button label="Prendre rendez-vous" onPress={() => void openContactEmail(`Rendez-vous : ${service.name}`)} />
+          <Button
+            label={t("coaching.appointment")}
+            onPress={() => void openContactEmail(t("coaching.appointmentSubject", { name: service.name }))}
+          />
         }
       >
         {paragraphs.map((text) => (
@@ -27,10 +32,7 @@ export function ServiceInfo({ service }: { service: Service }) {
           </AppText>
         ))}
         {price ? <AppText variant="bodyStrong">{price}</AppText> : null}
-        <AppText variant="caption">
-          Chaque situation est différente — le plus simple est d’en discuter directement pour voir quel accompagnement
-          correspond à votre famille.
-        </AppText>
+        <AppText variant="caption">{t("coaching.ctaText")}</AppText>
       </Screen>
     </>
   );

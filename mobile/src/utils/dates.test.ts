@@ -1,4 +1,7 @@
 import { addDays, brusselsDateTime, dayParts, formatDayLong, formatDuration, formatTime, toIsoDay } from "./dates";
+import { setLanguage } from "@/i18n";
+
+beforeEach(() => setLanguage("fr", { persist: false }));
 
 describe("dates (heure de Bruxelles)", () => {
   it("affiche l’heure locale de Bruxelles, été comme hiver", () => {

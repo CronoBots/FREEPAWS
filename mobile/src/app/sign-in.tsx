@@ -9,10 +9,12 @@ import { TextField } from "@/components/text-field";
 import { env } from "@/lib/env";
 import { supabase } from "@/lib/supabase";
 import { toUserMessage } from "@/utils/errors";
+import { useLanguage } from "@/i18n";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function SignInRoute() {
+  const { t } = useLanguage();
   const [step, setStep] = useState<"email" | "code" | "password">("email");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
@@ -24,7 +26,7 @@ export default function SignInRoute() {
   const sendCode = async () => {
     const address = email.trim().toLowerCase();
     if (!EMAIL_PATTERN.test(address)) {
-      setError("Saisissez une adresse email valide.");
+      setError(t("signIn.invalidEmail"));
       return;
     }
     if (env.reviewEmail && address === env.reviewEmail) {
@@ -70,12 +72,10 @@ export default function SignInRoute() {
     <Screen underHeader>
       {step === "email" ? (
         <>
-          <AppText variant="title">Bienvenue</AppText>
-          <AppText variant="body">
-            Saisissez votre email : nous vous envoyons un code à 6 chiffres. Pas de mot de passe à retenir.
-          </AppText>
+          <AppText variant="title">{t("signIn.welcome")}</AppText>
+          <AppText variant="body">{t("signIn.intro")}</AppText>
           <TextField
-            label="Adresse email"
+            label={t("signIn.email")}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -86,17 +86,15 @@ export default function SignInRoute() {
             onSubmitEditing={() => void sendCode()}
             error={error}
           />
-          <Button label="Recevoir mon code" loading={busy} onPress={() => void sendCode()} />
-          <AppText variant="caption">
-            En continuant, vous acceptez nos conditions d’utilisation et notre politique de confidentialité.
-          </AppText>
-          <Button label="Lire la politique de confidentialité" variant="ghost" onPress={() => router.push("/legal")} />
+          <Button label={t("signIn.sendCode")} loading={busy} onPress={() => void sendCode()} />
+          <AppText variant="caption">{t("signIn.consent")}</AppText>
+          <Button label={t("signIn.readPolicy")} variant="ghost" onPress={() => router.push("/legal")} />
         </>
       ) : step === "password" ? (
         <>
-          <AppText variant="title">Compte de démonstration</AppText>
+          <AppText variant="title">{t("signIn.demoTitle")}</AppText>
           <TextField
-            label="Mot de passe"
+            label={t("signIn.password")}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -105,15 +103,15 @@ export default function SignInRoute() {
             onSubmitEditing={() => void verify()}
             error={error}
           />
-          <Button label="Se connecter" loading={busy} disabled={!password} onPress={() => void verify()} />
+          <Button label={t("signIn.submit")} loading={busy} disabled={!password} onPress={() => void verify()} />
         </>
       ) : (
         <>
-          <AppText variant="title">Vérifiez vos emails</AppText>
-          <AppText variant="body">Nous avons envoyé un code à {email}. Il est valable 10 minutes.</AppText>
+          <AppText variant="title">{t("signIn.checkEmail")}</AppText>
+          <AppText variant="body">{t("signIn.codeSent", { email })}</AppText>
           <TextField
             ref={codeInput}
-            label="Code à 6 chiffres"
+            label={t("signIn.code")}
             value={code}
             onChangeText={(text) => setCode(text.replace(/\D/g, "").slice(0, 6))}
             keyboardType="number-pad"
@@ -124,9 +122,14 @@ export default function SignInRoute() {
             onSubmitEditing={() => void verify()}
             error={error}
           />
-          <Button label="Se connecter" loading={busy} disabled={code.length !== 6} onPress={() => void verify()} />
           <Button
-            label="Changer d’adresse ou renvoyer un code"
+            label={t("signIn.submit")}
+            loading={busy}
+            disabled={code.length !== 6}
+            onPress={() => void verify()}
+          />
+          <Button
+            label={t("signIn.changeEmail")}
             variant="ghost"
             onPress={() => {
               setStep("email");

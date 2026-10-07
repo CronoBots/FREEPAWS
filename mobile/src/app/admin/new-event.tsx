@@ -10,11 +10,22 @@ import { Screen } from "@/components/screen";
 import { LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
+import { AdminGuard } from "@/components/admin-guard";
+import { useLanguage } from "@/i18n";
 import { colors, space } from "@/theme";
 import { brusselsDateTime } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 
 export default function NewEventRoute() {
+  return (
+    <AdminGuard>
+      <NewEvent />
+    </AdminGuard>
+  );
+}
+
+function NewEvent() {
+  const { t } = useLanguage();
   const services = useServices();
   const create = useCreateEvent();
   const eventServices =
@@ -37,8 +48,8 @@ export default function NewEventRoute() {
     if (!service) return;
     const start = brusselsDateTime(day, time);
     const places = capacity ? Number.parseInt(capacity, 10) : service.default_capacity;
-    if (!start || start < new Date()) return setError("Date ou heure invalide (AAAA-MM-JJ et HH:MM, dans le futur).");
-    if (!Number.isInteger(places) || places < 1 || places > 50) return setError("Nombre de places entre 1 et 50.");
+    if (!start || start < new Date()) return setError(t("admin.invalidDate"));
+    if (!Number.isInteger(places) || places < 1 || places > 50) return setError(t("admin.invalidPlaces"));
     setError(null);
     create.mutate(
       {
@@ -53,7 +64,7 @@ export default function NewEventRoute() {
         onError: (err) =>
           setError(
             String((err as { message?: string }).message ?? "").includes("appointments_no_overlap")
-              ? "Ce créneau chevauche un autre rendez-vous."
+              ? t("admin.overlap")
               : toUserMessage(err),
           ),
       },
@@ -62,7 +73,7 @@ export default function NewEventRoute() {
 
   return (
     <Screen underHeader>
-      <AppText variant="heading">Prestation</AppText>
+      <AppText variant="heading">{t("admin.service")}</AppText>
       <View style={styles.row}>
         {eventServices.map((item) => (
           <Chip
@@ -73,16 +84,22 @@ export default function NewEventRoute() {
           />
         ))}
       </View>
-      <TextField label="Date" placeholder="AAAA-MM-JJ" value={day} onChangeText={setDay} maxLength={10} />
       <TextField
-        label="Heure de début (Bruxelles)"
-        placeholder="HH:MM"
+        label={t("admin.date")}
+        placeholder={t("dogs.datePlaceholder")}
+        value={day}
+        onChangeText={setDay}
+        maxLength={10}
+      />
+      <TextField
+        label={t("admin.time")}
+        placeholder={t("admin.timePlaceholder")}
         value={time}
         onChangeText={setTime}
         maxLength={5}
       />
       <TextField
-        label="Places"
+        label={t("admin.places_label")}
         placeholder={String(service?.default_capacity ?? 4)}
         value={capacity}
         onChangeText={(text) => setCapacity(text.replace(/\D/g, ""))}
@@ -94,7 +111,7 @@ export default function NewEventRoute() {
           {error}
         </AppText>
       ) : null}
-      <Button label="Planifier" loading={create.isPending} disabled={!service} onPress={submit} />
+      <Button label={t("admin.plan")} loading={create.isPending} disabled={!service} onPress={submit} />
     </Screen>
   );
 }

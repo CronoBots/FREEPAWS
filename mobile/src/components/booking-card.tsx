@@ -6,14 +6,16 @@ import { Badge } from "@/components/badge";
 import { AppText } from "@/components/text";
 import { colors, radius, space } from "@/theme";
 import { formatDayLong, formatTime } from "@/utils/dates";
+import { t, useLanguage } from "@/i18n";
 
 export function bookingBadge(booking: Booking): { label: string; tone: "success" | "neutral" | "danger" } {
-  if (booking.status === "cancelled") return { label: "Annulée", tone: "danger" };
-  if (isUpcoming(booking)) return { label: "Confirmée", tone: "success" };
-  return { label: "Passée", tone: "neutral" };
+  if (booking.status === "cancelled") return { label: t("booking.badgeCancelled"), tone: "danger" };
+  if (isUpcoming(booking)) return { label: t("booking.badgeConfirmed"), tone: "success" };
+  return { label: t("booking.badgePast"), tone: "neutral" };
 }
 
 export function BookingCard({ booking }: { booking: Booking }) {
+  useLanguage();
   const badge = bookingBadge(booking);
   const when = `${formatDayLong(booking.start)}, ${formatTime(booking.start)} –⁠ ${formatTime(booking.end)}`;
   return (
@@ -26,7 +28,7 @@ export function BookingCard({ booking }: { booking: Booking }) {
       <Badge label={badge.label} tone={badge.tone} />
       <AppText variant="heading">{booking.service.name}</AppText>
       <AppText variant="body">{when}</AppText>
-      {booking.dog ? <AppText variant="caption">Avec {booking.dog.name}</AppText> : null}
+      {booking.dog ? <AppText variant="caption">{t("common.with", { name: booking.dog.name })}</AppText> : null}
     </Pressable>
   );
 }

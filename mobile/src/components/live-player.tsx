@@ -2,10 +2,12 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import { StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/text";
+import { useLanguage } from "@/i18n";
 import { colors, radius, space } from "@/theme";
 
 /** Lecture d’un flux HLS en direct (URL signée à durée courte). */
 export function LivePlayer({ url, label }: { url: string; label: string }) {
+  const { t } = useLanguage();
   const player = useVideoPlayer({ uri: url, contentType: "hls" }, (instance) => {
     instance.muted = true;
     instance.loop = false;
@@ -19,12 +21,12 @@ export function LivePlayer({ url, label }: { url: string; label: string }) {
         style={styles.video}
         contentFit="cover"
         nativeControls={false}
-        accessibilityLabel={`Direct vidéo : ${label}`}
+        accessibilityLabel={t("camera.liveLabel", { name: label })}
       />
       <View style={styles.liveTag}>
         <View style={styles.liveDot} />
         <AppText variant="caption" style={styles.liveText}>
-          EN DIRECT · {label}
+          {t("camera.live", { name: label })}
         </AppText>
       </View>
     </View>

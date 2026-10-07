@@ -2,19 +2,21 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
 
+import { type TranslationKey, useLanguage } from "@/i18n";
 import { colors, fonts } from "@/theme";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
 // Sur le web, les onglets natifs s’affichent en haut : on garde une barre classique en bas.
-const TABS: { name: string; title: string; icon: IconName; iconActive: IconName }[] = [
-  { name: "index", title: "Le parc", icon: "paw-outline", iconActive: "paw" },
-  { name: "services", title: "Coaching", icon: "people-outline", iconActive: "people" },
-  { name: "bookings", title: "Réservations", icon: "list-outline", iconActive: "list" },
-  { name: "account", title: "Compte", icon: "person-circle-outline", iconActive: "person-circle" },
+const TABS: { name: string; title: TranslationKey; icon: IconName; iconActive: IconName }[] = [
+  { name: "index", title: "tabs.park", icon: "paw-outline", iconActive: "paw" },
+  { name: "services", title: "tabs.coaching", icon: "people-outline", iconActive: "people" },
+  { name: "bookings", title: "tabs.bookingsShort", icon: "list-outline", iconActive: "list" },
+  { name: "account", title: "tabs.account", icon: "person-circle-outline", iconActive: "person-circle" },
 ];
 
 export default function TabsLayout() {
+  const { t } = useLanguage();
   return (
     <Tabs
       screenOptions={{
@@ -36,7 +38,7 @@ export default function TabsLayout() {
           key={tab.name}
           name={tab.name}
           options={{
-            title: tab.title,
+            title: t(tab.title),
             tabBarIcon: ({ focused, color, size }) => (
               <Ionicons name={focused ? tab.iconActive : tab.icon} color={color} size={size} />
             ),

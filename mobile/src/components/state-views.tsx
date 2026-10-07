@@ -4,22 +4,25 @@ import { Button } from "@/components/button";
 import { AppText } from "@/components/text";
 import { colors, space } from "@/theme";
 import { toUserMessage } from "@/utils/errors";
+import { useLanguage } from "@/i18n";
 
-export function LoadingView({ label = "Chargement…" }: { label?: string }) {
+export function LoadingView({ label }: { label?: string }) {
+  const { t } = useLanguage();
   return (
-    <View style={styles.box} accessibilityLabel={label} accessibilityRole="progressbar">
+    <View style={styles.box} accessibilityLabel={label ?? t("common.loading")} accessibilityRole="progressbar">
       <ActivityIndicator color={colors.olive} />
     </View>
   );
 }
 
 export function ErrorView({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+  const { t } = useLanguage();
   return (
     <View style={styles.box} accessibilityRole="alert">
       <AppText variant="bodyStrong" style={styles.center}>
         {toUserMessage(error)}
       </AppText>
-      {onRetry ? <Button label="Réessayer" variant="secondary" onPress={onRetry} /> : null}
+      {onRetry ? <Button label={t("common.retry")} variant="secondary" onPress={onRetry} /> : null}
     </View>
   );
 }

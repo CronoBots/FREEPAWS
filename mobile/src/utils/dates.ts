@@ -1,14 +1,28 @@
-// Toutes les dates affichées le sont en heure de Bruxelles, quel que soit le fuseau du téléphone.
-export const TIME_ZONE = "Europe/Brussels";
-const LOCALE = "fr-BE";
+import { getLocale } from "@/i18n";
 
-const timeFormat = new Intl.DateTimeFormat(LOCALE, { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit" });
-const dayLongFormat = new Intl.DateTimeFormat(LOCALE, {
+// Toutes les dates affichées le sont en heure de Bruxelles, quel que soit le fuseau du téléphone,
+// dans la langue choisie (français ou anglais).
+export const TIME_ZONE = "Europe/Brussels";
+
+const formatters = new Map<string, Intl.DateTimeFormat>();
+function formatter(options: Intl.DateTimeFormatOptions, locale = getLocale()) {
+  const key = locale + JSON.stringify(options);
+  let format = formatters.get(key);
+  if (!format) formatters.set(key, (format = new Intl.DateTimeFormat(locale, options)));
+  return format;
+}
+const TIME_OPTIONS: Intl.DateTimeFormatOptions = {
+  timeZone: TIME_ZONE,
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+};
+const DAY_LONG_OPTIONS: Intl.DateTimeFormatOptions = {
   timeZone: TIME_ZONE,
   weekday: "long",
   day: "numeric",
   month: "long",
-});
+};
 const isoDayFormat = new Intl.DateTimeFormat("en-CA", {
   timeZone: TIME_ZONE,
   year: "numeric",
@@ -18,12 +32,12 @@ const isoDayFormat = new Intl.DateTimeFormat("en-CA", {
 
 /** "14:30" */
 export function formatTime(date: Date | string): string {
-  return timeFormat.format(new Date(date));
+  return formatter(TIME_OPTIONS).format(new Date(date));
 }
 
 /** "Mercredi 14 octobre" */
 export function formatDayLong(date: Date | string): string {
-  const text = dayLongFormat.format(new Date(date));
+  const text = formatter(DAY_LONG_OPTIONS).format(new Date(date));
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
@@ -43,8 +57,7 @@ export function addDays(isoDay: string, days: number): string {
 export function dayParts(isoDay: string): { weekday: string; day: string; month: string } {
   const [y, m, d] = isoDay.split("-").map(Number) as [number, number, number];
   const date = new Date(Date.UTC(y, m - 1, d, 12));
-  const fmt = (options: Intl.DateTimeFormatOptions) =>
-    new Intl.DateTimeFormat(LOCALE, { timeZone: "UTC", ...options }).format(date);
+  const fmt = (options: Intl.DateTimeFormatOptions) => formatter({ timeZone: "UTC", ...options }).format(date);
   return { weekday: fmt({ weekday: "short" }), day: String(d), month: fmt({ month: "short" }) };
 }
 
@@ -104,4 +117,12 @@ export function brusselsDateTime(isoDay: string, time: string): Date | null {
   const check = new Date(instant.getTime() + brusselsOffset(instant));
   if (check.getUTCHours() !== h || check.getUTCMinutes() !== min || check.getUTCDate() !== d) return null;
   return instant;
+}
+
+/** Nom du jour ISO (1 = lundi … 7 = dimanche) dans la langue courante. */
+export function weekdayName(isoWeekday: number, style: "long" | "short" = "long"): string {
+  // Le 5 janvier 2026 est un lundi.
+  const date = new Date(Date.UTC(2026, 0, 4 + isoWeekday, 12));
+  const text = formatter({ timeZone: "UTC", weekday: style }).format(date);
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }

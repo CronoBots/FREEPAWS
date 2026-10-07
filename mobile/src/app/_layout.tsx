@@ -8,9 +8,10 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { ConfigMissing } from "@/screens/config-missing";
+import { loadStoredLanguage, useLanguage } from "@/i18n";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { queryClient } from "@/lib/query-client";
@@ -39,7 +40,13 @@ export default function RootLayout() {
 
 function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   const { ready } = useAuth();
-  const appReady = fontsReady && ready;
+  const { t } = useLanguage();
+  const [languageReady, setLanguageReady] = useState(false);
+  const appReady = fontsReady && ready && languageReady;
+
+  useEffect(() => {
+    void loadStoredLanguage().finally(() => setLanguageReady(true));
+  }, []);
 
   useEffect(() => {
     if (appReady) void SplashScreen.hideAsync();
@@ -63,15 +70,22 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false, title: "FreePaws" }} />
-      <Stack.Screen name="sign-in" options={{ presentation: "modal", title: "Connexion" }} />
+      <Stack.Screen name="sign-in" options={{ presentation: "modal", title: t("titles.signIn") }} />
       <Stack.Screen name="service/[slug]" options={{ title: "" }} />
-      <Stack.Screen name="booking/[id]" options={{ title: "Réservation" }} />
-      <Stack.Screen name="profile" options={{ title: "Mes informations" }} />
-      <Stack.Screen name="dogs/index" options={{ title: "Mes chiens" }} />
-      <Stack.Screen name="dogs/[id]" options={{ title: "Chien" }} />
-      <Stack.Screen name="legal" options={{ title: "Confidentialité" }} />
-      <Stack.Screen name="admin/index" options={{ title: "Agenda" }} />
-      <Stack.Screen name="admin/new-event" options={{ presentation: "modal", title: "Planifier un atelier" }} />
+      <Stack.Screen name="booking/[id]" options={{ title: t("titles.booking") }} />
+      <Stack.Screen name="profile" options={{ title: t("titles.profile") }} />
+      <Stack.Screen name="dogs/index" options={{ title: t("titles.dogs") }} />
+      <Stack.Screen name="dogs/[id]" options={{ title: t("titles.dog") }} />
+      <Stack.Screen name="legal" options={{ title: t("titles.legal") }} />
+      <Stack.Screen name="admin/index" options={{ title: t("titles.admin") }} />
+      <Stack.Screen name="admin/agenda" options={{ title: t("admin.hubAgenda") }} />
+      <Stack.Screen name="admin/services" options={{ title: t("admin.hubServices") }} />
+      <Stack.Screen name="admin/service/[id]" options={{ title: "" }} />
+      <Stack.Screen name="admin/availability" options={{ title: t("admin.hubAvailability") }} />
+      <Stack.Screen name="admin/closures" options={{ title: t("admin.hubClosures") }} />
+      <Stack.Screen name="admin/discounts" options={{ title: t("admin.hubDiscounts") }} />
+      <Stack.Screen name="admin/documents" options={{ title: t("admin.hubDocuments") }} />
+      <Stack.Screen name="admin/new-event" options={{ presentation: "modal", title: t("titles.newEvent") }} />
     </Stack>
   );
 }

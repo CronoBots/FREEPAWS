@@ -2,6 +2,7 @@ import { Pressable, ScrollView, StyleSheet } from "react-native";
 
 import { AppText } from "@/components/text";
 import { colors, fonts, radius, space } from "@/theme";
+import { useLanguage } from "@/i18n";
 import { dayParts } from "@/utils/dates";
 
 type Props = {
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export function DayPicker({ days, selected, onSelect, counts }: Props) {
+  const { t, tp } = useLanguage();
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
       {days.map((day) => {
@@ -24,9 +26,11 @@ export function DayPicker({ days, selected, onSelect, counts }: Props) {
           <Pressable
             key={day}
             accessibilityRole="button"
-            accessibilityLabel={`${parts.weekday} ${parts.day} ${parts.month}, ${
-              disabled ? "complet" : `${count} créneau${count > 1 ? "x" : ""} disponible${count > 1 ? "s" : ""}`
-            }`}
+            accessibilityLabel={
+              disabled
+                ? t("booking.dayFull", { day: `${parts.weekday} ${parts.day} ${parts.month}` })
+                : tp("booking.dayAvailable", count, { day: `${parts.weekday} ${parts.day} ${parts.month}` })
+            }
             accessibilityState={{ selected: isSelected, disabled }}
             disabled={disabled}
             onPress={() => onSelect(day)}

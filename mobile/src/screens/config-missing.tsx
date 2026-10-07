@@ -1,14 +1,13 @@
 import { Screen } from "@/components/screen";
 import { AppText } from "@/components/text";
+import { useLanguage } from "@/i18n";
 
 /** Affiché en développement si les variables Supabase ne sont pas renseignées. */
 export function ConfigMissing() {
+  const { t } = useLanguage();
   return (
-    <Screen title="Configuration requise">
-      <AppText variant="body">
-        Les variables EXPO_PUBLIC_SUPABASE_URL et EXPO_PUBLIC_SUPABASE_KEY ne sont pas définies. Copiez
-        mobile/.env.example en mobile/.env.local, renseignez les valeurs du projet Supabase, puis relancez l’app.
-      </AppText>
+    <Screen title={t("config.title")}>
+      <AppText variant="body">{t("config.text")}</AppText>
     </Screen>
   );
 }

@@ -4,37 +4,48 @@ import type { ParkStatus } from "@/api/park";
 import { Card } from "@/components/card";
 import { AppText } from "@/components/text";
 import { colors, space } from "@/theme";
+import { useLanguage } from "@/i18n";
 import { formatTime } from "@/utils/dates";
 
-const COPY = {
-  free: { label: "Libre", color: colors.free, until: "jusqu’à" },
-  reserved: { label: "Réservé", color: colors.reserved, until: "jusqu’à" },
-  closed: { label: "Fermé", color: colors.closed, until: "jusqu’à" },
-  not_open: { label: "Pas encore ouvert", color: colors.reserved, until: "" },
+const COLORS = {
+  free: colors.free,
+  reserved: colors.reserved,
+  closed: colors.closed,
+  not_open: colors.reserved,
 } as const;
 
 export function ParkStatusCard({ status }: { status: ParkStatus | undefined }) {
-  const copy = status ? COPY[status.status] : null;
+  const { t } = useLanguage();
+  const labels = {
+    free: t("status.free"),
+    reserved: t("status.reserved"),
+    closed: t("status.closed"),
+    not_open: t("status.notOpen"),
+  };
+  const label = status ? labels[status.status] : null;
+  const until = status?.until ? formatTime(status.until) : null;
   const detail = !status
-    ? "Statut en cours de chargement…"
+    ? t("status.loading")
     : status.status === "not_open"
-      ? "Projet actif, recherche de terrain en cours."
+      ? t("status.notOpenDetail")
       : status.status === "free"
-        ? status.until
-          ? `Disponible maintenant, jusqu’à ${formatTime(status.until)}.`
-          : "Disponible maintenant."
+        ? until
+          ? t("status.freeUntil", { time: until })
+          : t("status.freeNow")
         : status.status === "reserved"
-          ? `Session privée en cours${status.until ? `, jusqu’à ${formatTime(status.until)}` : ""}.`
-          : status.until
-            ? `Fermé jusqu’à ${formatTime(status.until)}.`
-            : "En dehors des heures d’ouverture.";
+          ? until
+            ? t("status.reservedUntil", { time: until })
+            : t("status.reservedNow")
+          : until
+            ? t("status.closedUntil", { time: until })
+            : t("status.closedNow");
 
   return (
-    <Card accessibilityRole="summary" accessibilityLabel={`Parc ${copy?.label ?? ""}. ${detail}`}>
-      <AppText variant="eyebrow">{status?.status === "not_open" ? "FreePaws Park" : "En ce moment"}</AppText>
+    <Card accessibilityRole="summary" accessibilityLabel={t("status.a11y", { label: label ?? "", detail })}>
+      <AppText variant="eyebrow">{status?.status === "not_open" ? "FreePaws Park" : t("status.now")}</AppText>
       <View style={styles.row}>
-        <View style={[styles.dot, { backgroundColor: copy?.color ?? colors.line }]} />
-        <AppText variant="title">{copy?.label ?? "…"}</AppText>
+        <View style={[styles.dot, { backgroundColor: status ? COLORS[status.status] : colors.line }]} />
+        <AppText variant="title">{label ?? "…"}</AppText>
       </View>
       <AppText variant="body">{detail}</AppText>
     </Card>

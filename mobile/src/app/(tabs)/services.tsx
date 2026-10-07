@@ -1,45 +1,43 @@
-import { useServices } from "@/api/services";
+import { PARK_SERVICE_SLUG, useServices } from "@/api/services";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { Screen } from "@/components/screen";
 import { ServiceCard } from "@/components/service-card";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
+import { useLanguage } from "@/i18n";
 import { openContactEmail } from "@/lib/contact";
 
 // Textes repris de freepaws.be/coaching.html.
 export default function ServicesScreen() {
+  const { t } = useLanguage();
   const services = useServices();
+  // Le parc a son propre onglet.
+  const coaching = services.data?.filter((service) => service.slug !== PARK_SERVICE_SLUG) ?? [];
 
   return (
     <Screen
-      title="Coaching"
-      eyebrow="Cohabitation famille-chien"
+      title={t("tabs.coaching")}
+      eyebrow={t("coaching.eyebrow")}
       refreshing={services.isRefetching}
       onRefresh={() => void services.refetch()}
     >
-      <AppText variant="body">
-        Un accompagnement pensé pour que votre chien et votre famille trouvent leur équilibre — dès l’adoption, ou pour
-        apaiser une cohabitation devenue difficile.
-      </AppText>
+      <AppText variant="body">{t("coaching.intro")}</AppText>
 
       {services.isLoading ? (
         <LoadingView />
       ) : services.isError ? (
         <ErrorView error={services.error} onRetry={() => void services.refetch()} />
-      ) : services.data?.length === 0 ? (
-        <EmptyView title="Aucune prestation pour le moment" />
+      ) : coaching.length === 0 ? (
+        <EmptyView title={t("coaching.empty")} />
       ) : (
-        services.data?.map((service) => <ServiceCard key={service.id} service={service} />)
+        coaching.map((service) => <ServiceCard key={service.id} service={service} />)
       )}
 
       <Card>
-        <AppText variant="heading">Prête à en parler ?</AppText>
-        <AppText variant="body">
-          Chaque situation est différente — le plus simple est d’en discuter directement pour voir quel accompagnement
-          correspond à votre famille.
-        </AppText>
-        <Button label="Prendre rendez-vous" onPress={() => void openContactEmail("Prendre rendez-vous")} />
+        <AppText variant="heading">{t("coaching.ctaTitle")}</AppText>
+        <AppText variant="body">{t("coaching.ctaText")}</AppText>
+        <Button label={t("coaching.appointment")} onPress={() => void openContactEmail(t("coaching.appointment"))} />
       </Card>
     </Screen>
   );

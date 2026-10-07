@@ -1,4 +1,7 @@
 import { toUserMessage } from "./errors";
+import { setLanguage } from "@/i18n";
+
+beforeEach(() => setLanguage("fr", { persist: false }));
 
 describe("toUserMessage", () => {
   it("traduit les codes levés par les fonctions SQL", () => {

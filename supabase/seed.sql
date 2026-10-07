@@ -52,3 +52,53 @@ insert into public.services (
     120, 4, false, 50
   )
 on conflict (id) do nothing;
+
+-- Règles fixées par FreePaws dans son cahier des charges (7 octobre 2026) :
+--   coaching : adresse du domicile demandée, annulation et report en ligne jusqu'à 48 h avant ;
+--   parc : créneaux de 60 min (45 min dans le parc + 15 min de battement), 5 chiens maximum,
+--          annulation jusqu'à 48 h avant. Réservation fermée tant que le parc n'est pas ouvert.
+-- Les tarifs, horaires et délais de réservation restent à définir par FreePaws (non renseignés).
+update public.services set cancel_notice_hours = 48;
+update public.services set requires_address = true
+where slug in ('bilan-cohabitation', 'accompagnement-adoption', 'adoption-famille-atypique');
+
+insert into public.services (
+  id, slug, resource_id, mode, name, summary, description, location,
+  duration_minutes, slot_step_minutes, buffer_minutes, max_dogs, cancel_notice_hours, booking_enabled, sort_order
+) values (
+  '00000000-0000-4000-b000-000000000001', 'park-session',
+  '00000000-0000-4000-a000-000000000001', 'slot',
+  'FreePaws Park',
+  'Un lieu pensé pour que votre chien puisse enfin courir, jouer et se dépenser librement et en sécurité, entre Liège, Huy et Waremme.',
+  'Un lieu pensé pour que votre chien puisse enfin courir, jouer et se dépenser librement et en sécurité, entre Liège, Huy et Waremme.',
+  '',
+  45, 60, 0, 5, 48, false, 10
+)
+on conflict (id) do nothing;
+
+-- Traductions anglaises des textes du site (FR + EN au lancement), à faire valider par FreePaws.
+update public.services set translations = jsonb_build_object('en', jsonb_build_object(
+  'name', 'Home relationship assessment',
+  'summary', 'I observe the dynamic between your family and your dog, and build a personalised action plan with you.',
+  'description', E'2 hours, at home. I observe the dynamic between your child/family and your dog, identify the sources of tension, and build a personalised action plan with you.\n\nThe same approach as childhood and family professionals, applied to the child/family–dog relationship. This assessment is the starting point: together we look at what is really going on in your daily life with your dog, without judgement, to build a way forward that suits you.',
+  'location', 'At home'))
+where slug = 'bilan-cohabitation';
+update public.services set translations = jsonb_build_object('en', jsonb_build_object(
+  'name', 'Adoption support',
+  'summary', 'Before adoption: choosing a dog suited to your family, preparing your home, introduction protocol. After adoption: 3-month follow-up.',
+  'description', E'Before adoption: choosing a dog suited to your family, preparing your home, and an introduction protocol designed for a calm start.\n\nAfter adoption, a 3-month follow-up to adjust and consolidate the first weeks together — because the real questions often come once the dog is home, not before.'))
+where slug = 'accompagnement-adoption';
+update public.services set translations = jsonb_build_object('en', jsonb_build_object(
+  'name', 'Adoption for families with specific needs',
+  'summary', 'The same approach as standard support, with a choice of breed and a protocol designed around your child''s needs. 3-month follow-up included.',
+  'description', E'The same approach as standard support, but with a choice of breed and an introduction protocol designed specifically around your child''s profile and needs.\n\n3-month follow-up included. This programme draws on fifteen years of supporting children with specific needs, combined with dog training — so that the dog becomes real support, not an extra source of stress.'))
+where slug = 'adoption-famille-atypique';
+update public.services set translations = jsonb_build_object('en', jsonb_build_object(
+  'name', 'Group workshop “My child and my dog”',
+  'summary', 'Group format, 1 to 4 families, 2 hours. Time to learn together and share with families in similar situations.',
+  'description', E'Group format, 1 to 4 families, 2 hours. Time to learn together, share with families in similar situations, and observe the child–dog relationship in a supportive setting.\n\nIdeally held on private, fenced land where dogs can be present in complete safety.'))
+where slug = 'atelier-collectif';
+update public.services set translations = jsonb_build_object('en', jsonb_build_object(
+  'summary', 'A place designed so your dog can finally run, play and burn off energy freely and safely, between Liège, Huy and Waremme.',
+  'description', 'A place designed so your dog can finally run, play and burn off energy freely and safely, between Liège, Huy and Waremme.'))
+where slug = 'park-session';

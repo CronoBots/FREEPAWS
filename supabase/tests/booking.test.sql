@@ -61,10 +61,9 @@ select pg_temp.reset_role();
 -- Configuration de TEST (annulée en fin de transaction) : ces valeurs servent uniquement à
 -- vérifier les règles de réservation, ce ne sont pas des horaires ou tarifs FreePaws.
 update public.resources set is_open = true where slug = 'park';
-insert into public.services (id, slug, resource_id, mode, name, duration_minutes, slot_step_minutes,
-  min_notice_hours, max_advance_days, cancel_notice_hours, booking_enabled)
-values ('00000000-0000-4000-b000-000000000001', 'test-park', '00000000-0000-4000-a000-000000000001',
-  'slot', 'Test parc', 60, 60, 1, 30, 12, true);
+update public.services set booking_enabled = true, min_notice_hours = 1, max_advance_days = 30,
+  cancel_notice_hours = 12
+where slug = 'park-session';
 update public.services set booking_enabled = true, buffer_minutes = 30, slot_step_minutes = 30,
   min_notice_hours = 48, max_advance_days = 60, cancel_notice_hours = 48
 where slug = 'bilan-cohabitation';
@@ -149,7 +148,7 @@ select pg_temp.reset_role();
 
 -- 5. Buffer de trajet : un bilan à domicile bloque 30 min avant et après
 select pg_temp.act_as('22222222-2222-4222-8222-222222222222');
-select public.book_slot((select bilan from t), (select ten from t));
+select public.book_slot((select bilan from t), (select ten from t), p_visit_address => 'Rue du Test 1, Huy');
 select pg_temp.assert(
   not exists (
     select 1 from public.get_available_slots((select bilan from t), (select day from t), (select day from t)) s

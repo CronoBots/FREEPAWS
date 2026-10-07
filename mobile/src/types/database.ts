@@ -168,44 +168,65 @@ export type Database = {
       };
       bookings: {
         Row: {
+          adults_count: number | null;
           appointment_id: string;
           cancelled_at: string | null;
           cancelled_by: string | null;
+          children_count: number | null;
           client_id: string;
           client_notes: string | null;
           created_at: string;
+          discount_cents: number | null;
+          discount_code_id: string | null;
           dog_id: string | null;
+          dogs_count: number | null;
           id: string;
           party_size: number;
+          price_cents: number | null;
           status: Database["public"]["Enums"]["booking_status"];
           updated_at: string;
+          visit_address: string | null;
         };
         ComputedFields: never;
         Insert: {
+          adults_count?: number | null;
           appointment_id: string;
           cancelled_at?: string | null;
           cancelled_by?: string | null;
+          children_count?: number | null;
           client_id: string;
           client_notes?: string | null;
           created_at?: string;
+          discount_cents?: number | null;
+          discount_code_id?: string | null;
           dog_id?: string | null;
+          dogs_count?: number | null;
           id?: string;
           party_size?: number;
+          price_cents?: number | null;
           status?: Database["public"]["Enums"]["booking_status"];
           updated_at?: string;
+          visit_address?: string | null;
         };
         Update: {
+          adults_count?: number | null;
           appointment_id?: string;
           cancelled_at?: string | null;
           cancelled_by?: string | null;
+          children_count?: number | null;
           client_id?: string;
           client_notes?: string | null;
           created_at?: string;
+          discount_cents?: number | null;
+          discount_code_id?: string | null;
           dog_id?: string | null;
+          dogs_count?: number | null;
           id?: string;
           party_size?: number;
+          price_cents?: number | null;
           status?: Database["public"]["Enums"]["booking_status"];
           updated_at?: string;
+          visit_address?: string | null;
         };
         Relationships: [
           {
@@ -227,6 +248,13 @@ export type Database = {
             columns: ["client_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bookings_discount_code_fk";
+            columns: ["discount_code_id"];
+            isOneToOne: false;
+            referencedRelation: "discount_codes";
             referencedColumns: ["id"];
           },
           {
@@ -277,6 +305,90 @@ export type Database = {
           },
         ];
       };
+      discount_codes: {
+        Row: {
+          active: boolean;
+          code: string;
+          created_at: string;
+          id: string;
+          kind: Database["public"]["Enums"]["discount_kind"];
+          label: string;
+          max_uses: number | null;
+          valid_until: string | null;
+          value: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          active?: boolean;
+          code: string;
+          created_at?: string;
+          id?: string;
+          kind: Database["public"]["Enums"]["discount_kind"];
+          label?: string;
+          max_uses?: number | null;
+          valid_until?: string | null;
+          value: number;
+        };
+        Update: {
+          active?: boolean;
+          code?: string;
+          created_at?: string;
+          id?: string;
+          kind?: Database["public"]["Enums"]["discount_kind"];
+          label?: string;
+          max_uses?: number | null;
+          valid_until?: string | null;
+          value?: number;
+        };
+        Relationships: [];
+      };
+      document_acceptances: {
+        Row: {
+          accepted_at: string;
+          booking_id: string | null;
+          document_id: string;
+          id: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          accepted_at?: string;
+          booking_id?: string | null;
+          document_id: string;
+          id?: string;
+          user_id: string;
+        };
+        Update: {
+          accepted_at?: string;
+          booking_id?: string | null;
+          document_id?: string;
+          id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "document_acceptances_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "document_acceptances_document_id_fkey";
+            columns: ["document_id"];
+            isOneToOne: false;
+            referencedRelation: "legal_documents";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "document_acceptances_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       dogs: {
         Row: {
           birth_date: string | null;
@@ -318,6 +430,40 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      legal_documents: {
+        Row: {
+          body: string;
+          created_at: string;
+          id: string;
+          kind: string;
+          language: string;
+          published_at: string | null;
+          title: string;
+          version: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          body: string;
+          created_at?: string;
+          id?: string;
+          kind: string;
+          language?: string;
+          published_at?: string | null;
+          title: string;
+          version: number;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          language?: string;
+          published_at?: string | null;
+          title?: string;
+          version?: number;
+        };
+        Relationships: [];
       };
       profiles: {
         Row: {
@@ -388,15 +534,20 @@ export type Database = {
           id: string;
           location: string;
           max_advance_days: number;
+          max_dogs: number | null;
           min_notice_hours: number;
           mode: Database["public"]["Enums"]["booking_mode"];
           name: string;
           price_cents: number | null;
+          price_visible: boolean;
+          required_document_kinds: string[];
+          requires_address: boolean;
           resource_id: string;
           slot_step_minutes: number;
           slug: string;
           sort_order: number;
           summary: string;
+          translations: NonNullable<Json>;
           updated_at: string;
         };
         ComputedFields: never;
@@ -412,15 +563,20 @@ export type Database = {
           id?: string;
           location?: string;
           max_advance_days?: number;
+          max_dogs?: number | null;
           min_notice_hours?: number;
           mode: Database["public"]["Enums"]["booking_mode"];
           name: string;
           price_cents?: number | null;
+          price_visible?: boolean;
+          required_document_kinds?: string[];
+          requires_address?: boolean;
           resource_id: string;
           slot_step_minutes?: number;
           slug: string;
           sort_order?: number;
           summary?: string;
+          translations?: NonNullable<Json>;
           updated_at?: string;
         };
         Update: {
@@ -435,15 +591,20 @@ export type Database = {
           id?: string;
           location?: string;
           max_advance_days?: number;
+          max_dogs?: number | null;
           min_notice_hours?: number;
           mode?: Database["public"]["Enums"]["booking_mode"];
           name?: string;
           price_cents?: number | null;
+          price_visible?: boolean;
+          required_document_kinds?: string[];
+          requires_address?: boolean;
           resource_id?: string;
           slot_step_minutes?: number;
           slug?: string;
           sort_order?: number;
           summary?: string;
+          translations?: NonNullable<Json>;
           updated_at?: string;
         };
         Relationships: [
@@ -456,6 +617,28 @@ export type Database = {
           },
         ];
       };
+      settings: {
+        Row: {
+          calendar_token: string;
+          id: boolean;
+          social_monthly_cap: number | null;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          calendar_token?: string;
+          id?: boolean;
+          social_monthly_cap?: number | null;
+          updated_at?: string;
+        };
+        Update: {
+          calendar_token?: string;
+          id?: boolean;
+          social_monthly_cap?: number | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -464,11 +647,32 @@ export type Database = {
       assert_booking_quota: { Args: { p_client_id: string }; Returns: undefined };
       assert_dog_owner: { Args: { p_dog_id: string; p_owner_id: string }; Returns: undefined };
       book_event: {
-        Args: { p_appointment_id: string; p_dog_id?: string; p_notes?: string; p_party_size?: number };
+        Args: {
+          p_adults_count?: number;
+          p_appointment_id: string;
+          p_children_count?: number;
+          p_discount_code?: string;
+          p_document_ids?: string[];
+          p_dog_id?: string;
+          p_dogs_count?: number;
+          p_notes?: string;
+          p_party_size?: number;
+        };
         Returns: string;
       };
       book_slot: {
-        Args: { p_dog_id?: string; p_notes?: string; p_service_id: string; p_starts_at: string };
+        Args: {
+          p_adults_count?: number;
+          p_children_count?: number;
+          p_discount_code?: string;
+          p_document_ids?: string[];
+          p_dog_id?: string;
+          p_dogs_count?: number;
+          p_notes?: string;
+          p_service_id: string;
+          p_starts_at: string;
+          p_visit_address?: string;
+        };
         Returns: string;
       };
       camera_access: {
@@ -479,6 +683,28 @@ export type Database = {
         }[];
       };
       cancel_booking: { Args: { p_booking_id: string }; Returns: undefined };
+      check_discount_code: {
+        Args: { p_code: string; p_service_id: string };
+        Returns: {
+          discount_cents: number;
+          price_cents: number;
+          valid: boolean;
+        }[];
+      };
+      close_period: {
+        Args: {
+          p_cancel_existing?: boolean;
+          p_ends_at: string;
+          p_reason?: string;
+          p_resource_id: string;
+          p_starts_at: string;
+        };
+        Returns: number;
+      };
+      count_appointments_in_period: {
+        Args: { p_ends_at: string; p_resource_id: string; p_starts_at: string };
+        Returns: number;
+      };
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
       get_available_slots: {
         Args: { p_from: string; p_service_id: string; p_to: string };
@@ -489,6 +715,17 @@ export type Database = {
           starts_at: string;
         }[];
       };
+      get_required_documents: {
+        Args: { p_language?: string; p_service_id: string };
+        Returns: {
+          accepted: boolean;
+          body: string;
+          document_id: string;
+          kind: string;
+          title: string;
+          version: number;
+        }[];
+      };
       get_resource_status: {
         Args: { p_resource_slug: string };
         Returns: {
@@ -497,11 +734,35 @@ export type Database = {
         }[];
       };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      prepare_booking: {
+        Args: {
+          p_adults_count: number;
+          p_children_count: number;
+          p_discount_code: string;
+          p_document_ids: string[];
+          p_dog_id: string;
+          p_dogs_count: number;
+          p_notes: string;
+          p_service: Omit<
+            Database["public"]["Tables"]["services"]["Row"],
+            Database["public"]["Tables"]["services"]["ComputedFields"]
+          >;
+          p_uid: string;
+          p_visit_address: string;
+        };
+        Returns: Record<string, unknown>;
+      };
+      record_acceptances: {
+        Args: { p_booking_id: string; p_document_ids: string[]; p_uid: string };
+        Returns: undefined;
+      };
+      reschedule_booking: { Args: { p_booking_id: string; p_starts_at: string }; Returns: undefined };
     };
     Enums: {
       appointment_status: "scheduled" | "cancelled";
       booking_mode: "slot" | "event";
       booking_status: "confirmed" | "cancelled";
+      discount_kind: "percent" | "amount";
       user_role: "client" | "admin";
     };
     CompositeTypes: {
@@ -616,6 +877,7 @@ export const Constants = {
       appointment_status: ["scheduled", "cancelled"],
       booking_mode: ["slot", "event"],
       booking_status: ["confirmed", "cancelled"],
+      discount_kind: ["percent", "amount"],
       user_role: ["client", "admin"],
     },
   },

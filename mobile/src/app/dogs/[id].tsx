@@ -8,10 +8,12 @@ import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { TextField } from "@/components/text-field";
 import { confirm, notify } from "@/lib/confirm";
 import { toUserMessage } from "@/utils/errors";
+import { useLanguage } from "@/i18n";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export default function DogRoute() {
+  const { t } = useLanguage();
   const { id } = useLocalSearchParams<{ id: string }>();
   const dogs = useDogs();
 
@@ -33,7 +35,7 @@ export default function DogRoute() {
   if (!dog) {
     return (
       <Screen underHeader>
-        <EmptyView title="Chien introuvable" />
+        <EmptyView title={t("dogs.notFound")} />
       </Screen>
     );
   }
@@ -41,6 +43,7 @@ export default function DogRoute() {
 }
 
 function DogForm({ dog }: { dog?: Dog }) {
+  const { t } = useLanguage();
   const isNew = !dog;
   const save = useSaveDog();
   const remove = useDeleteDog();
@@ -53,14 +56,14 @@ function DogForm({ dog }: { dog?: Dog }) {
 
   const onSave = () => {
     const next: typeof errors = {};
-    if (!name.trim()) next.name = "Le nom est obligatoire.";
+    if (!name.trim()) next.name = t("dogs.nameRequired");
     if (
       birthDate &&
       (!DATE_PATTERN.test(birthDate) ||
         Number.isNaN(Date.parse(birthDate)) ||
         birthDate > new Date().toISOString().slice(0, 10))
     ) {
-      next.birthDate = "Format attendu : AAAA-MM-JJ, dans le passé.";
+      next.birthDate = t("dogs.dateError");
     }
     setErrors(next);
     if (Object.keys(next).length > 0) return;
@@ -74,7 +77,7 @@ function DogForm({ dog }: { dog?: Dog }) {
       },
       {
         onSuccess: () => router.back(),
-        onError: (error) => notify("Enregistrement impossible", toUserMessage(error)),
+        onError: (error) => notify(t("profile.saveFailed"), toUserMessage(error)),
       },
     );
   };
@@ -82,26 +85,26 @@ function DogForm({ dog }: { dog?: Dog }) {
   const onDelete = async () => {
     if (!dog) return;
     const ok = await confirm({
-      title: `Retirer ${dog.name} ?`,
-      message: "Ses réservations passées restent dans votre historique.",
-      confirmLabel: "Retirer",
+      title: t("dogs.removeTitle", { name: dog.name }),
+      message: t("dogs.removeMessage"),
+      confirmLabel: t("dogs.removeConfirm"),
       destructive: true,
     });
     if (!ok) return;
     remove.mutate(dog.id, {
       onSuccess: () => router.back(),
-      onError: (error) => notify("Suppression impossible", toUserMessage(error)),
+      onError: (error) => notify(t("dogs.removeFailed"), toUserMessage(error)),
     });
   };
 
   return (
     <Screen underHeader>
-      <Stack.Screen options={{ title: isNew ? "Nouveau chien" : (dog?.name ?? "Chien") }} />
-      <TextField label="Nom" value={name} onChangeText={setName} maxLength={60} error={errors.name} />
-      <TextField label="Race (facultatif)" value={breed} onChangeText={setBreed} maxLength={80} />
+      <Stack.Screen options={{ title: isNew ? t("titles.newDog") : (dog?.name ?? t("titles.dog")) }} />
+      <TextField label={t("dogs.name")} value={name} onChangeText={setName} maxLength={60} error={errors.name} />
+      <TextField label={t("dogs.breed")} value={breed} onChangeText={setBreed} maxLength={80} />
       <TextField
-        label="Date de naissance (facultatif)"
-        placeholder="AAAA-MM-JJ"
+        label={t("dogs.birthDate")}
+        placeholder={t("dogs.datePlaceholder")}
         value={birthDate}
         onChangeText={setBirthDate}
         keyboardType="numbers-and-punctuation"
@@ -109,16 +112,16 @@ function DogForm({ dog }: { dog?: Dog }) {
         error={errors.birthDate}
       />
       <TextField
-        label="À savoir (facultatif)"
-        hint="Réactivité, rappel, santé… tout ce qui aide à bien l’accueillir."
+        label={t("dogs.notes")}
+        hint={t("dogs.notesHint")}
         value={notes}
         onChangeText={setNotes}
         maxLength={1000}
         multiline
       />
-      <Button label="Enregistrer" loading={save.isPending} onPress={onSave} />
+      <Button label={t("common.save")} loading={save.isPending} onPress={onSave} />
       {dog ? (
-        <Button label="Retirer ce chien" variant="ghost" loading={remove.isPending} onPress={() => void onDelete()} />
+        <Button label={t("dogs.remove")} variant="ghost" loading={remove.isPending} onPress={() => void onDelete()} />
       ) : null}
     </Screen>
   );
