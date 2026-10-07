@@ -12,6 +12,7 @@
 | Vaccination ajoutée ou modifiée | Résultat de la validation | « Vaccination à valider » |
 | Créneau libéré un jour où il est inscrit en liste d’attente | Alerte | — |
 | Bouton « Urgence » pendant une réservation | — | Alerte immédiate (identité, créneau, contact d’urgence) |
+| 30 min avant un créneau du parc | Chaque invité ayant un email reçoit son lien live personnel | — |
 
 - L’email du client part dans la langue choisie dans l’app (`profiles.language`, FR ou EN).
 - L’adresse des alertes et le délai du rappel se règlent dans l’app : **Compte → Administration**.
@@ -38,7 +39,9 @@ Les erreurs d’envoi restent visibles dans `notifications.last_error` (lecture 
    npx supabase secrets set RESEND_API_KEY=re_xxx \
      NOTIFY_FROM="FreePaws <reservations@freepaws.be>" \
      NOTIFY_CRON_SECRET=$(openssl rand -hex 32)
-   npx supabase functions deploy send-notifications
+   npx supabase functions deploy send-notifications calendar-import
+   # Lien live des invités : adresse web de l'app si elle est publiée (sinon freepaws:// ouvre l'app).
+   npx supabase secrets set APP_URL=https://app.freepaws.be
    ```
 
 3. Planifier l’appel (SQL Editor du tableau de bord). Activer d’abord les extensions `pg_cron` et
@@ -51,6 +54,18 @@ Les erreurs d’envoi restent visibles dans `notifications.last_error` (lecture 
    select cron.schedule('send-notifications', '* * * * *', $$
      select net.http_post(
        url := (select decrypted_secret from vault.decrypted_secrets where name = 'notify_url'),
+       headers := jsonb_build_object(
+         'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'notify_secret'),
+         'Content-Type', 'application/json'),
+       body := '{}'::jsonb
+     );
+   $$);
+
+   -- Import des agendas personnels (Administration → Agenda personnel) : toutes les 15 minutes.
+   select vault.create_secret('https://<ref>.supabase.co/functions/v1/calendar-import', 'calendar_import_url');
+   select cron.schedule('calendar-import', '*/15 * * * *', $$
+     select net.http_post(
+       url := (select decrypted_secret from vault.decrypted_secrets where name = 'calendar_import_url'),
        headers := jsonb_build_object(
          'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'notify_secret'),
          'Content-Type', 'application/json'),

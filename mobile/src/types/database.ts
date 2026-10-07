@@ -167,27 +167,40 @@ export type Database = {
       blackouts: {
         Row: {
           created_at: string;
+          feed_id: string | null;
           id: string;
           period: unknown;
           reason: string;
           resource_id: string;
+          source: string;
         };
         ComputedFields: never;
         Insert: {
           created_at?: string;
+          feed_id?: string | null;
           id?: string;
           period: unknown;
           reason?: string;
           resource_id: string;
+          source?: string;
         };
         Update: {
           created_at?: string;
+          feed_id?: string | null;
           id?: string;
           period?: unknown;
           reason?: string;
           resource_id?: string;
+          source?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "blackouts_feed_id_fkey";
+            columns: ["feed_id"];
+            isOneToOne: false;
+            referencedRelation: "calendar_feeds";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "blackouts_resource_id_fkey";
             columns: ["resource_id"];
@@ -230,6 +243,7 @@ export type Database = {
       };
       booking_guests: {
         Row: {
+          access_token: string;
           booking_id: string;
           created_at: string;
           email: string | null;
@@ -239,6 +253,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          access_token?: string;
           booking_id: string;
           created_at?: string;
           email?: string | null;
@@ -247,6 +262,7 @@ export type Database = {
           phone?: string | null;
         };
         Update: {
+          access_token?: string;
           booking_id?: string;
           created_at?: string;
           email?: string | null;
@@ -360,6 +376,70 @@ export type Database = {
             columns: ["dog_id"];
             isOneToOne: false;
             referencedRelation: "dogs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      calendar_days: {
+        Row: {
+          day: string;
+          kind: string;
+          label: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          day: string;
+          kind: string;
+          label?: string;
+        };
+        Update: {
+          day?: string;
+          kind?: string;
+          label?: string;
+        };
+        Relationships: [];
+      };
+      calendar_feeds: {
+        Row: {
+          active: boolean;
+          created_at: string;
+          event_count: number | null;
+          id: string;
+          label: string;
+          last_error: string | null;
+          last_synced_at: string | null;
+          resource_id: string;
+          url: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          active?: boolean;
+          created_at?: string;
+          event_count?: number | null;
+          id?: string;
+          label?: string;
+          last_error?: string | null;
+          last_synced_at?: string | null;
+          resource_id: string;
+          url: string;
+        };
+        Update: {
+          active?: boolean;
+          created_at?: string;
+          event_count?: number | null;
+          id?: string;
+          label?: string;
+          last_error?: string | null;
+          last_synced_at?: string | null;
+          resource_id?: string;
+          url?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "calendar_feeds_resource_id_fkey";
+            columns: ["resource_id"];
+            isOneToOne: false;
+            referencedRelation: "resources";
             referencedColumns: ["id"];
           },
         ];
@@ -557,11 +637,13 @@ export type Database = {
       };
       dogs: {
         Row: {
+          antiparasitic_until: string | null;
           birth_date: string | null;
           bite_history: boolean | null;
           breed: string | null;
           chip_number: string | null;
           created_at: string;
+          currently_ill: boolean;
           dogid_registered: boolean;
           id: string;
           in_heat: boolean;
@@ -581,11 +663,13 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          antiparasitic_until?: string | null;
           birth_date?: string | null;
           bite_history?: boolean | null;
           breed?: string | null;
           chip_number?: string | null;
           created_at?: string;
+          currently_ill?: boolean;
           dogid_registered?: boolean;
           id?: string;
           in_heat?: boolean;
@@ -604,11 +688,13 @@ export type Database = {
           vet_phone?: string | null;
         };
         Update: {
+          antiparasitic_until?: string | null;
           birth_date?: string | null;
           bite_history?: boolean | null;
           breed?: string | null;
           chip_number?: string | null;
           created_at?: string;
+          currently_ill?: boolean;
           dogid_registered?: boolean;
           id?: string;
           in_heat?: boolean;
@@ -792,6 +878,7 @@ export type Database = {
           created_at: string;
           dog_id: string | null;
           emergency_id: string | null;
+          guest_id: string | null;
           id: string;
           kind: Database["public"]["Enums"]["notification_kind"];
           last_error: string | null;
@@ -810,6 +897,7 @@ export type Database = {
           created_at?: string;
           dog_id?: string | null;
           emergency_id?: string | null;
+          guest_id?: string | null;
           id?: string;
           kind: Database["public"]["Enums"]["notification_kind"];
           last_error?: string | null;
@@ -827,6 +915,7 @@ export type Database = {
           created_at?: string;
           dog_id?: string | null;
           emergency_id?: string | null;
+          guest_id?: string | null;
           id?: string;
           kind?: Database["public"]["Enums"]["notification_kind"];
           last_error?: string | null;
@@ -860,10 +949,80 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "notifications_guest_id_fkey";
+            columns: ["guest_id"];
+            isOneToOne: false;
+            referencedRelation: "booking_guests";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "notifications_profile_id_fkey";
             columns: ["profile_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      pricing_rules: {
+        Row: {
+          active: boolean;
+          adjustment: string;
+          created_at: string;
+          end_time: string | null;
+          id: string;
+          kind: string;
+          label: string;
+          on_public_holidays: boolean;
+          on_school_holidays: boolean;
+          service_id: string;
+          sort_order: number;
+          start_time: string | null;
+          threshold: number;
+          value: number;
+          weekdays: number[];
+        };
+        ComputedFields: never;
+        Insert: {
+          active?: boolean;
+          adjustment?: string;
+          created_at?: string;
+          end_time?: string | null;
+          id?: string;
+          kind: string;
+          label?: string;
+          on_public_holidays?: boolean;
+          on_school_holidays?: boolean;
+          service_id: string;
+          sort_order?: number;
+          start_time?: string | null;
+          threshold?: number;
+          value: number;
+          weekdays?: number[];
+        };
+        Update: {
+          active?: boolean;
+          adjustment?: string;
+          created_at?: string;
+          end_time?: string | null;
+          id?: string;
+          kind?: string;
+          label?: string;
+          on_public_holidays?: boolean;
+          on_school_holidays?: boolean;
+          service_id?: string;
+          sort_order?: number;
+          start_time?: string | null;
+          threshold?: number;
+          value?: number;
+          weekdays?: number[];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pricing_rules_service_id_fkey";
+            columns: ["service_id"];
+            isOneToOne: false;
+            referencedRelation: "services";
             referencedColumns: ["id"];
           },
         ];
@@ -1117,7 +1276,9 @@ export type Database = {
           id: boolean;
           min_dog_age_months: number | null;
           refuse_dogs_in_heat: boolean;
+          refuse_ill_dogs: boolean;
           reminder_hours: number;
+          require_antiparasitic: boolean;
           rescue_info: string;
           social_monthly_cap: number | null;
           updated_at: string;
@@ -1130,7 +1291,9 @@ export type Database = {
           id?: boolean;
           min_dog_age_months?: number | null;
           refuse_dogs_in_heat?: boolean;
+          refuse_ill_dogs?: boolean;
           reminder_hours?: number;
+          require_antiparasitic?: boolean;
           rescue_info?: string;
           social_monthly_cap?: number | null;
           updated_at?: string;
@@ -1142,7 +1305,9 @@ export type Database = {
           id?: boolean;
           min_dog_age_months?: number | null;
           refuse_dogs_in_heat?: boolean;
+          refuse_ill_dogs?: boolean;
           reminder_hours?: number;
+          require_antiparasitic?: boolean;
           rescue_info?: string;
           social_monthly_cap?: number | null;
           updated_at?: string;
@@ -1255,6 +1420,7 @@ export type Database = {
           p_dog_id?: string;
           p_dog_ids?: string[];
           p_dogs_count?: number;
+          p_guests?: Json;
           p_notes?: string;
           p_party_size?: number;
         };
@@ -1269,6 +1435,7 @@ export type Database = {
           p_dog_id?: string;
           p_dog_ids?: string[];
           p_dogs_count?: number;
+          p_guests?: Json;
           p_notes?: string;
           p_service_id: string;
           p_starts_at: string;
@@ -1301,6 +1468,7 @@ export type Database = {
           created_at: string;
           dog_id: string | null;
           emergency_id: string | null;
+          guest_id: string | null;
           id: string;
           kind: Database["public"]["Enums"]["notification_kind"];
           last_error: string | null;
@@ -1318,12 +1486,25 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      clean_guests: { Args: { p_guests: Json }; Returns: Json };
       close_period: {
         Args: {
           p_cancel_existing?: boolean;
           p_ends_at: string;
           p_reason?: string;
           p_resource_id: string;
+          p_starts_at: string;
+        };
+        Returns: number;
+      };
+      compute_price: {
+        Args: {
+          p_dogs: number;
+          p_guests: number;
+          p_service: Omit<
+            Database["public"]["Tables"]["services"]["Row"],
+            Database["public"]["Tables"]["services"]["ComputedFields"]
+          >;
           p_starts_at: string;
         };
         Returns: number;
@@ -1345,6 +1526,7 @@ export type Database = {
         }[];
       };
       get_emergency_overview: { Args: { p_resource_slug?: string }; Returns: Json };
+      get_full_days: { Args: { p_from: string; p_service_id: string; p_to: string }; Returns: string[] };
       get_required_documents: {
         Args: { p_language?: string; p_service_id: string };
         Returns: {
@@ -1364,6 +1546,17 @@ export type Database = {
           until: string;
         }[];
       };
+      guest_camera_access: {
+        Args: { p_token: string };
+        Returns: {
+          ends_at: string;
+          expires_at: string;
+          guest_name: string;
+          mode: string;
+          starts_at: string;
+        }[];
+      };
+      insert_guests: { Args: { p_booking_id: string; p_guests: Json }; Returns: undefined };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       my_role: { Args: Record<PropertyKey, never>; Returns: string };
       normalize_dog_ids: { Args: { p_dog_id: string; p_dog_ids: string[] }; Returns: string[] };
@@ -1376,6 +1569,7 @@ export type Database = {
           p_dog_id: string;
           p_dogs_count: number;
           p_notes: string;
+          p_price: number;
           p_service: Omit<
             Database["public"]["Tables"]["services"]["Row"],
             Database["public"]["Tables"]["services"]["ComputedFields"]
@@ -1385,11 +1579,26 @@ export type Database = {
         };
         Returns: Record<string, unknown>;
       };
+      quote_price: {
+        Args: {
+          p_discount_code?: string;
+          p_dogs_count?: number;
+          p_guests_count?: number;
+          p_service_id: string;
+          p_starts_at: string;
+        };
+        Returns: {
+          discount_cents: number;
+          labels: string[];
+          price_cents: number;
+        }[];
+      };
       raise_emergency: { Args: { p_message?: string }; Returns: string };
       record_acceptances: {
         Args: { p_booking_id: string; p_document_ids: string[]; p_uid: string };
         Returns: undefined;
       };
+      replace_external_busy: { Args: { p_error?: string; p_events: Json; p_feed_id: string }; Returns: number };
       reschedule_booking: { Args: { p_booking_id: string; p_starts_at: string }; Returns: undefined };
       schedule_booking_reminder: { Args: { p_booking_id: string; p_starts_at: string }; Returns: undefined };
       set_booking_guests: { Args: { p_booking_id: string; p_guests: Json }; Returns: undefined };
@@ -1418,7 +1627,8 @@ export type Database = {
         | "waitlist_slot_freed"
         | "admin_documents_expired"
         | "admin_vaccination_to_review"
-        | "admin_emergency";
+        | "admin_emergency"
+        | "guest_live_link";
       review_status: "pending" | "validated" | "rejected";
       sanction_level: "warning" | "suspension" | "ban";
       user_role: "client" | "admin";
@@ -1552,6 +1762,7 @@ export const Constants = {
         "admin_documents_expired",
         "admin_vaccination_to_review",
         "admin_emergency",
+        "guest_live_link",
       ],
       review_status: ["pending", "validated", "rejected"],
       sanction_level: ["warning", "suspension", "ban"],

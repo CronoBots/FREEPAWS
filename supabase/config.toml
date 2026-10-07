@@ -436,3 +436,7 @@ verify_jwt = false
 # Envoi des emails : protégé par NOTIFY_CRON_SECRET (appel pg_cron), pas par une session.
 [functions.send-notifications]
 verify_jwt = false
+
+# Import de l'agenda personnel : protégé par NOTIFY_CRON_SECRET (appel pg_cron).
+[functions.calendar-import]
+verify_jwt = false

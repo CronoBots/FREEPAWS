@@ -9,6 +9,7 @@
 //   RESEND_API_KEY      clé de l'API Resend (https://resend.com), domaine expéditeur vérifié
 //   NOTIFY_FROM         ex. FreePaws <reservations@freepaws.be>
 //   NOTIFY_CRON_SECRET  secret partagé avec la tâche pg_cron
+//   APP_URL             (optionnel) adresse web de l'app pour les liens (défaut : freepaws://)
 //   RESEND_API_URL      (optionnel, tests) autre adresse d'envoi que l'API Resend
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -27,7 +28,8 @@ type Kind =
   | "waitlist_slot_freed"
   | "admin_documents_expired"
   | "admin_vaccination_to_review"
-  | "admin_emergency";
+  | "admin_emergency"
+  | "guest_live_link";
 
 type NotificationRow = {
   id: string;
@@ -37,6 +39,7 @@ type NotificationRow = {
   profile_id: string | null;
   dog_id: string | null;
   emergency_id: string | null;
+  guest_id: string | null;
   ref_date: string | null;
   payload: Record<string, unknown>;
 };
@@ -251,6 +254,49 @@ async function standaloneEmail(db: Db, n: NotificationRow, adminEmail: string | 
     };
   }
 
+  if (n.kind === "guest_live_link") {
+    const { data } = await db
+      .from("booking_guests")
+      .select(
+        `full_name, email, access_token,
+         booking:bookings ( status, client:profiles!bookings_client_id_fkey ( full_name, language ),
+           appointment:appointments ( period, service:services ( name ) ) )`,
+      )
+      .eq("id", n.guest_id ?? "")
+      .single();
+    const g = data as unknown as {
+      full_name: string;
+      email: string | null;
+      access_token: string;
+      booking: {
+        status: string;
+        client: { full_name: string; language: string } | null;
+        appointment: { period: string; service: { name: string } | null } | null;
+      } | null;
+    } | null;
+    if (!g?.email || g.booking?.status !== "confirmed" || !g.booking.appointment) return null;
+    const lang: Lang = g.booking.client?.language === "en" ? "en" : "fr";
+    const base = (Deno.env.get("APP_URL") ?? "freepaws://").replace(/\/?$/, "/");
+    const link = `${base}live/${g.access_token}`;
+    const when = formatWhen(parseRange(String(g.booking.appointment.period)), lang);
+    const host = g.booking.client?.full_name || "FreePaws";
+    const title = lang === "fr" ? "Votre accès au direct FreePaws Park" : "Your FreePaws Park live access";
+    const intro =
+      lang === "fr"
+        ? `${host} vous a ajouté·e à sa réservation du parc. Ce lien personnel vous donne accès au direct des caméras pendant le créneau uniquement. Merci de ne pas le partager.`
+        : `${host} added you to their park booking. This personal link gives you access to the live cameras during the slot only. Please do not share it.`;
+    return {
+      to: g.email,
+      subject: title,
+      html: layout(title, [
+        p(intro),
+        field(lang === "fr" ? "Créneau" : "Slot", when),
+        `<p style="margin:24px 0"><a href="${escapeHtml(link)}" style="display:inline-block;background:#2b3a30;color:#fff;text-decoration:none;padding:14px 22px;border-radius:10px;font-size:16px">${escapeHtml(lang === "fr" ? "Ouvrir le direct" : "Open the live view")}</a></p>`,
+        footer(lang),
+      ].join("")),
+    };
+  }
+
   if (n.audience === "admin") {
     if (!adminEmail) throw new Error("admin_email_missing");
     if (n.kind === "admin_documents_expired") {
@@ -340,7 +386,7 @@ Deno.serve(async (req) => {
   let sent = 0;
   for (const notification of (claimed ?? []) as NotificationRow[]) {
     try {
-      if (notification.kind === "admin_emergency" || !notification.booking_id) {
+      if (notification.kind === "admin_emergency" || notification.kind === "guest_live_link" || !notification.booking_id) {
         const email = await standaloneEmail(db, notification, settings?.admin_email ?? null);
         if (email) {
           await send(email);

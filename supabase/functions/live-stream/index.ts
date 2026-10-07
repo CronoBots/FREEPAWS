@@ -58,11 +58,25 @@ Deno.serve(async (req) => {
     auth: { persistSession: false },
   });
 
-  const { data: access, error: accessError } = await asCaller
-    .rpc("camera_access", { p_resource_slug: RESOURCE_SLUG })
-    .single<{ mode: "public" | "private" | "admin" | "denied"; expires_at: string | null }>();
+  // Invité d'une réservation (sans compte) : lien personnel valable pendant le créneau (M8-03).
+  const body = (await req.json().catch(() => ({}))) as { guest_token?: unknown };
+  const guestToken = typeof body.guest_token === "string" ? body.guest_token : null;
+
+  type Access = {
+    mode: "public" | "private" | "admin" | "denied" | "not_started";
+    expires_at: string | null;
+    starts_at?: string | null;
+    ends_at?: string | null;
+    guest_name?: string | null;
+  };
+  const { data: access, error: accessError } = guestToken
+    ? await asCaller.rpc("guest_camera_access", { p_token: guestToken }).single<Access>()
+    : await asCaller.rpc("camera_access", { p_resource_slug: RESOURCE_SLUG }).single<Access>();
   if (accessError) return json({ error: "access_check_failed" }, 502);
 
+  if (access.mode === "not_started") {
+    return json({ mode: "not_started", startsAt: access.starts_at, endsAt: access.ends_at, guestName: access.guest_name, streams: [] });
+  }
   if (access.mode === "denied" || !access.expires_at) {
     return json({ mode: "denied", streams: [] });
   }
