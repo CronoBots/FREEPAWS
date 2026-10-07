@@ -33,6 +33,6 @@ describe("traductions", () => {
     expect(formatDayLong("2026-10-14T10:00:00Z")).toBe("Wednesday 14 October");
     setLanguage("fr", { persist: false });
     expect(tp("booking.places", 2)).toBe("2 places");
-    expect(t("booking.confirm", { day: "mer.", time: "10:00" })).toBe("Confirmer · mer. 10:00");
+    expect(t("booking.confirm", { day: "mer.", time: "10:00" })).toBe("Confirmer · mer. à\u00a010:00");
   });
 });
