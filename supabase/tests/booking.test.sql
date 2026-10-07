@@ -61,7 +61,7 @@ select pg_temp.reset_role();
 -- Configuration de TEST (annulée en fin de transaction) : ces valeurs servent uniquement à
 -- vérifier les règles de réservation, ce ne sont pas des horaires ou tarifs FreePaws.
 update public.resources set is_open = true where slug = 'park';
-update public.services set booking_enabled = true, min_notice_hours = 1, max_advance_days = 30,
+update public.services set requires_park_profile = false, booking_enabled = true, min_notice_hours = 1, max_advance_days = 30,
   cancel_notice_hours = 12
 where slug = 'park-session';
 update public.services set booking_enabled = true, buffer_minutes = 30, slot_step_minutes = 30,

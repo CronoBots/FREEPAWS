@@ -27,7 +27,7 @@ insert into auth.users (id, email) values
 update public.profiles set role = 'admin' where id = '33333333-3333-4333-8333-333333333333';
 
 -- Configuration de TEST (annulée en fin de transaction).
-update public.services set booking_enabled = true, price_cents = 10000, min_notice_hours = 1,
+update public.services set requires_park_profile = false, booking_enabled = true, price_cents = 10000, min_notice_hours = 1,
   max_advance_days = 60, slot_step_minutes = 60, buffer_minutes = 0
 where slug = 'bilan-cohabitation';
 update public.services set booking_enabled = true, min_notice_hours = 1, max_advance_days = 60

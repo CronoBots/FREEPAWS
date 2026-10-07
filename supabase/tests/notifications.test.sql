@@ -27,7 +27,7 @@ update public.profiles set role = 'admin' where id = '33333333-3333-4333-8333-33
 
 -- Configuration de TEST : parc ouvert, réservable, horaires larges, alertes activées.
 update public.resources set is_open = true where slug = 'park';
-update public.services set booking_enabled = true, min_notice_hours = 1, max_advance_days = 60, cancel_notice_hours = 0
+update public.services set requires_park_profile = false, booking_enabled = true, min_notice_hours = 1, max_advance_days = 60, cancel_notice_hours = 0
   where slug = 'park-session';
 update public.settings set admin_email = 'admin@example.com';
 insert into public.availability_rules (resource_id, weekday, start_time, end_time, valid_from)

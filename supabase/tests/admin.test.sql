@@ -27,7 +27,7 @@ update public.profiles set role = 'admin' where id = '33333333-3333-4333-8333-33
 
 -- Configuration de TEST : parc ouvert, réservable, horaires larges.
 update public.resources set is_open = true where slug = 'park';
-update public.services set booking_enabled = true, min_notice_hours = 1, max_advance_days = 60 where slug = 'park-session';
+update public.services set requires_park_profile = false, booking_enabled = true, min_notice_hours = 1, max_advance_days = 60 where slug = 'park-session';
 insert into public.availability_rules (resource_id, weekday, start_time, end_time, valid_from)
 select '00000000-0000-4000-a000-000000000001', d, '08:00', '20:00', date '2026-01-01' from generate_series(1, 7) d;
 
