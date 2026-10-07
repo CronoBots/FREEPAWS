@@ -77,7 +77,7 @@ export const en: Widen<typeof fr> = {
   noService: "No appointment-based service.",
   rescueTitle: "Temporary access for emergency services",
   rescueText:
-    "Create a link to give to emergency services: live view of every park camera and the rescue sheet, read-only, for the chosen duration. You can revoke it at any time.",
+    "Create a link to give to emergency services: live view of every park camera and the emergency sheet, read-only, for the chosen duration. You can revoke it at any time.",
   rescueLabel: "Recipient",
   rescueLabelPlaceholder: "E.g. rescue zone",
   rescueDuration: "Duration",
@@ -98,7 +98,7 @@ export const en: Widen<typeof fr> = {
   rescueNoCamera: "The cameras are not installed yet.",
   rescueInfoTitle: "Rescue sheet",
   rescueLiveTitle: "Live cameras",
-  rescueVideoUnavailable: "The live video is temporarily unavailable. The rescue sheet above is still valid.",
+  rescueVideoUnavailable: "The live video is temporarily unavailable. The emergency sheet above is still valid.",
   rescueVideoRetry: "Retry the video",
   call112: "Call 112",
 

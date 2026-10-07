@@ -352,10 +352,10 @@ export const en: Widen<typeof fr> = {
   requireAntiparasitic: "Antiparasitic treatment expired or missing",
   ruleMinAge: "Dog younger than the minimum age",
   rulesModesText:
-    "For each rule: Off (rule disabled), Warning (the booking goes through and you are notified) or Blocking (the booking is refused).",
+    "For each rule: Off (rule disabled), Warn (the booking goes through and you are notified) or Block (the booking is refused).",
   modeOff: "Off",
-  modeWarn: "Warning",
-  modeBlock: "Blocking",
+  modeWarn: "Warn",
+  modeBlock: "Block",
   expiryDays: "Expiry alert notice (days)",
   expiryHint: "The client is notified this many days before their insurance or a vaccine expires (1 to 120).",
   rescueField: "Emergency sheet text",
