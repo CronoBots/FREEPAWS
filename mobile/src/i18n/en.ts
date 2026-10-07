@@ -214,6 +214,7 @@ export const en: Dictionary = {
     password: "Password",
     checkEmail: "Check your email",
     codeSent: "We sent a code to {email}. It is valid for 10 minutes.",
+    linkHint: "If the message contains a sign-in link instead, tap it: you will be signed in directly.",
     code: "6-digit code",
     submit: "Sign in",
     changeEmail: "Change address or resend a code",

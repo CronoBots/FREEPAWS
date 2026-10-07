@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useRef, useState } from "react";
-import { type TextInput } from "react-native";
+import { Platform, type TextInput } from "react-native";
 
 import { Button } from "@/components/button";
 import { Screen } from "@/components/screen";
@@ -38,7 +38,10 @@ export default function SignInRoute() {
     setError(undefined);
     const { error: authError } = await supabase.auth.signInWithOtp({
       email: address,
-      options: { shouldCreateUser: true },
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: Platform.OS === "web" ? `${env.appUrl || globalThis.location?.origin || ""}/` : undefined,
+      },
     });
     setBusy(false);
     if (authError) {
@@ -109,6 +112,7 @@ export default function SignInRoute() {
         <>
           <AppText variant="title">{t("signIn.checkEmail")}</AppText>
           <AppText variant="body">{t("signIn.codeSent", { email })}</AppText>
+          {Platform.OS === "web" ? <AppText variant="caption">{t("signIn.linkHint")}</AppText> : null}
           <TextField
             ref={codeInput}
             label={t("signIn.code")}

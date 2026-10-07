@@ -214,6 +214,7 @@ export const fr = {
     password: "Mot de passe",
     checkEmail: "Vérifiez vos emails",
     codeSent: "Nous avons envoyé un code à {email}. Il est valable 10 minutes.",
+    linkHint: "Si le message contient plutôt un lien de connexion, touchez-le : vous serez connecté·e directement.",
     code: "Code à 6 chiffres",
     submit: "Se connecter",
     changeEmail: "Changer d’adresse ou renvoyer un code",
