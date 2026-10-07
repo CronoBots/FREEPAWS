@@ -420,7 +420,9 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
             {formatPrice(price) ? (
               <AppText variant="bodyStrong">{t("booking.priceLine", { price: formatPrice(price) ?? "" })}</AppText>
             ) : null}
-            <AppText variant="caption">{t("booking.cancelPolicy", { hours: service.cancel_notice_hours })}</AppText>
+            {service.cancel_notice_hours > 0 ? (
+              <AppText variant="caption">{t("booking.cancelPolicy", { hours: service.cancel_notice_hours })}</AppText>
+            ) : null}
           </View>
         ) : null}
       </Screen>
