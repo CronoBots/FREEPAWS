@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   form: { gap: space.md },
   document: { gap: space.xs },
   // Lien aligné sous le libellé de la case (case de 26 px + écart), collé à elle.
-  documentLink: { alignSelf: "flex-start", marginLeft: 26 + space.md, marginTop: -space.sm },
+  documentLink: { alignSelf: "flex-start", marginLeft: 26 + space.md, marginTop: -space.sm - 10, paddingVertical: 10 },
   // Même style de lien que « Lire la politique de confidentialité » (connexion).
   linkText: { color: colors.ink, textDecorationLine: "underline" },
   pressed: { opacity: 0.6 },

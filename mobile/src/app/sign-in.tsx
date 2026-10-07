@@ -163,7 +163,8 @@ export default function SignInRoute() {
 const styles = StyleSheet.create({
   consent: { fontSize: 14, lineHeight: 20 },
   // Lien aligné à gauche, juste sous la mention (même style que « Lire le document » de l’invitation).
-  link: { alignSelf: "flex-start", marginTop: -space.sm },
+  // Zone tactile de 44 px : le padding compense le retrait visuel.
+  link: { alignSelf: "flex-start", marginTop: -space.sm - 10, paddingVertical: 10 },
   linkText: { color: colors.ink, textDecorationLine: "underline" },
   pressed: { opacity: 0.6 },
 });

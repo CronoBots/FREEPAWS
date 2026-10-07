@@ -176,8 +176,8 @@ const styles = StyleSheet.create({
   withArrows: { flexDirection: "row", alignItems: "center", gap: space.xs },
   scroller: { flex: 1 },
   arrow: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.line,
