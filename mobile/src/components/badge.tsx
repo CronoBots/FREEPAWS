@@ -4,9 +4,10 @@ import { AppText } from "@/components/text";
 import { colors, radius, space } from "@/theme";
 
 const TONES = {
-  success: { bg: colors.freeSoft, fg: colors.free },
-  warning: { bg: colors.reservedSoft, fg: colors.reserved },
-  neutral: { bg: colors.closedSoft, fg: colors.closed },
+  // Textes assombris : contraste AA (≥ 4,5:1) sur leur fond pâle.
+  success: { bg: colors.freeSoft, fg: "#3a6136" },
+  warning: { bg: colors.reservedSoft, fg: colors.brassText },
+  neutral: { bg: colors.closedSoft, fg: colors.inkSoft },
   danger: { bg: colors.dangerSoft, fg: colors.danger },
 } as const;
 

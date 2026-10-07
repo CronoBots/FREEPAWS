@@ -46,30 +46,27 @@ function Security() {
 
   return (
     <Screen underHeader refreshing={factors.isRefetching} onRefresh={() => void factors.refetch()}>
+      {/* Une seule carte : état, explication puis action. Le titre est déjà dans l’en-tête. */}
       <Card>
-        <View style={styles.head}>
-          <AppText variant="heading" style={styles.flex}>
-            {t("adminSafety.securityTitle")}
-          </AppText>
-          {factors.data ? (
+        {factors.data ? (
+          <View style={styles.status}>
             <Badge
               label={verified ? t("adminSafety.statusOn") : t("adminSafety.statusOff")}
-              tone={verified ? "success" : "neutral"}
+              tone={verified ? "success" : "warning"}
             />
-          ) : null}
-        </View>
+          </View>
+        ) : null}
         <AppText variant="body">{t("adminSafety.securityIntro")}</AppText>
+        {factors.isLoading ? (
+          <LoadingView />
+        ) : factors.isError ? (
+          <ErrorView error={factors.error} onRetry={() => void factors.refetch()} />
+        ) : verified ? (
+          <Enabled factorId={verified.id} />
+        ) : (
+          <Activation />
+        )}
       </Card>
-
-      {factors.isLoading ? (
-        <LoadingView />
-      ) : factors.isError ? (
-        <ErrorView error={factors.error} onRetry={() => void factors.refetch()} />
-      ) : verified ? (
-        <Enabled factorId={verified.id} />
-      ) : (
-        <Activation />
-      )}
     </Screen>
   );
 }
@@ -92,7 +89,7 @@ function Enabled({ factorId }: { factorId: string }) {
   };
 
   return (
-    <Card>
+    <>
       <AppText variant="body">{t("adminSafety.enabledText")}</AppText>
       {error ? (
         <AppText variant="bodyStrong" style={styles.error} accessibilityRole="alert">
@@ -105,7 +102,7 @@ function Enabled({ factorId }: { factorId: string }) {
         loading={unenroll.isPending}
         onPress={() => void disable()}
       />
-    </Card>
+    </>
   );
 }
 
@@ -148,7 +145,7 @@ function Activation() {
 
   if (!enrollment) {
     return (
-      <Card>
+      <>
         <AppText variant="body">{t("adminSafety.afterText")}</AppText>
         {error ? (
           <AppText variant="bodyStrong" style={styles.error} accessibilityRole="alert">
@@ -156,12 +153,12 @@ function Activation() {
           </AppText>
         ) : null}
         <Button label={t("adminSafety.activate")} loading={enroll.isPending} onPress={start} />
-      </Card>
+      </>
     );
   }
 
   return (
-    <Card>
+    <>
       <AppText variant="bodyStrong">{t("adminSafety.step1")}</AppText>
       {!qrFailed ? (
         <View style={styles.qrBox}>
@@ -216,13 +213,12 @@ function Activation() {
           setError(null);
         }}
       />
-    </Card>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  head: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: space.sm },
-  flex: { flexGrow: 1, flexShrink: 1 },
+  status: { flexDirection: "row" },
   qrBox: {
     alignSelf: "center",
     padding: space.md,

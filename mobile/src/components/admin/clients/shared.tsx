@@ -64,6 +64,11 @@ export function vaccineName(vaccine: { name: string; translations?: unknown } | 
   return translations?.[getLanguage()]?.name?.trim() || vaccine.name;
 }
 
+/** Espaces insécables : un numéro de téléphone n’est jamais coupé sur deux lignes. */
+export function keepTogether(text: string) {
+  return text.replace(/ /g, " ");
+}
+
 export function todayIso() {
   return toIsoDay(new Date());
 }

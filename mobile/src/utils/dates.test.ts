@@ -27,9 +27,9 @@ describe("dates (heure de Bruxelles)", () => {
   });
 
   it("formate les durées", () => {
-    expect(formatDuration(45)).toBe("45 min");
-    expect(formatDuration(60)).toBe("1h");
-    expect(formatDuration(90)).toBe("1h30");
+    expect(formatDuration(45)).toBe("45\u00a0min");
+    expect(formatDuration(60)).toBe("1\u00a0h");
+    expect(formatDuration(90)).toBe("1\u00a0h\u00a030");
   });
 });
 

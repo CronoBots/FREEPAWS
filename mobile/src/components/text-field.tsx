@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useState } from "react";
 import { StyleSheet, TextInput, type TextInputProps, View } from "react-native";
 
 import { AppText } from "@/components/text";
@@ -10,6 +10,11 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
   { label, hint, error, style, multiline, ...props },
   ref,
 ) {
+  // Champ multiligne : grandit avec le texte (aucune ligne coupée à mi-hauteur), dans une limite raisonnable.
+  const [contentHeight, setContentHeight] = useState(0);
+  const autoHeight = multiline
+    ? { height: Math.min(MAX_MULTILINE, Math.max(MIN_MULTILINE, contentHeight + space.md * 2)) }
+    : null;
   return (
     <View style={styles.field}>
       <AppText variant="bodyStrong">{label}</AppText>
@@ -19,8 +24,12 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
         accessibilityHint={hint}
         placeholderTextColor="rgba(74, 92, 76, 0.55)"
         multiline={multiline}
-        style={[styles.input, multiline && styles.multiline, error ? styles.inputError : null, style]}
+        style={[styles.input, multiline && styles.multiline, autoHeight, error ? styles.inputError : null, style]}
         {...props}
+        onContentSizeChange={(event) => {
+          if (multiline) setContentHeight(event.nativeEvent.contentSize.height);
+          props.onContentSizeChange?.(event);
+        }}
       />
       {error ? (
         <AppText variant="caption" style={styles.error} accessibilityLiveRegion="polite">
@@ -32,6 +41,9 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
     </View>
   );
 });
+
+const MIN_MULTILINE = 100;
+const MAX_MULTILINE = 320;
 
 const styles = StyleSheet.create({
   field: { gap: space.xs },
@@ -46,7 +58,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.ink,
   },
-  multiline: { minHeight: 100, paddingTop: space.md, textAlignVertical: "top" },
+  multiline: { minHeight: MIN_MULTILINE, paddingTop: space.md, paddingBottom: space.md, textAlignVertical: "top" },
   inputError: { borderColor: colors.danger },
   error: { color: colors.danger },
 });

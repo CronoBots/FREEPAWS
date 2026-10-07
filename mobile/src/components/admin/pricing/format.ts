@@ -76,5 +76,6 @@ export function ruleSummary(rule: PricingRule): string {
       : rule.adjustment === "amount"
         ? formatSigned(rule.value)
         : t("pricing.fixedValue", { price: formatPrice(rule.value) ?? "" });
-  return `${when.join(" · ")} · ${hours} → ${effect}`;
+  // Espaces insécables : la flèche et l’effet ne passent jamais seuls à la ligne.
+  return `${when.join(" · ")} · ${hours}\u00a0→\u00a0${effect}`;
 }

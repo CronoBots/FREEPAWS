@@ -1,7 +1,8 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Clipboard from "expo-clipboard";
 import { type Href, router } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
 import { useSettings, useUpdateSettings } from "@/api/admin";
 import { useTotpFactors } from "@/api/mfa";
@@ -15,7 +16,7 @@ import { TextField } from "@/components/text-field";
 import { type TranslationKey, useLanguage } from "@/i18n";
 import { notify } from "@/lib/confirm";
 import { env } from "@/lib/env";
-import { colors, space } from "@/theme";
+import { colors, radius, space } from "@/theme";
 import { toUserMessage } from "@/utils/errors";
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -32,7 +33,6 @@ type HubKey =
   | "hubVaccinations"
   | "hubVaccineTypes"
   | "hubIncidents"
-  | "hubEmergency"
   | "hubParkRules"
   | "hubSecurity"
   | "hubPricing"
@@ -49,7 +49,6 @@ const SECTIONS: { title: TranslationKey; rows: [HubKey, Href][] }[] = [
       ["hubPricing", "/admin/pricing"],
       ["hubCalendarDays", "/admin/calendar-days"],
       ["hubAvailability", "/admin/availability"],
-      ["hubCalendarSync", "/admin/calendar-sync"],
       ["hubClosures", "/admin/closures"],
       ["hubDiscounts", "/admin/discounts"],
       ["hubDocuments", "/admin/documents"],
@@ -58,13 +57,19 @@ const SECTIONS: { title: TranslationKey; rows: [HubKey, Href][] }[] = [
   {
     title: "admin.sectionPark",
     rows: [
-      ["hubEmergency", "/admin/emergency"],
       ["hubClients", "/admin/clients"],
       ["hubVaccinations", "/admin/vaccinations"],
       ["hubVaccineTypes", "/admin/vaccine-types"],
       ["hubIncidents", "/admin/incidents"],
       ["hubParkRules", "/admin/park-rules"],
+    ],
+  },
+  {
+    // Réglages du compte : suivis des cartes « Notifications par email » et « Exporter mes rendez-vous ».
+    title: "admin.sectionAccount",
+    rows: [
       ["hubSecurity", "/admin/security"],
+      ["hubCalendarSync", "/admin/calendar-sync"],
     ],
   },
 ];
@@ -111,20 +116,38 @@ function AdminHub() {
       {mfaMissing ? (
         <Card>
           <AppText variant="bodyStrong">{t("admin.mfaBanner")}</AppText>
-          <Button label={t("admin.hubSecurity")} variant="secondary" onPress={() => router.push("/admin/security")} />
+          <Button label={t("admin.mfaEnable")} onPress={() => router.push("/admin/security")} />
         </Card>
       ) : null}
+
+      {/* Écran critique en cas d’accident : toujours en tête, bien distinct des autres entrées. */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${t("admin.hubEmergency")}, ${t("admin.hubEmergencyDetail")}`}
+        onPress={() => router.push("/admin/emergency")}
+        style={({ pressed }) => [styles.emergency, pressed && styles.pressed]}
+      >
+        <Ionicons name="alert-circle" size={28} color={colors.danger} />
+        <View style={styles.emergencyTexts}>
+          <AppText variant="bodyStrong" style={styles.emergencyLabel}>
+            {t("admin.hubEmergency")}
+          </AppText>
+          <AppText variant="caption">{t("admin.hubEmergencyDetail")}</AppText>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.danger} />
+      </Pressable>
 
       {SECTIONS.map((section) => (
         <View key={section.title} style={styles.section}>
           <AppText variant="heading">{t(section.title)}</AppText>
           <View>
-            {section.rows.map(([key, href]) => (
+            {section.rows.map(([key, href], index) => (
               <ListRow
                 key={key}
                 label={t(`admin.${key}`)}
                 detail={t(`admin.${key}Detail`)}
                 onPress={() => router.push(href)}
+                last={index === section.rows.length - 1}
               />
             ))}
           </View>
@@ -156,22 +179,15 @@ function AdminHub() {
               {error}
             </AppText>
           ) : null}
-          <Button
-            label={t("common.save")}
-            variant="secondary"
-            loading={updateSettings.isPending}
-            onPress={saveNotifications}
-          />
+          <Button label={t("common.save")} loading={updateSettings.isPending} onPress={saveNotifications} />
         </Card>
       ) : null}
 
       {feedUrl ? (
         <Card>
           <AppText variant="heading">{t("admin.hubCalendar")}</AppText>
+          {/* Le lien contient un jeton secret : on ne l’affiche pas, le bouton suffit pour le copier. */}
           <AppText variant="body">{t("admin.calendarText")}</AppText>
-          <AppText variant="caption" selectable>
-            {feedUrl}
-          </AppText>
           <Button
             label={t("admin.copyLink")}
             variant="secondary"
@@ -186,4 +202,18 @@ function AdminHub() {
 const styles = StyleSheet.create({
   section: { gap: space.sm },
   error: { color: colors.danger },
+  emergency: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.md,
+    minHeight: 56,
+    padding: space.md,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.danger,
+    backgroundColor: colors.white,
+  },
+  emergencyTexts: { flex: 1, gap: 2 },
+  emergencyLabel: { color: colors.danger },
+  pressed: { opacity: 0.7 },
 });

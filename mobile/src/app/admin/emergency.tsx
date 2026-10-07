@@ -14,7 +14,7 @@ import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { Screen } from "@/components/screen";
-import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
+import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { useLanguage } from "@/i18n";
 import { notify } from "@/lib/confirm";
@@ -48,6 +48,21 @@ function Emergency() {
       await shareTextFile("fiche-secours-freepaws.txt", text, "text/plain");
     } catch (err) {
       notify(t("adminSafety.downloadFailed"), toUserMessage(err));
+    }
+  };
+
+  const rescueText = settings.data?.rescue_info.trim() ?? "";
+
+  const shareRescue = async (text: string) => {
+    try {
+      if (Platform.OS === "web") {
+        await Clipboard.setStringAsync(text);
+        notify(t("adminSafety.copied"), t("adminSafety.copiedText"));
+      } else {
+        await Share.share({ message: text });
+      }
+    } catch (err) {
+      notify(t("adminSafety.share"), toUserMessage(err));
     }
   };
 
@@ -105,20 +120,14 @@ function Emergency() {
       ) : overview.isError ? (
         <ErrorView error={overview.error} onRetry={() => void overview.refetch()} />
       ) : bookings.length === 0 ? (
-        <EmptyView title={t("adminSafety.nothingOnSite")} />
+        <AppText variant="body" style={styles.empty}>
+          {t("adminSafety.nothingOnSite")}
+        </AppText>
       ) : (
         bookings.map((booking) => (
           <BookingCard key={booking.booking_id} booking={booking} now={overview.dataUpdatedAt} />
         ))
       )}
-
-      <Button
-        label={t("adminSafety.downloadSheet")}
-        variant="secondary"
-        disabled={overview.isLoading || settings.isLoading}
-        onPress={() => void downloadSheet()}
-      />
-      <AppText variant="caption">{t("adminSafety.downloadSheetHint")}</AppText>
 
       <Card>
         <AppText variant="heading">{t("adminSafety.rescueTitle")}</AppText>
@@ -126,8 +135,10 @@ function Emergency() {
           <LoadingView />
         ) : settings.isError ? (
           <ErrorView error={settings.error} onRetry={() => void settings.refetch()} />
-        ) : settings.data?.rescue_info.trim() ? (
-          <RescueInfo text={settings.data.rescue_info.trim()} />
+        ) : rescueText ? (
+          <AppText variant="body" selectable>
+            {rescueText}
+          </AppText>
         ) : (
           <>
             <AppText variant="body">{t("adminSafety.rescueEmpty")}</AppText>
@@ -138,34 +149,30 @@ function Emergency() {
             />
           </>
         )}
+        <AppText variant="caption" style={styles.sheetHint}>
+          {t("adminSafety.downloadSheetHint")}
+        </AppText>
+        <View style={styles.sheetActions}>
+          <Button
+            label={t("adminSafety.downloadSheet")}
+            variant="secondary"
+            disabled={overview.isLoading || settings.isLoading}
+            onPress={() => void downloadSheet()}
+            style={styles.sheetAction}
+          />
+          {rescueText ? (
+            <Button
+              label={t("adminSafety.share")}
+              variant="secondary"
+              onPress={() => void shareRescue(rescueText)}
+              style={styles.sheetAction}
+            />
+          ) : null}
+        </View>
       </Card>
 
       <RescueAccessCard />
     </Screen>
-  );
-}
-
-function RescueInfo({ text }: { text: string }) {
-  const { t } = useLanguage();
-  const share = async () => {
-    try {
-      if (Platform.OS === "web") {
-        await Clipboard.setStringAsync(text);
-        notify(t("adminSafety.copied"), t("adminSafety.copiedText"));
-      } else {
-        await Share.share({ message: text });
-      }
-    } catch (err) {
-      notify(t("adminSafety.share"), toUserMessage(err));
-    }
-  };
-  return (
-    <>
-      <AppText variant="body" selectable>
-        {text}
-      </AppText>
-      <Button label={t("adminSafety.share")} variant="secondary" onPress={() => void share()} />
-    </>
   );
 }
 
@@ -311,6 +318,10 @@ const styles = StyleSheet.create({
   call112Label: { fontFamily: fonts.sansSemiBold, fontSize: 20, lineHeight: 26, color: colors.white },
   pressed: { opacity: 0.82 },
   center: { textAlign: "center" },
+  empty: { color: colors.inkSoft },
+  sheetHint: { marginTop: space.xs },
+  sheetActions: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  sheetAction: { flexGrow: 1, flexBasis: 200 },
   cardDanger: { borderColor: colors.danger, borderWidth: 1.5 },
   head: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: space.sm },
   section: { gap: space.xs, paddingTop: space.xs },

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Pressable, ScrollView, StyleSheet } from "react-native";
 
 import { AppText } from "@/components/text";
@@ -18,8 +19,23 @@ type Props = {
 export function DayPicker({ days, selected, onSelect, counts, fullDays }: Props) {
   const { t, tp } = useLanguage();
   const full = new Set(fullDays ?? []);
+  const scroller = useRef<ScrollView>(null);
+  const selectedIndex = selected ? days.indexOf(selected) : -1;
+  // Le jour choisi (souvent le premier jour libre) peut être loin à droite : on l’amène à l’écran.
+  useEffect(() => {
+    if (selectedIndex < 0) return;
+    const timer = setTimeout(
+      () =>
+        scroller.current?.scrollTo({
+          x: Math.max(0, selectedIndex * (DAY_WIDTH + space.sm) - space.xl),
+          animated: true,
+        }),
+      50,
+    );
+    return () => clearTimeout(timer);
+  }, [selectedIndex]);
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+    <ScrollView ref={scroller} horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.row}>
       {days.map((day) => {
         const parts = dayParts(day);
         const count = counts[day] ?? 0;
@@ -63,10 +79,12 @@ export function DayPicker({ days, selected, onSelect, counts, fullDays }: Props)
   );
 }
 
+const DAY_WIDTH = 64;
+
 const styles = StyleSheet.create({
-  row: { gap: space.sm, paddingVertical: space.xs },
+  row: { gap: space.sm, paddingTop: space.xs, paddingBottom: space.sm },
   day: {
-    width: 64,
+    width: DAY_WIDTH,
     paddingVertical: space.md,
     borderRadius: radius.md,
     borderWidth: 1,
@@ -78,7 +96,7 @@ const styles = StyleSheet.create({
   full: { backgroundColor: colors.reservedSoft, borderColor: colors.reserved, borderStyle: "dashed" },
   fullTag: { fontFamily: fonts.sansSemiBold, fontSize: 11, color: colors.danger },
   selected: { backgroundColor: colors.ink, borderColor: colors.ink },
-  disabled: { opacity: 0.35 },
+  disabled: { opacity: 0.5, backgroundColor: "transparent" },
   weekday: { fontFamily: fonts.sansMedium, fontSize: 12, textTransform: "uppercase", color: colors.inkSoft },
   number: { fontFamily: fonts.serif, fontSize: 22, lineHeight: 26, color: colors.ink },
   month: { fontFamily: fonts.sans, fontSize: 12, color: colors.inkSoft },

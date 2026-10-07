@@ -22,6 +22,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     letterSpacing: 1.6,
     textTransform: "uppercase",
-    color: colors.brass,
+    color: colors.brassText,
   },
 });

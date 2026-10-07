@@ -6,7 +6,8 @@ import { type Dog, type DogInput, useDeleteDog, useDogs, useSaveDog } from "@/ap
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { Checkbox } from "@/components/checkbox";
-import { ChoiceRow, isValidIsoDay, todayIso, YesNoUnknown } from "@/components/fiche/form-parts";
+import { DateField } from "@/components/date-field";
+import { ChoiceRow, todayIso, YesNoUnknown } from "@/components/fiche/form-parts";
 import { VaccinationsSection } from "@/components/fiche/vaccinations-section";
 import { Screen } from "@/components/screen";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
@@ -74,16 +75,14 @@ function DogForm({ dog }: { dog?: Dog }) {
   const [biteHistory, setBiteHistory] = useState<boolean | null>(dog?.bite_history ?? null);
   const [reactivity, setReactivity] = useState(dog?.reactivity ?? "");
   const [specialNeeds, setSpecialNeeds] = useState(dog?.special_needs ?? "");
-  const [errors, setErrors] = useState<{ name?: string; birthDate?: string; chip?: string; antiparasitic?: string }>(
-    {},
-  );
+  const [errors, setErrors] = useState<{ name?: string; birthDate?: string; chip?: string }>({});
+  // « En chaleurs » n’a de sens que pour une femelle non stérilisée.
+  const canBeInHeat = sex === "female" && sterilised !== true;
 
   const onSave = () => {
     const next: typeof errors = {};
     if (!name.trim()) next.name = t("dogs.nameRequired");
-    if (birthDate && (!isValidIsoDay(birthDate) || birthDate > todayIso())) next.birthDate = t("dogs.dateError");
-    const antiparasitic = antiparasiticUntil.trim();
-    if (antiparasitic && !isValidIsoDay(antiparasitic)) next.antiparasitic = t("dogs.dateError");
+    if (birthDate && birthDate > todayIso()) next.birthDate = t("fiche.birthDateError");
     const chip = chipNumber.replace(/\s+/g, "");
     if (chip && !CHIP_PATTERN.test(chip)) next.chip = t("fiche.chipError");
     setErrors(next);
@@ -99,9 +98,9 @@ function DogForm({ dog }: { dog?: Dog }) {
       chip_number: chip || null,
       dogid_registered: dogidRegistered,
       sterilised,
-      in_heat: sex === "female" ? inHeat : false,
+      in_heat: canBeInHeat ? inHeat : false,
       currently_ill: currentlyIll,
-      antiparasitic_until: antiparasitic || null,
+      antiparasitic_until: antiparasiticUntil || null,
       vet_name: vetName.trim() || null,
       vet_phone: vetPhone.trim() || null,
       bite_history: biteHistory,
@@ -139,15 +138,7 @@ function DogForm({ dog }: { dog?: Dog }) {
         </AppText>
         <TextField label={t("dogs.name")} value={name} onChangeText={setName} maxLength={60} error={errors.name} />
         <TextField label={t("dogs.breed")} value={breed} onChangeText={setBreed} maxLength={80} />
-        <TextField
-          label={t("dogs.birthDate")}
-          placeholder={t("dogs.datePlaceholder")}
-          value={birthDate}
-          onChangeText={setBirthDate}
-          keyboardType="numbers-and-punctuation"
-          maxLength={10}
-          error={errors.birthDate}
-        />
+        <DateField label={t("dogs.birthDate")} value={birthDate} onChange={setBirthDate} error={errors.birthDate} />
         <ChoiceRow
           label={t("fiche.sex")}
           value={sex}
@@ -185,18 +176,9 @@ function DogForm({ dog }: { dog?: Dog }) {
           {t("fiche.sectionHealth")}
         </AppText>
         <YesNoUnknown label={t("fiche.sterilised")} value={sterilised} onChange={setSterilised} />
-        {sex === "female" ? <Checkbox label={t("fiche.inHeat")} checked={inHeat} onChange={setInHeat} /> : null}
+        {canBeInHeat ? <Checkbox label={t("fiche.inHeat")} checked={inHeat} onChange={setInHeat} /> : null}
         <Checkbox label={t("fiche.currentlyIll")} checked={currentlyIll} onChange={setCurrentlyIll} />
-        <TextField
-          label={t("fiche.antiparasiticUntil")}
-          hint={t("fiche.antiparasiticHint")}
-          placeholder={t("dogs.datePlaceholder")}
-          value={antiparasiticUntil}
-          onChangeText={setAntiparasiticUntil}
-          keyboardType="numbers-and-punctuation"
-          maxLength={10}
-          error={errors.antiparasitic}
-        />
+        <DateField label={t("fiche.antiparasiticUntil")} value={antiparasiticUntil} onChange={setAntiparasiticUntil} />
         <TextField
           label={t("dogs.notes")}
           hint={t("dogs.notesHint")}
@@ -245,18 +227,24 @@ function DogForm({ dog }: { dog?: Dog }) {
         />
       </View>
 
-      <Button label={t("common.save")} loading={save.isPending} onPress={onSave} />
-
-      {dog ? (
-        <VaccinationsSection dogId={dog.id} />
-      ) : (
+      {/* Nouveau chien : prévenir avant l’enregistrement que les vaccinations viennent ensuite. */}
+      {isNew ? (
         <Card>
           <AppText variant="body">{t("fiche.vaccinesAfterSave")}</AppText>
         </Card>
-      )}
+      ) : null}
+
+      <Button label={t("common.save")} loading={save.isPending} onPress={onSave} />
+
+      {dog ? <VaccinationsSection dogId={dog.id} /> : null}
 
       {dog ? (
-        <Button label={t("dogs.remove")} variant="ghost" loading={remove.isPending} onPress={() => void onDelete()} />
+        <Button
+          label={t("dogs.remove")}
+          variant="dangerText"
+          loading={remove.isPending}
+          onPress={() => void onDelete()}
+        />
       ) : null}
     </Screen>
   );

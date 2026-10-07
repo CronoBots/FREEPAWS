@@ -6,7 +6,8 @@ import { useProfile, useUpdateProfile } from "@/api/profile";
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
-import { isValidIsoDay, ProofField, todayIso, validityState } from "@/components/fiche/form-parts";
+import { DateField } from "@/components/date-field";
+import { ProofField, todayIso, validityState } from "@/components/fiche/form-parts";
 import { Screen } from "@/components/screen";
 import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
@@ -14,7 +15,7 @@ import { TextField } from "@/components/text-field";
 import { useAuth } from "@/lib/auth";
 import { notify } from "@/lib/confirm";
 import { type PickedFile, removeStoredFile, uploadFile } from "@/lib/files";
-import { space } from "@/theme";
+import { colors, space } from "@/theme";
 import type { Tables } from "@/types/database";
 import { formatDate } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
@@ -32,7 +33,7 @@ export default function ProfileRoute() {
   );
 }
 
-type Errors = { name?: string; birthDate?: string; emergency?: string; insuranceDate?: string };
+type Errors = { name?: string; birthDate?: string; emergency?: string };
 
 function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcome: boolean }) {
   const { t } = useLanguage();
@@ -53,10 +54,9 @@ function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcom
   const save = async () => {
     const next: Errors = {};
     if (fullName.trim().length < 2) next.name = t("profile.nameError");
-    if (birthDate && (!isValidIsoDay(birthDate) || birthDate > todayIso())) next.birthDate = t("fiche.birthDateError");
+    if (birthDate && birthDate > todayIso()) next.birthDate = t("fiche.birthDateError");
     if (Boolean(emergencyName.trim()) !== Boolean(emergencyPhone.trim()))
       next.emergency = t("fiche.emergencyIncomplete");
-    if (validUntil && !isValidIsoDay(validUntil)) next.insuranceDate = t("fiche.insuranceValidUntilError");
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
@@ -112,6 +112,13 @@ function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcom
           {t("fiche.sectionYou")}
         </AppText>
         <TextField
+          label={t("fiche.readOnlyEmail")}
+          hint={t("fiche.readOnlyEmailHint")}
+          value={profile.email}
+          editable={false}
+          style={styles.readOnly}
+        />
+        <TextField
           label={t("profile.name")}
           value={fullName}
           onChangeText={setFullName}
@@ -130,18 +137,13 @@ function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcom
           textContentType="telephoneNumber"
           maxLength={30}
         />
-        <TextField
+        <DateField
           label={t("fiche.birthDate")}
           hint={t("fiche.birthDateHint")}
-          placeholder={t("fiche.datePlaceholder")}
           value={birthDate}
-          onChangeText={setBirthDate}
-          keyboardType="numbers-and-punctuation"
-          autoComplete="birthdate-full"
-          maxLength={10}
+          onChange={setBirthDate}
           error={errors.birthDate}
         />
-        <AppText variant="caption">{t("profile.email", { email: profile.email })}</AppText>
       </View>
 
       <View style={styles.section}>
@@ -172,15 +174,7 @@ function ProfileForm({ profile, welcome }: { profile: Tables<"profiles">; welcom
         <InsuranceBadge profile={profile} />
         <TextField label={t("fiche.insuranceCompany")} value={company} onChangeText={setCompany} maxLength={120} />
         <TextField label={t("fiche.insurancePolicy")} value={policy} onChangeText={setPolicy} maxLength={60} />
-        <TextField
-          label={t("fiche.insuranceValidUntil")}
-          placeholder={t("fiche.datePlaceholder")}
-          value={validUntil}
-          onChangeText={setValidUntil}
-          keyboardType="numbers-and-punctuation"
-          maxLength={10}
-          error={errors.insuranceDate}
-        />
+        <DateField label={t("fiche.insuranceValidUntil")} value={validUntil} onChange={setValidUntil} />
         <ProofField
           label={t("fiche.insuranceProof")}
           storedPath={profile.insurance_proof_path}
@@ -212,4 +206,6 @@ function InsuranceBadge({ profile }: { profile: Tables<"profiles"> }) {
 
 const styles = StyleSheet.create({
   section: { gap: space.md },
+  // Lecture seule : pas de fond blanc, pour ne pas ressembler à un champ modifiable.
+  readOnly: { backgroundColor: "transparent", color: colors.inkSoft },
 });

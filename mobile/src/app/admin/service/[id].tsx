@@ -3,6 +3,7 @@ import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
 import { useAdminServices, useLegalDocuments, useUpdateService } from "@/api/admin";
+import { localizeContent } from "@/api/services";
 import { AdminGuard } from "@/components/admin-guard";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
@@ -57,8 +58,13 @@ const NUMBER_FIELDS = [
 
 type NumberField = (typeof NUMBER_FIELDS)[number][0];
 
+const NUMBER_HINTS: Partial<Record<NumberField, TranslationKey>> = {
+  buffer_minutes: "admin.fieldBufferHint",
+  max_dogs: "admin.fieldMaxDogsHint",
+};
+
 function ServiceForm({ service }: { service: Service }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const update = useUpdateService();
   const documents = useLegalDocuments();
   const english = ((service.translations ?? {}) as Record<string, EnglishContent>).en ?? {};
@@ -85,6 +91,11 @@ function ServiceForm({ service }: { service: Service }) {
   const [error, setError] = useState<string | null>(null);
 
   const availableKinds = [...new Set((documents.data ?? []).map((document) => document.kind))];
+  /** Titre du document dans la langue de l’interface (à défaut, le premier trouvé), jamais le code technique. */
+  const kindTitle = (kind: string) => {
+    const docs = (documents.data ?? []).filter((document) => document.kind === kind);
+    return (docs.find((document) => document.language === language) ?? docs[0])?.title || kind;
+  };
 
   const save = () => {
     setError(null);
@@ -149,12 +160,8 @@ function ServiceForm({ service }: { service: Service }) {
 
   return (
     <>
-      <Stack.Screen options={{ title: "" }} />
-      <Screen
-        underHeader
-        heading={service.name}
-        footer={<Button label={t("common.save")} loading={update.isPending} onPress={save} />}
-      >
+      <Stack.Screen options={{ title: localizeContent(service, language).name }} />
+      <Screen underHeader footer={<Button label={t("common.save")} loading={update.isPending} onPress={save} />}>
         <Card>
           <AppText variant="heading">{t("admin.sectionContent")}</AppText>
           <TextField label={t("admin.fieldName")} value={name} onChangeText={setName} maxLength={120} />
@@ -201,30 +208,24 @@ function ServiceForm({ service }: { service: Service }) {
             keyboardType="decimal-pad"
           />
           <Checkbox label={t("admin.fieldPriceVisible")} checked={priceVisible} onChange={setPriceVisible} />
-          <Button
-            label={t("pricing.rulesButton")}
-            variant="secondary"
-            onPress={() => router.push({ pathname: "/admin/pricing/[serviceId]", params: { serviceId: service.id } })}
-          />
-          <Button
-            label={t("v11Admin.questionnaireButton")}
-            variant="secondary"
-            onPress={() =>
-              router.push({ pathname: "/admin/questionnaire/[serviceId]", params: { serviceId: service.id } })
-            }
-          />
-          {NUMBER_FIELDS.map(([key, label]) =>
-            key === "default_capacity" && service.mode !== "event" ? null : (
-              <TextField
-                key={key}
-                label={t(label)}
-                value={numbers[key]}
-                onChangeText={(value) => setNumbers({ ...numbers, [key]: value.replace(/\D/g, "") })}
-                keyboardType="number-pad"
-                maxLength={4}
-              />
-            ),
-          )}
+          {/* Champs courts (1 à 4 chiffres) : deux colonnes sur grand écran, une seule sur téléphone. */}
+          <View style={styles.numbers}>
+            {NUMBER_FIELDS.map(([key, label]) => {
+              const hint = NUMBER_HINTS[key];
+              return key === "default_capacity" && service.mode !== "event" ? null : (
+                <View key={key} style={styles.numberField}>
+                  <TextField
+                    label={t(label)}
+                    hint={hint ? t(hint) : undefined}
+                    value={numbers[key]}
+                    onChangeText={(value) => setNumbers({ ...numbers, [key]: value.replace(/\D/g, "") })}
+                    keyboardType="number-pad"
+                    maxLength={4}
+                  />
+                </View>
+              );
+            })}
+          </View>
           <Checkbox label={t("admin.fieldRequiresAddress")} checked={requiresAddress} onChange={setRequiresAddress} />
           <Checkbox
             label={t("adminSafety.requiresParkProfile")}
@@ -242,11 +243,12 @@ function ServiceForm({ service }: { service: Service }) {
           {availableKinds.length > 0 ? (
             <View style={styles.kinds}>
               <AppText variant="bodyStrong">{t("admin.fieldDocuments")}</AppText>
+              <AppText variant="caption">{t("admin.fieldDocumentsHint")}</AppText>
               <View style={styles.chips}>
                 {availableKinds.map((kind) => (
                   <Chip
                     key={kind}
-                    label={kind}
+                    label={kindTitle(kind)}
                     selected={kinds.includes(kind)}
                     onPress={() =>
                       setKinds(kinds.includes(kind) ? kinds.filter((item) => item !== kind) : [...kinds, kind])
@@ -256,6 +258,24 @@ function ServiceForm({ service }: { service: Service }) {
               </View>
             </View>
           ) : null}
+        </Card>
+
+        {/* Écrans séparés : en bas du formulaire pour ne pas quitter la page avant d’avoir enregistré. */}
+        <Card>
+          <AppText variant="heading">{t("admin.sectionLinked")}</AppText>
+          <AppText variant="caption">{t("admin.sectionLinkedHint")}</AppText>
+          <Button
+            label={t("pricing.rulesButton")}
+            variant="secondary"
+            onPress={() => router.push({ pathname: "/admin/pricing/[serviceId]", params: { serviceId: service.id } })}
+          />
+          <Button
+            label={t("v11Admin.questionnaireButton")}
+            variant="secondary"
+            onPress={() =>
+              router.push({ pathname: "/admin/questionnaire/[serviceId]", params: { serviceId: service.id } })
+            }
+          />
         </Card>
 
         {error ? (
@@ -270,6 +290,8 @@ function ServiceForm({ service }: { service: Service }) {
 
 const styles = StyleSheet.create({
   kinds: { gap: space.sm },
+  numbers: { flexDirection: "row", flexWrap: "wrap", gap: space.md },
+  numberField: { flexGrow: 1, flexBasis: 240, minWidth: 0 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   error: { color: colors.danger },
 });

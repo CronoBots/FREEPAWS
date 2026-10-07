@@ -113,6 +113,7 @@ export function GuestProfileForm({ token, invitation }: { token: string; invitat
 
       <Card>
         <AppText variant="heading">{t("v11Client.guestDogTitle")}</AppText>
+        <AppText variant="caption">{t("v11Client.guestDogHint")}</AppText>
         <DogFields value={dog} onChange={(patch) => setDog((prev) => ({ ...prev, ...patch }))} />
       </Card>
 
@@ -122,14 +123,15 @@ export function GuestProfileForm({ token, invitation }: { token: string; invitat
           {pending.map((document) => (
             <View key={document.id} style={styles.document}>
               <Checkbox
-                label={t("booking.documentAccept", { title: document.title, version: document.version })}
+                label={t("v11Client.guestDocumentAccept", { title: document.title })}
                 checked={Boolean(accepted[document.id])}
                 onChange={(checked) => setAccepted((prev) => ({ ...prev, [document.id]: checked }))}
               />
               <Button
-                label={t("booking.documentRead")}
+                label={t(openDocument === document.id ? "v11Client.guestDocumentHide" : "v11Client.guestDocumentRead")}
                 variant="ghost"
                 onPress={() => setOpenDocument(openDocument === document.id ? null : document.id)}
+                style={styles.documentLink}
               />
               {openDocument === document.id ? (
                 <AppText variant="caption" style={styles.documentBody}>
@@ -154,6 +156,8 @@ export function GuestProfileForm({ token, invitation }: { token: string; invitat
 const styles = StyleSheet.create({
   form: { gap: space.md },
   document: { gap: space.xs },
+  // Lien aligné sous le libellé de la case (case de 26 px + écart).
+  documentLink: { alignSelf: "flex-start", minHeight: 44, paddingHorizontal: 0, marginLeft: 26 + space.md },
   documentBody: { padding: space.sm, backgroundColor: colors.cream, borderRadius: radius.sm },
   error: { color: colors.danger },
 });

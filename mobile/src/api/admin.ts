@@ -21,7 +21,7 @@ export function useAgenda(from: Date, to: Date) {
            service:services ( name, mode, location ),
            bookings ( id, status, party_size, client_notes, visit_address, adults_count, children_count, dogs_count,
              client:profiles!bookings_client_id_fkey ( full_name, email, phone ),
-             dog:dogs ( name, breed ) )`,
+             dog:dogs!bookings_dog_id_fkey ( name, breed ) )`,
         )
         .eq("status", "scheduled")
         .overlaps("period", toRangeLiteral(from, to))

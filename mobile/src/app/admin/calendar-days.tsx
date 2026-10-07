@@ -10,6 +10,7 @@ import { Chip } from "@/components/chip";
 import { Screen } from "@/components/screen";
 import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
+import { DateField } from "@/components/date-field";
 import { TextField } from "@/components/text-field";
 import { useLanguage } from "@/i18n";
 import { confirm, notify } from "@/lib/confirm";
@@ -63,7 +64,7 @@ function CalendarDays() {
 
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [kind, setKind] = useState<Kind | null>(null);
+  const [kind, setKind] = useState<Kind>("public_holiday");
   const [label, setLabel] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -75,7 +76,6 @@ function CalendarDays() {
     if (new Date(noon(end)).getTime() - new Date(noon(from.trim())).getTime() > 365 * 86_400_000) {
       return setError(t("pricing.errorDate"));
     }
-    if (!kind) return setError(t("pricing.dayKind"));
     add.mutate(
       { from: from.trim(), to: end, kind, label: label.trim() },
       {
@@ -112,23 +112,8 @@ function CalendarDays() {
 
       <Card>
         <AppText variant="heading">{t("pricing.addPeriod")}</AppText>
-        <TextField
-          label={t("pricing.fieldFrom")}
-          placeholder={t("dogs.datePlaceholder")}
-          value={from}
-          onChangeText={setFrom}
-          maxLength={10}
-          keyboardType="numbers-and-punctuation"
-        />
-        <TextField
-          label={t("pricing.fieldTo")}
-          hint={t("pricing.fieldToHint")}
-          placeholder={t("dogs.datePlaceholder")}
-          value={to}
-          onChangeText={setTo}
-          maxLength={10}
-          keyboardType="numbers-and-punctuation"
-        />
+        <DateField label={t("pricing.fieldFrom")} value={from} onChange={setFrom} />
+        <DateField label={t("pricing.fieldTo")} hint={t("pricing.fieldToHint")} value={to} onChange={setTo} />
         <AppText variant="bodyStrong">{t("pricing.dayKind")}</AppText>
         <View style={styles.chips}>
           <Chip
@@ -148,7 +133,7 @@ function CalendarDays() {
             {error}
           </AppText>
         ) : null}
-        <Button label={t("pricing.add")} disabled={!from || !kind} loading={add.isPending} onPress={submit} />
+        <Button label={t("pricing.add")} loading={add.isPending} onPress={submit} />
       </Card>
 
       <AppText variant="heading">{t("pricing.daysListTitle")}</AppText>
@@ -175,12 +160,14 @@ function CalendarDays() {
                   : t("pricing.dayRange", { from: formatDate(noon(first)), to: formatDate(noon(last)) })}
               </AppText>
               <AppText variant="caption">{tp("pricing.dayCount", group.days.length)}</AppText>
-              <Button
-                label={t("pricing.deleteRule")}
-                variant="ghost"
-                loading={remove.isPending && deleting === first}
-                onPress={() => void askDelete(group)}
-              />
+              <View style={styles.actions}>
+                <Button
+                  label={t("pricing.deleteRule")}
+                  variant="dangerText"
+                  loading={remove.isPending && deleting === first}
+                  onPress={() => void askDelete(group)}
+                />
+              </View>
             </Card>
           );
         })
@@ -191,5 +178,6 @@ function CalendarDays() {
 
 const styles = StyleSheet.create({
   chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  actions: { flexDirection: "row", justifyContent: "flex-end" },
   error: { color: colors.danger },
 });

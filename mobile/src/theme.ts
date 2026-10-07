@@ -6,6 +6,8 @@ export const colors = {
   inkSoft: "#4a5c4c",
   olive: "#6c7746",
   brass: "#a3823f",
+  /** Laiton assombri pour le petit texte (contraste AA sur crème). */
+  brassText: "#7a5f2a",
   line: "rgba(43, 58, 48, 0.16)",
   white: "#ffffff",
   danger: "#9c3a2e",

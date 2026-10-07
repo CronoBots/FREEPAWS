@@ -58,8 +58,9 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
   const documents = useRequiredDocuments(rescheduling ? undefined : service.id);
 
   const [pickedDay, setPickedDay] = useState<string | null>(null);
-  const [selected, setSelected] = useState<Slot | null>(null);
-  const [dogId, setDogId] = useState<string | null>(null);
+  const [picked, setPicked] = useState<Slot | null>(null);
+  // Jour où la personne a retiré la séance présélectionnée (on ne la remet pas).
+  const [autoDismissedDay, setAutoDismissedDay] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [address, setAddress] = useState("");
   const [adults, setAdults] = useState(1);
@@ -84,7 +85,7 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
   const submitting = bookSlot.isPending || bookEvent.isPending || reschedule.isPending;
 
   const selectSlot = (slot: Slot | null) => {
-    setSelected(slot);
+    setPicked(slot);
     // Amène la suite du formulaire à l’écran.
     if (slot && userId) setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
   };
@@ -102,6 +103,11 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
   const activeDay = pickedDay ?? days.find((day) => (counts[day] ?? 0) > 0) ?? null;
   const activeDayFull = activeDay != null && (counts[activeDay] ?? 0) === 0 && fullDays.includes(activeDay);
   const daySlots = activeDay ? (byDay[activeDay] ?? []) : [];
+
+  // Séance (atelier) : quand le jour n’en propose qu’une, elle est présélectionnée.
+  const autoSlot =
+    service.mode === "event" && daySlots.length === 1 && autoDismissedDay !== activeDay ? daySlots[0] : null;
+  const selected = picked ?? autoSlot ?? null;
   const pendingDocuments = (documents.data ?? []).filter((document) => !document.accepted);
   const documentsOk = pendingDocuments.every((document) => accepted[document.documentId]);
   const addressOk = !service.requires_address || address.trim().length > 0;
@@ -115,6 +121,8 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
   // Parc : chiens du compte + chiens d’autres foyers, sous le même plafond (M2-06).
   const groupCount = parkProfile ? groupDogs.length : 0;
   const totalDogs = dogIds.length + groupCount;
+  // Autres prestations : les chiens touchés donnent le nombre ; le compteur ne sert que sans chien choisi.
+  const effectiveDogsCount = parkProfile ? totalDogs : dogIds.length > 0 ? dogIds.length : dogsCount;
   const dogsFull = totalDogs >= maxDogs;
 
   const toggleDog = (id: string) =>
@@ -184,13 +192,13 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
     }
 
     const details = {
-      dogId: parkProfile ? null : dogId,
-      dogIds: parkProfile ? dogIds : undefined,
+      dogId: null,
+      dogIds,
       notes,
       visitAddress: service.requires_address ? address : undefined,
       adultsCount: showAdults ? adults : undefined,
       childrenCount: children,
-      dogsCount: parkProfile ? totalDogs : dogsCount,
+      dogsCount: effectiveDogsCount,
       discountCode: discount?.valid ? discount.code : undefined,
       documentIds: pendingDocuments.map((document) => document.documentId),
       guests: guestInputs,
@@ -208,19 +216,53 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
     }
   };
 
+  const selectedDay = selected ? dayParts(toIsoDay(selected.startsAt)) : null;
   const confirmLabel = selected
     ? t(rescheduling ? "booking.rescheduleConfirm" : "booking.confirm", {
-        day: dayParts(toIsoDay(selected.startsAt)).weekday,
+        day: `${selectedDay?.weekday} ${selectedDay?.day} ${selectedDay?.month}`,
         time: formatTime(selected.startsAt),
       })
     : t("booking.chooseSlot");
+
+  // Ce qui manque encore avant de pouvoir confirmer (affiché au-dessus du prix).
+  const missing =
+    !selected || rescheduling
+      ? null
+      : !addressOk
+        ? t("errors.address_required")
+        : parkProfile && totalDogs === 0
+          ? t("parkBooking.dogRequired")
+          : null;
+
+  const dogChips = (
+    <View style={styles.chips}>
+      {dogs.data?.map((dog) => {
+        const checked = dogIds.includes(dog.id);
+        return (
+          <Chip
+            key={dog.id}
+            label={checked ? `✓ ${dog.name}` : dog.name}
+            accessibilityLabel={dog.name}
+            selected={checked}
+            disabled={!checked && dogsFull}
+            onPress={() => toggleDog(dog.id)}
+          />
+        );
+      })}
+      <Chip
+        label={t("booking.addDog")}
+        selected={false}
+        onPress={() => router.push({ pathname: "/dogs/[id]", params: { id: "new" } })}
+      />
+    </View>
+  );
 
   const footer = !userId ? (
     <Button label={t("booking.signInToBook")} onPress={() => router.push("/sign-in")} />
   ) : (
     <Button
       label={confirmLabel}
-      disabled={!selected || (!rescheduling && eligibilityBlocked)}
+      disabled={!selected || Boolean(missing) || (!rescheduling && eligibilityBlocked)}
       loading={submitting}
       onPress={onConfirm}
     />
@@ -228,8 +270,8 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
 
   const quote = useQuote({
     serviceId: service.id,
-    startsAt: userId && selected && !rescheduling ? selected.startsAt : null,
-    dogs: parkProfile ? Math.max(1, totalDogs) : dogsCount,
+    startsAt: userId && selected && !rescheduling && !(parkProfile && totalDogs === 0) ? selected.startsAt : null,
+    dogs: effectiveDogsCount,
     guests: guestInputs.length,
     discountCode: discount?.valid ? discount.code : undefined,
   });
@@ -256,7 +298,9 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
               </AppText>
             ))}
             {formatPrice(service.displayPriceCents) ? (
-              <AppText variant="bodyStrong">{formatPrice(service.displayPriceCents)}</AppText>
+              <AppText variant="bodyStrong">
+                {t("booking.basePrice", { price: formatPrice(service.displayPriceCents) ?? "" })}
+              </AppText>
             ) : null}
           </View>
         ) : null}
@@ -303,14 +347,18 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
                   key: slot.startsAt,
                   label:
                     service.mode === "event"
-                      ? `${formatTime(slot.startsAt)} · ${tp("booking.places", slot.remaining)}`
+                      ? `${formatTime(slot.startsAt)} · ${tp("booking.placesLeft", slot.remaining)}`
                       : formatTime(slot.startsAt),
                   accessibilityLabel: t("booking.slotA11y", {
                     start: formatTime(slot.startsAt),
                     end: formatTime(slot.endsAt),
                   }),
                   selected: selected?.startsAt === slot.startsAt,
-                  onPress: () => selectSlot(selected?.startsAt === slot.startsAt ? null : slot),
+                  onPress: () => {
+                    if (selected?.startsAt !== slot.startsAt) return selectSlot(slot);
+                    if (!picked) setAutoDismissedDay(activeDay);
+                    selectSlot(null);
+                  },
                 }))}
               />
             )}
@@ -346,14 +394,8 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
                 <Stepper label={t("booking.adults")} value={adults} onChange={setAdults} min={1} max={adultsMax} />
               ) : null}
               <Stepper label={t("booking.children")} value={children} onChange={setChildren} max={childrenMax} />
-              {parkProfile ? null : (
-                <Stepper label={t("booking.dogsCount")} value={dogsCount} onChange={setDogsCount} max={maxDogs} />
-              )}
               {maxPeople ? (
                 <AppText variant="caption">{t("parkBooking.maxPeople", { count: maxPeople })}</AppText>
-              ) : null}
-              {service.max_dogs ? (
-                <AppText variant="caption">{t("booking.maxDogs", { count: service.max_dogs })}</AppText>
               ) : null}
             </Card>
 
@@ -365,43 +407,29 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
                     ? t("parkBooking.dogsHint", { max: service.max_dogs })
                     : t("parkBooking.dogsHintNoMax")}
                 </AppText>
-                <View style={styles.chips}>
-                  {dogs.data?.map((dog) => {
-                    const checked = dogIds.includes(dog.id);
-                    return (
-                      <Chip
-                        key={dog.id}
-                        label={checked ? `✓ ${dog.name}` : dog.name}
-                        accessibilityLabel={dog.name}
-                        selected={checked}
-                        disabled={!checked && dogsFull}
-                        onPress={() => toggleDog(dog.id)}
-                      />
-                    );
-                  })}
-                  <Chip
-                    label={t("booking.addDog")}
-                    selected={false}
-                    onPress={() => router.push({ pathname: "/dogs/[id]", params: { id: "new" } })}
-                  />
-                </View>
+                {dogChips}
                 <AppText variant="bodyStrong">{tp("parkBooking.dogsSelected", dogIds.length)}</AppText>
               </Card>
             ) : (
-              <>
-                <AppText variant="heading">{t("booking.whichDog")}</AppText>
-                <View style={styles.chips}>
-                  <Chip label={t("booking.dogUnspecified")} selected={dogId === null} onPress={() => setDogId(null)} />
-                  {dogs.data?.map((dog) => (
-                    <Chip key={dog.id} label={dog.name} selected={dogId === dog.id} onPress={() => setDogId(dog.id)} />
-                  ))}
-                  <Chip
-                    label={t("booking.addDog")}
-                    selected={false}
-                    onPress={() => router.push({ pathname: "/dogs/[id]", params: { id: "new" } })}
+              <Card>
+                <AppText variant="heading">{t("booking.whichDogs")}</AppText>
+                <AppText variant="caption">{t("booking.whichDogsHint")}</AppText>
+                {dogChips}
+                {dogIds.length > 0 ? (
+                  <AppText variant="bodyStrong">{tp("parkBooking.dogsSelected", dogIds.length)}</AppText>
+                ) : (
+                  <Stepper
+                    label={t("booking.dogsCount")}
+                    value={dogsCount}
+                    onChange={setDogsCount}
+                    min={1}
+                    max={maxDogs}
                   />
-                </View>
-              </>
+                )}
+                {service.max_dogs ? (
+                  <AppText variant="caption">{t("booking.maxDogs", { count: service.max_dogs })}</AppText>
+                ) : null}
+              </Card>
             )}
 
             {parkProfile ? (
@@ -413,13 +441,15 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
                   onCertifiedChange={setGroupCertified}
                   canAdd={!dogsFull}
                   showErrors={showGroupErrors}
+                  footer={
+                    <View style={styles.total} accessibilityLiveRegion="polite">
+                      <AppText variant="bodyStrong">{tp("v11Client.dogsTotal", totalDogs)}</AppText>
+                      {dogsFull ? (
+                        <AppText variant="caption">{t("v11Client.dogsMaxReached", { max: maxDogs })}</AppText>
+                      ) : null}
+                    </View>
+                  }
                 />
-                <View style={styles.total} accessibilityLiveRegion="polite">
-                  <AppText variant="bodyStrong">{tp("v11Client.dogsTotal", totalDogs)}</AppText>
-                  {dogsFull ? (
-                    <AppText variant="caption">{t("v11Client.dogsMaxReached", { max: maxDogs })}</AppText>
-                  ) : null}
-                </View>
                 <EligibilityPreview
                   loading={eligibility.isLoading && eligibility.fetchStatus !== "idle"}
                   data={totalDogs > 0 ? eligibility.data : undefined}
@@ -441,6 +471,7 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
               <View style={styles.codeField}>
                 <TextField
                   label={t("booking.discount")}
+                  placeholder={t("booking.discountPlaceholder")}
                   value={codeInput}
                   onChangeText={(text) => {
                     setCodeInput(text.toUpperCase());
@@ -452,7 +483,12 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
                   onSubmitEditing={() => void onCheckCode()}
                 />
               </View>
-              <Button label="OK" variant="secondary" onPress={() => void onCheckCode()} style={styles.codeButton} />
+              <Button
+                label={t("booking.applyCode")}
+                variant="secondary"
+                onPress={() => void onCheckCode()}
+                style={styles.codeButton}
+              />
             </View>
             {discount ? (
               <AppText variant="caption" style={discount.valid ? styles.ok : styles.error}>
@@ -485,7 +521,11 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
               </Card>
             ) : null}
 
-            {quote.isLoading ? (
+            {missing ? (
+              <AppText variant="bodyStrong" style={styles.error}>
+                {missing}
+              </AppText>
+            ) : quote.isLoading ? (
               <AppText variant="caption">{t("parkBooking.priceLoading")}</AppText>
             ) : quotedPrice ? (
               <View style={styles.price} accessibilityLiveRegion="polite">
@@ -511,7 +551,7 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
 }
 
 const styles = StyleSheet.create({
-  intro: { gap: space.sm },
+  intro: { gap: space.lg },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   details: { gap: space.md },
   codeRow: { flexDirection: "row", alignItems: "flex-end", gap: space.sm },

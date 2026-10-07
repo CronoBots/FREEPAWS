@@ -11,7 +11,7 @@ import { parseRange } from "@/utils/range";
 const BOOKING_SELECT = `
   id, status, client_notes, party_size, created_at, cancelled_at,
   visit_address, adults_count, children_count, dogs_count, price_cents, discount_cents,
-  dog:dogs ( id, name ),
+  dog:dogs!bookings_dog_id_fkey ( id, name ),
   appointment:appointments (
     id, period, status,
     service:services ( id, slug, name, location, mode, booking_enabled, cancel_notice_hours, duration_minutes, max_advance_days, translations )

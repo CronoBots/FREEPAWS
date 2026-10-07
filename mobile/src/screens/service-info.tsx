@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 
 import type { Service } from "@/api/services";
 import { Button } from "@/components/button";
+import { Card } from "@/components/card";
 import { Screen } from "@/components/screen";
 import { AppText } from "@/components/text";
 import { useLanguage } from "@/i18n";
@@ -32,7 +33,9 @@ export function ServiceInfo({ service }: { service: Service }) {
           </AppText>
         ))}
         {price ? <AppText variant="bodyStrong">{price}</AppText> : null}
-        <AppText variant="caption">{t("coaching.ctaText")}</AppText>
+        <Card>
+          <AppText variant="body">{t("coaching.ctaText")}</AppText>
+        </Card>
       </Screen>
     </>
   );

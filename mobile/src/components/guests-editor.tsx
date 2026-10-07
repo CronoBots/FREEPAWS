@@ -68,7 +68,7 @@ export function GuestsEditor({ value, onChange, showErrors = false }: Props) {
             </AppText>
             <Button
               label={t("parkBooking.guestRemove")}
-              variant="ghost"
+              variant="dangerText"
               onPress={() => onChange(value.filter((item) => item.key !== guest.key))}
               style={styles.remove}
             />

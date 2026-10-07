@@ -3,7 +3,8 @@ import { ActivityIndicator, Platform, Pressable, type PressableProps, StyleSheet
 
 import { colors, fonts, radius, space } from "@/theme";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+/** dangerText : action destructrice secondaire (Supprimer), texte rouge sans fond. */
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "dangerText";
 
 type Props = Omit<PressableProps, "children"> & {
   label: string;
@@ -35,7 +36,13 @@ export function Button({ label, variant = "primary", loading = false, disabled, 
       {loading ? (
         <ActivityIndicator color={variant === "primary" || variant === "danger" ? colors.cream : colors.ink} />
       ) : (
-        <Text style={[styles.label, (variant === "primary" || variant === "danger") && styles.labelInverse]}>
+        <Text
+          style={[
+            styles.label,
+            (variant === "primary" || variant === "danger") && styles.labelInverse,
+            variant === "dangerText" && styles.labelDanger,
+          ]}
+        >
           {label}
         </Text>
       )}
@@ -56,8 +63,10 @@ const styles = StyleSheet.create({
   secondary: { backgroundColor: colors.creamAlt, borderWidth: 1, borderColor: colors.ink },
   ghost: { backgroundColor: "transparent" },
   danger: { backgroundColor: colors.danger },
+  dangerText: { backgroundColor: "transparent" },
   pressed: { opacity: 0.82 },
   disabled: { opacity: 0.45 },
   label: { fontFamily: fonts.sansSemiBold, fontSize: 16, lineHeight: 21, color: colors.ink, textAlign: "center" },
   labelInverse: { color: colors.cream },
+  labelDanger: { color: colors.danger },
 });

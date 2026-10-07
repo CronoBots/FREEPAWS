@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
@@ -16,6 +16,7 @@ import { AdminGuard } from "@/components/admin-guard";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { Chip } from "@/components/chip";
+import { DateField } from "@/components/date-field";
 import { ListRow } from "@/components/list-row";
 import { Screen } from "@/components/screen";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
@@ -70,7 +71,8 @@ function IncidentForm({ incident }: { incident?: Incident }) {
   const now = new Date();
 
   const [incidentId, setIncidentId] = useState(incident?.id);
-  const [kind, setKind] = useState<IncidentKind>(incident?.kind ?? "other");
+  // Pas de type présélectionné pour un nouvel incident : un incident saisi trop vite serait mal classé.
+  const [kind, setKind] = useState<IncidentKind | null>(incident?.kind ?? null);
   const [day, setDay] = useState(toIsoDay(incident?.occurred_at ?? now));
   const [time, setTime] = useState(formatTime(incident?.occurred_at ?? now));
   const [description, setDescription] = useState(incident?.description ?? "");
@@ -165,7 +167,8 @@ function IncidentForm({ incident }: { incident?: Incident }) {
 
   const submit = () => {
     setError(null);
-    const occurred = brusselsDateTime(day.trim(), time.trim());
+    if (!kind) return setError(t("adminSafety.kindRequired"));
+    const occurred = day ? brusselsDateTime(day, time.trim()) : null;
     if (!occurred) return setError(t("adminSafety.dateError"));
     if (!description.trim()) return setError(t("adminSafety.descriptionRequired"));
     save.mutate(
@@ -198,25 +201,21 @@ function IncidentForm({ incident }: { incident?: Incident }) {
   return (
     <Screen
       underHeader
-      heading={incident ? t("adminSafety.editIncident") : t("adminSafety.newIncident")}
       footer={<Button label={t("common.save")} loading={save.isPending} disabled={uploading} onPress={submit} />}
     >
+      <Stack.Screen options={{ title: incidentId ? t("adminSafety.editIncident") : t("adminSafety.newIncident") }} />
       <Card>
+        <AppText variant="heading">{t("adminSafety.detailsTitle")}</AppText>
         <AppText variant="bodyStrong">{t("adminSafety.fieldKind")}</AppText>
         <View style={styles.chips}>
           {INCIDENT_KINDS.map((item) => (
             <Chip key={item} label={t(incidentKindKey(item))} selected={kind === item} onPress={() => setKind(item)} />
           ))}
         </View>
-        <TextField
-          label={t("adminSafety.fieldDate")}
-          value={day}
-          onChangeText={setDay}
-          maxLength={10}
-          keyboardType="numbers-and-punctuation"
-        />
+        <DateField label={t("adminSafety.fieldDate")} value={day} onChange={setDay} />
         <TextField
           label={t("adminSafety.fieldTime")}
+          placeholder="HH:MM"
           value={time}
           onChangeText={setTime}
           maxLength={5}
@@ -239,16 +238,17 @@ function IncidentForm({ incident }: { incident?: Incident }) {
       </Card>
 
       <Card>
-        <AppText variant="heading">{t("adminSafety.peopleTitle")}</AppText>
+        <AppText variant="heading" style={styles.cardTitle}>
+          {t("adminSafety.peopleTitle")}
+        </AppText>
         {people.length > 0 ? (
-          <View style={styles.chips}>
+          <View style={styles.tags}>
             {people.map((person) => (
-              <Chip
+              <PersonTag
                 key={person.id}
-                label={`${person.name}  ✕`}
-                accessibilityLabel={t("adminSafety.remove", { name: person.name })}
-                selected
-                onPress={() => removePerson(person.id)}
+                name={person.name}
+                removeLabel={t("adminSafety.remove", { name: person.name })}
+                onRemove={() => removePerson(person.id)}
               />
             ))}
           </View>
@@ -346,11 +346,17 @@ function IncidentForm({ incident }: { incident?: Incident }) {
           <AppText variant="heading">{t("adminSafety.sanctionTitle")}</AppText>
           <AppText variant="body">{t("adminSafety.sanctionText")}</AppText>
           <View>
-            {people.map((person) => (
+            {people.map((person, index) => (
               <ListRow
                 key={person.id}
                 label={person.name}
-                onPress={() => router.push({ pathname: "/admin/client/[id]", params: { id: person.id } })}
+                last={index === people.length - 1}
+                onPress={() =>
+                  router.push({
+                    pathname: "/admin/client/[id]",
+                    params: { id: person.id, incident: incidentId },
+                  })
+                }
               />
             ))}
           </View>
@@ -360,8 +366,44 @@ function IncidentForm({ incident }: { incident?: Incident }) {
   );
 }
 
+/** Personne retenue : étiquette claire, nom aligné à gauche, bouton ✕ séparé pour la retirer. */
+function PersonTag({ name, removeLabel, onRemove }: { name: string; removeLabel: string; onRemove: () => void }) {
+  return (
+    <View style={styles.tag}>
+      <AppText variant="bodyStrong" style={styles.tagName}>
+        {name}
+      </AppText>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={removeLabel}
+        hitSlop={4}
+        onPress={onRemove}
+        style={({ pressed }) => [styles.tagRemove, pressed && styles.pressed]}
+      >
+        <AppText style={styles.tagRemoveText}>✕</AppText>
+      </Pressable>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  cardTitle: { marginBottom: space.xs },
+  tags: { gap: space.xs },
+  tag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.sm,
+    minHeight: 44,
+    paddingLeft: space.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.white,
+  },
+  tagName: { flex: 1, paddingVertical: space.sm },
+  tagRemove: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  tagRemoveText: { fontSize: 18, color: colors.inkSoft },
   photoRow: {
     flexDirection: "row",
     flexWrap: "wrap",

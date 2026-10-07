@@ -2,6 +2,8 @@ import { router } from "expo-router";
 
 import { isUpcoming, useMyBookings } from "@/api/bookings";
 import { BookingCard } from "@/components/booking-card";
+import { Button } from "@/components/button";
+import { Card } from "@/components/card";
 import { Screen } from "@/components/screen";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
@@ -16,12 +18,13 @@ export default function BookingsScreen() {
   if (!userId) {
     return (
       <Screen title={t("tabs.bookings")}>
-        <EmptyView
-          title={t("booking.signInTitle")}
-          message={t("booking.signInText")}
-          actionLabel={t("booking.signIn")}
-          onAction={() => router.push("/sign-in")}
-        />
+        <Card>
+          <AppText variant="heading" accessibilityRole="header">
+            {t("booking.signInTitle")}
+          </AppText>
+          <AppText variant="body">{t("booking.signInText")}</AppText>
+          <Button label={t("booking.signIn")} onPress={() => router.push("/sign-in")} />
+        </Card>
       </Screen>
     );
   }

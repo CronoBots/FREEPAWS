@@ -97,11 +97,34 @@ export type RescueLive = {
   streams: { id: string; name: string; url: string }[];
 };
 
-/** Page des secours : direct de toutes les caméras et fiche secours, rafraîchi avant expiration. */
-export function useRescueLive(token: string | undefined) {
+export type RescueAccessCheck = { valid: boolean; rescueInfo: string; label: string };
+
+/**
+ * Page des secours : validité du lien et fiche secours, lues directement en base (RPC accessible sans
+ * compte). Ne dépend pas de l’Edge Function vidéo : la fiche et le 112 restent affichés si le direct
+ * est indisponible. La base ne distingue pas un lien expiré d’un lien révoqué (mode « denied »).
+ */
+export function useRescueAccessCheck(token: string | undefined) {
+  return useQuery({
+    queryKey: ["rescue-access-check", token],
+    enabled: Boolean(token),
+    refetchInterval: 60_000,
+    queryFn: async (): Promise<RescueAccessCheck> => {
+      const row = await run(supabase.rpc("rescue_camera_access", { p_token: token ?? "" }).maybeSingle());
+      return {
+        valid: row?.mode === "rescue",
+        rescueInfo: row?.rescue_info?.trim() ?? "",
+        label: row?.label?.trim() ?? "",
+      };
+    },
+  });
+}
+
+/** Direct de toutes les caméras pour un lien secours, rafraîchi avant expiration des URLs signées. */
+export function useRescueLive(token: string | undefined, enabled = true) {
   return useQuery({
     queryKey: ["rescue-live", token],
-    enabled: Boolean(token),
+    enabled: Boolean(token) && enabled,
     refetchInterval: 60_000,
     queryFn: async (): Promise<RescueLive> => {
       const { data, error } = await supabase.functions.invoke("live-stream", { body: { rescue_token: token } });

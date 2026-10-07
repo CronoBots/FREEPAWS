@@ -12,10 +12,10 @@ import {
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
-import { ChoiceRow, isValidIsoDay, ProofField, todayIso } from "@/components/fiche/form-parts";
+import { DateField } from "@/components/date-field";
+import { ChoiceRow, ProofField, todayIso } from "@/components/fiche/form-parts";
 import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
-import { TextField } from "@/components/text-field";
 import { type Language, useLanguage } from "@/i18n";
 import { useAuth } from "@/lib/auth";
 import { confirm, notify } from "@/lib/confirm";
@@ -46,6 +46,26 @@ export function vaccinationAttention(rows: Vaccination[] | undefined): "rejected
   if (rows?.some((row) => row.status === "rejected")) return "rejected";
   if (rows?.some((row) => row.status === "pending")) return "pending";
   return null;
+}
+
+/**
+ * Doses regroupées par vaccin (dans l’ordre des vaccins demandés), la plus récente d’abord :
+ * les suivantes sont marquées « dose précédente ».
+ */
+export function groupVaccinations(rows: Vaccination[], types: Pick<VaccineType, "id">[] | undefined) {
+  const order = new Map((types ?? []).map((type, index) => [type.id, index]));
+  const rank = (row: Vaccination) => order.get(row.vaccine_type_id) ?? Number.MAX_SAFE_INTEGER;
+  const sorted = [...rows].sort(
+    (a, b) =>
+      rank(a) - rank(b) ||
+      a.vaccine_type_id.localeCompare(b.vaccine_type_id) ||
+      b.vaccinated_on.localeCompare(a.vaccinated_on) ||
+      b.created_at.localeCompare(a.created_at),
+  );
+  return sorted.map((row, index) => ({
+    row,
+    previous: index > 0 && sorted[index - 1]?.vaccine_type_id === row.vaccine_type_id,
+  }));
 }
 
 export function VaccinationsSection({ dogId }: { dogId: string }) {
@@ -82,10 +102,11 @@ export function VaccinationsSection({ dogId }: { dogId: string }) {
         <>
           <AppText variant="caption">{t("fiche.vaccinationsIntro")}</AppText>
           {vaccinations.data?.length ? (
-            vaccinations.data.map((row) => (
+            groupVaccinations(vaccinations.data, types.data ?? undefined).map(({ row, previous }) => (
               <VaccinationCard
                 key={row.id}
                 row={row}
+                previous={previous}
                 editing={editing?.id === row.id}
                 onEdit={() => {
                   setEditing(row);
@@ -123,11 +144,13 @@ function StatusBadge({ row }: { row: Vaccination }) {
 
 function VaccinationCard({
   row,
+  previous,
   editing,
   onEdit,
   onDeleted,
 }: {
   row: Vaccination;
+  previous: boolean;
   editing: boolean;
   onEdit: () => void;
   onDeleted: () => void;
@@ -166,9 +189,13 @@ function VaccinationCard({
   return (
     <Card>
       <AppText variant="bodyStrong">{name}</AppText>
+      {previous ? <AppText variant="caption">{t("fiche.previousDose")}</AppText> : null}
       <StatusBadge row={row} />
       <AppText variant="caption">
-        {t("fiche.vaccinatedOnLine", { date: formatDate(row.vaccinated_on), until: formatDate(row.valid_until) })}
+        {/* Validée : la fin de validité est déjà dans le badge. */}
+        {row.status === "validated"
+          ? t("fiche.vaccinatedOnly", { date: formatDate(row.vaccinated_on) })
+          : t("fiche.vaccinatedOnLine", { date: formatDate(row.vaccinated_on), until: formatDate(row.valid_until) })}
       </AppText>
       {row.status === "rejected" && row.review_note ? (
         <AppText variant="body">{t("fiche.reviewNote", { note: row.review_note })}</AppText>
@@ -185,7 +212,7 @@ function VaccinationCard({
         ) : null}
         <Button variant="ghost" label={t("fiche.edit")} disabled={editing} onPress={onEdit} style={styles.rowAction} />
         <Button
-          variant="ghost"
+          variant="dangerText"
           label={t("fiche.remove")}
           loading={remove.isPending}
           onPress={() => void onDelete()}
@@ -222,9 +249,10 @@ function VaccinationForm({
   const onSave = async () => {
     const next: FormErrors = {};
     if (!vaccineId) next.vaccine = t("fiche.vaccineRequired");
-    const dateOk = isValidIsoDay(vaccinatedOn) && vaccinatedOn <= todayIso();
+    // DateField renvoie "" tant que la date est vide, incomplète ou inexistante.
+    const dateOk = Boolean(vaccinatedOn) && vaccinatedOn <= todayIso();
     if (!dateOk) next.vaccinatedOn = t("fiche.vaccinatedOnError");
-    if (!isValidIsoDay(validUntil) || (dateOk && validUntil <= vaccinatedOn)) {
+    if (!validUntil || (dateOk && validUntil <= vaccinatedOn)) {
       next.validUntil = t("fiche.validUntilError");
     }
     setErrors(next);
@@ -264,7 +292,7 @@ function VaccinationForm({
 
   return (
     <Card style={styles.form}>
-      <AppText variant="bodyStrong" accessibilityRole="header">
+      <AppText variant="heading" accessibilityRole="header">
         {editing ? t("fiche.editVaccination") : t("fiche.addVaccination")}
       </AppText>
       <ChoiceRow
@@ -281,24 +309,13 @@ function VaccinationForm({
           {errors.vaccine}
         </AppText>
       ) : null}
-      <TextField
+      <DateField
         label={t("fiche.vaccinatedOn")}
-        placeholder={t("fiche.datePlaceholder")}
         value={vaccinatedOn}
-        onChangeText={setVaccinatedOn}
-        keyboardType="numbers-and-punctuation"
-        maxLength={10}
+        onChange={setVaccinatedOn}
         error={errors.vaccinatedOn}
       />
-      <TextField
-        label={t("fiche.validUntil")}
-        placeholder={t("fiche.datePlaceholder")}
-        value={validUntil}
-        onChangeText={setValidUntil}
-        keyboardType="numbers-and-punctuation"
-        maxLength={10}
-        error={errors.validUntil}
-      />
+      <DateField label={t("fiche.validUntil")} value={validUntil} onChange={setValidUntil} error={errors.validUntil} />
       <ProofField
         label={t("fiche.vaccinationProof")}
         storedPath={editing?.proof_path ?? null}
@@ -314,7 +331,8 @@ function VaccinationForm({
 const styles = StyleSheet.create({
   section: { gap: space.md },
   form: { gap: space.md },
-  rowActions: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
-  rowAction: { flexGrow: 1 },
+  // Actions groupées à gauche, à leur largeur naturelle (pas étirées sur toute la carte).
+  rowActions: { flexDirection: "row", flexWrap: "wrap", gap: space.lg },
+  rowAction: { paddingHorizontal: 0 },
   error: { color: colors.danger },
 });

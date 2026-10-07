@@ -13,7 +13,6 @@ import { Checkbox } from "@/components/checkbox";
 import { Screen } from "@/components/screen";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
-import { useCompact } from "@/hooks/use-compact";
 import { type TranslationKey, useLanguage } from "@/i18n";
 import { confirm, notify } from "@/lib/confirm";
 import { colors, space } from "@/theme";
@@ -23,10 +22,10 @@ import { formatPrice } from "@/utils/format";
 type Kind = PricingRule["kind"];
 
 // Même ordre que le calcul côté serveur : forfait groupe, période, chiens supplémentaires.
-const SECTIONS: readonly [Kind, TranslationKey, TranslationKey][] = [
-  ["group", "pricing.kindGroup", "pricing.kindGroupHint"],
-  ["off_peak", "pricing.kindOffPeak", "pricing.kindOffPeakHint"],
-  ["extra_dog", "pricing.kindExtraDog", "pricing.kindExtraDogHint"],
+const SECTIONS: readonly [Kind, TranslationKey, TranslationKey, TranslationKey][] = [
+  ["group", "pricing.kindGroup", "pricing.kindGroupHint", "pricing.addGroupRule"],
+  ["off_peak", "pricing.kindOffPeak", "pricing.kindOffPeakHint", "pricing.addOffPeakRule"],
+  ["extra_dog", "pricing.kindExtraDog", "pricing.kindExtraDogHint", "pricing.addExtraDogRule"],
 ];
 
 export default function AdminPricingRulesRoute() {
@@ -39,7 +38,6 @@ export default function AdminPricingRulesRoute() {
 
 function PricingRules() {
   const { t } = useLanguage();
-  const compact = useCompact();
   const { serviceId } = useLocalSearchParams<{ serviceId: string }>();
   const services = useAdminServices();
   const rules = usePricingRules(serviceId);
@@ -116,13 +114,15 @@ function PricingRules() {
         ) : null}
       </Card>
 
-      {SECTIONS.map(([kind, title, hint]) => {
+      {SECTIONS.map(([kind, title, hint, addLabel]) => {
         const list = all.filter((rule) => rule.kind === kind);
         const formHere = editing?.kind === kind;
         return (
           <View key={kind} style={styles.section}>
             <AppText variant="heading">{t(title)}</AppText>
-            <AppText variant="caption">{t(hint)}</AppText>
+            <AppText variant="caption" style={styles.help}>
+              {t(hint)}
+            </AppText>
             {list.length === 0 && !formHere ? <AppText variant="body">{t("pricing.noRules")}</AppText> : null}
             {list.map((rule) =>
               formHere && editing?.rule?.id === rule.id ? (
@@ -145,19 +145,17 @@ function PricingRules() {
                     checked={rule.active}
                     onChange={(active) => toggle(rule, active)}
                   />
-                  <View style={compact ? styles.stack : styles.pair}>
+                  <View style={styles.actions}>
                     <Button
                       label={t("pricing.editRule")}
                       variant="secondary"
                       onPress={() => setEditing({ kind, rule })}
-                      style={compact ? undefined : styles.flex}
                     />
                     <Button
                       label={t("pricing.deleteRule")}
-                      variant="ghost"
+                      variant="dangerText"
                       loading={remove.isPending && remove.variables === rule.id}
                       onPress={() => void askDelete(rule)}
-                      style={compact ? undefined : styles.flex}
                     />
                   </View>
                 </Card>
@@ -166,7 +164,7 @@ function PricingRules() {
             {formHere && !editing?.rule ? (
               <RuleForm serviceId={service.id} kind={kind} sortOrder={nextSortOrder} onDone={() => setEditing(null)} />
             ) : (
-              <Button label={t("pricing.addRule")} variant="secondary" onPress={() => setEditing({ kind })} />
+              <Button label={t(addLabel)} variant="secondary" onPress={() => setEditing({ kind })} />
             )}
           </View>
         );
@@ -176,10 +174,9 @@ function PricingRules() {
 }
 
 const styles = StyleSheet.create({
-  section: { gap: space.md },
-  pair: { flexDirection: "row", gap: space.md },
-  stack: { gap: space.md },
-  flex: { flex: 1 },
+  section: { gap: space.md, marginTop: space.lg },
+  help: { fontSize: 14, lineHeight: 20 },
+  actions: { flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-end", gap: space.sm },
   inactive: { opacity: 0.5 },
   warning: { color: colors.reserved },
 });

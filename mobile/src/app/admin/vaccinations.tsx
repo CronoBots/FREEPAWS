@@ -8,11 +8,13 @@ import { dayDate, ErrorText, openProof, validity, vaccineName } from "@/componen
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
+import { ListRow } from "@/components/list-row";
 import { Screen } from "@/components/screen";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { useLanguage } from "@/i18n";
+import { confirm } from "@/lib/confirm";
 import { colors, space } from "@/theme";
 import { formatDate } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
@@ -56,8 +58,17 @@ function PendingCard({ item }: { item: Pending }) {
   const ownerName = owner ? owner.full_name?.trim() || owner.email : null;
   const expired = validity(item.valid_until) === "expired";
 
-  const submit = (status: "validated" | "rejected") => {
+  const submit = async (status: "validated" | "rejected") => {
     setError(null);
+    // Valider ouvre l’accès au parc : sans justificatif, on demande confirmation.
+    if (status === "validated" && !item.proof_path) {
+      const ok = await confirm({
+        title: t("adminClients.noProofTitle"),
+        message: t("adminClients.noProofMessage"),
+        confirmLabel: t("adminClients.validate"),
+      });
+      if (!ok) return;
+    }
     review.mutate(
       { id: item.id, status, note: status === "rejected" ? note.trim() || null : null },
       { onError: (err) => setError(toUserMessage(err)) },
@@ -69,12 +80,11 @@ function PendingCard({ item }: { item: Pending }) {
       <AppText variant="heading">{vaccineName(item.vaccine)}</AppText>
       <AppText variant="bodyStrong">{[item.dog?.name, item.dog?.breed].filter(Boolean).join(" · ")}</AppText>
       {owner && ownerName ? (
-        <View style={styles.owner}>
+        <View>
           <AppText variant="caption">{t("adminClients.owner")}</AppText>
-          <Button
+          <ListRow
             label={ownerName}
-            variant="ghost"
-            style={styles.ownerLink}
+            last
             onPress={() => router.push({ pathname: "/admin/client/[id]", params: { id: owner.id } })}
           />
         </View>
@@ -89,7 +99,10 @@ function PendingCard({ item }: { item: Pending }) {
       {item.proof_path ? (
         <Button label={t("adminClients.proof")} variant="secondary" onPress={() => openProof(item.proof_path!)} />
       ) : (
-        <AppText variant="caption">{t("adminClients.noProof")}</AppText>
+        <View style={styles.row}>
+          <Badge label={t("adminClients.noProofBadge")} tone="warning" />
+          <AppText variant="caption">{t("adminClients.noProof")}</AppText>
+        </View>
       )}
 
       {rejecting ? (
@@ -115,7 +128,7 @@ function PendingCard({ item }: { item: Pending }) {
               variant="danger"
               style={styles.action}
               loading={review.isPending}
-              onPress={() => submit("rejected")}
+              onPress={() => void submit("rejected")}
             />
           </View>
         </View>
@@ -134,7 +147,7 @@ function PendingCard({ item }: { item: Pending }) {
               label={t("adminClients.validate")}
               style={styles.action}
               loading={review.isPending}
-              onPress={() => submit("validated")}
+              onPress={() => void submit("validated")}
             />
           </View>
         </>
@@ -144,8 +157,6 @@ function PendingCard({ item }: { item: Pending }) {
 }
 
 const styles = StyleSheet.create({
-  owner: { gap: 0 },
-  ownerLink: { alignSelf: "flex-start", paddingHorizontal: 0, minHeight: 44 },
   row: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: space.sm },
   reject: {
     gap: space.sm,

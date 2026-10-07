@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { StyleSheet, View } from "react-native";
 
 import { useGuestLive } from "@/api/pricing";
@@ -71,6 +71,10 @@ export default function GuestLiveRoute() {
       refreshing={invitation.isRefetching || live.isRefetching}
       onRefresh={() => void Promise.all([invitation.refetch(), guest?.profileCompleted ? live.refetch() : null])}
     >
+      {/* Tant que le profil est à compléter, la page est un formulaire d’invitation, pas encore le direct. */}
+      <Stack.Screen
+        options={{ title: guest && profileRequired ? t("v11Client.guestHeaderTitle") : t("admin.liveGuestTitle") }}
+      />
       {firstName ? (
         <AppText variant="title" accessibilityRole="header">
           {t("parkBooking.liveHello", { name: firstName })}

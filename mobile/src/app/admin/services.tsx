@@ -30,12 +30,12 @@ function AdminServices() {
         <ErrorView error={services.error} onRetry={() => void services.refetch()} />
       ) : (
         <View>
-          {services.data?.map((service) => {
+          {services.data?.map((service, index) => {
             const localized = localizeContent(service, language);
             const detail = [
-              service.booking_enabled ? t("admin.fieldBookingEnabled") : t("coaching.appointment"),
+              service.active ? null : t("admin.statusHidden"),
+              service.booking_enabled ? t("admin.statusOnline") : t("admin.statusOnRequest"),
               formatPrice(service.price_cents),
-              service.active ? null : "—",
             ]
               .filter(Boolean)
               .join(" · ");
@@ -44,6 +44,7 @@ function AdminServices() {
                 key={service.id}
                 label={localized.name}
                 detail={detail}
+                last={index === (services.data?.length ?? 0) - 1}
                 onPress={() => router.push({ pathname: "/admin/service/[id]", params: { id: service.id } })}
               />
             );

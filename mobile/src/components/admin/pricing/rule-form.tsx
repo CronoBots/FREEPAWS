@@ -145,6 +145,7 @@ export function RuleForm({ serviceId, kind, rule, sortOrder, onDone }: Props) {
             <View style={compact ? undefined : styles.flex}>
               <TextField
                 label={t("pricing.fieldStart")}
+                placeholder="HH:MM"
                 value={start}
                 onChangeText={setStart}
                 maxLength={5}
@@ -154,6 +155,7 @@ export function RuleForm({ serviceId, kind, rule, sortOrder, onDone }: Props) {
             <View style={compact ? undefined : styles.flex}>
               <TextField
                 label={t("pricing.fieldEnd")}
+                placeholder="HH:MM"
                 value={end}
                 onChangeText={setEnd}
                 maxLength={5}
@@ -161,7 +163,9 @@ export function RuleForm({ serviceId, kind, rule, sortOrder, onDone }: Props) {
               />
             </View>
           </View>
-          <AppText variant="caption">{t("pricing.fieldTimesHint")}</AppText>
+          <AppText variant="caption" style={styles.help}>
+            {t("pricing.fieldTimesHint")}
+          </AppText>
           <AppText variant="bodyStrong">{t("pricing.fieldAdjustment")}</AppText>
           <View style={styles.chips}>
             <Chip
@@ -241,5 +245,6 @@ const styles = StyleSheet.create({
   pair: { flexDirection: "row", gap: space.md },
   stack: { gap: space.md },
   flex: { flex: 1 },
+  help: { fontSize: 14, lineHeight: 20 },
   error: { color: colors.danger },
 });

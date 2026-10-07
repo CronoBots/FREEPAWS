@@ -60,7 +60,9 @@ export default function AccountScreen() {
       {userId ? (
         <Card>
           <AppText variant="heading">{profile.data?.full_name || t("account.welcome")}</AppText>
-          <AppText variant="body">{profile.data?.email}</AppText>
+          <AppText variant="body" numberOfLines={1} ellipsizeMode="middle">
+            {profile.data?.email}
+          </AppText>
         </Card>
       ) : (
         <Card>
@@ -120,7 +122,7 @@ export default function AccountScreen() {
               detail={exporting ? t("fiche.exportLoading") : t("fiche.exportDetail")}
               onPress={() => void onExport()}
             />
-            <ListRow label={t("account.signOut")} onPress={() => void supabase.auth.signOut()} />
+            <ListRow label={t("account.signOut")} chevron={false} onPress={() => void supabase.auth.signOut()} />
             <ListRow label={t("account.delete")} destructive onPress={() => void onDelete()} />
           </>
         ) : null}

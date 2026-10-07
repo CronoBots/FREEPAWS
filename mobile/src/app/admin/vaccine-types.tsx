@@ -1,10 +1,9 @@
-import { useState } from "react";
-import { StyleSheet } from "react-native";
+import { useEffect, useState } from "react";
+import { StyleSheet, View } from "react-native";
 
 import { useAllVaccineTypes, useSaveVaccineType } from "@/api/admin-park";
 import { AdminGuard } from "@/components/admin-guard";
-import { BadgeRow, ErrorText } from "@/components/admin/clients/shared";
-import { Badge } from "@/components/badge";
+import { ErrorText } from "@/components/admin/clients/shared";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { Checkbox } from "@/components/checkbox";
@@ -13,7 +12,7 @@ import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { useLanguage } from "@/i18n";
-import { notify } from "@/lib/confirm";
+import { confirm, notify } from "@/lib/confirm";
 import type { Json } from "@/types/database";
 import { colors } from "@/theme";
 import { toUserMessage } from "@/utils/errors";
@@ -59,12 +58,6 @@ function VaccineTypes() {
     );
   };
 
-  const toggle = (item: VaccineType, values: { required?: boolean; active?: boolean }) =>
-    save.mutate(
-      { id: item.id, ...values },
-      { onError: (err) => notify(t("adminClients.saveFailed"), toUserMessage(err)) },
-    );
-
   return (
     <Screen underHeader refreshing={types.isRefetching} onRefresh={() => void types.refetch()}>
       <Card>
@@ -90,34 +83,70 @@ function VaccineTypes() {
       ) : !types.data?.length ? (
         <EmptyView title={t("adminClients.noTypes")} message={t("adminClients.noTypesText")} />
       ) : (
-        types.data.map((item) => (
-          <Card key={item.id} style={!item.active && styles.inactive}>
-            <AppText variant="heading">{item.name}</AppText>
-            {englishName(item) ? <AppText variant="caption">{englishName(item)}</AppText> : null}
-            <BadgeRow>
-              <Badge
-                label={item.required ? t("adminClients.typeRequired") : t("adminClients.typeOptional")}
-                tone={item.required ? "warning" : "neutral"}
-              />
-              <Badge
-                label={item.active ? t("adminClients.typeActive") : t("adminClients.typeInactive")}
-                tone={item.active ? "success" : "neutral"}
-              />
-            </BadgeRow>
-            <Checkbox
-              label={t("adminClients.requiredForPark")}
-              checked={item.required}
-              onChange={(value) => toggle(item, { required: value })}
-            />
-            <Checkbox
-              label={t("adminClients.typeActive")}
-              checked={item.active}
-              onChange={(value) => toggle(item, { active: value })}
-            />
-          </Card>
-        ))
+        types.data.map((item) => <VaccineTypeCard key={item.id} item={item} />)
       )}
     </Screen>
+  );
+}
+
+function VaccineTypeCard({ item }: { item: VaccineType }) {
+  const { t } = useLanguage();
+  const save = useSaveVaccineType();
+  const [saved, setSaved] = useState(false);
+  const english = englishName(item);
+
+  useEffect(() => {
+    if (!saved) return;
+    const timer = setTimeout(() => setSaved(false), 2500);
+    return () => clearTimeout(timer);
+  }, [saved]);
+
+  // Ces cases changent aussitôt les conditions de réservation de tous les clients :
+  // on confirme avant de retirer une exigence ou de désactiver un vaccin.
+  const toggle = async (values: { required?: boolean; active?: boolean }) => {
+    setSaved(false);
+    const loosening = values.required === false || values.active === false;
+    if (loosening) {
+      const deactivate = values.active === false;
+      const ok = await confirm({
+        title: t(deactivate ? "adminClients.deactivateTitle" : "adminClients.unrequireTitle"),
+        message: t(deactivate ? "adminClients.deactivateMessage" : "adminClients.unrequireMessage"),
+        confirmLabel: t(deactivate ? "adminClients.deactivateConfirm" : "adminClients.unrequireConfirm"),
+        destructive: true,
+      });
+      if (!ok) return;
+    }
+    save.mutate(
+      { id: item.id, ...values },
+      {
+        onSuccess: () => setSaved(true),
+        onError: (err) => notify(t("adminClients.saveFailed"), toUserMessage(err)),
+      },
+    );
+  };
+
+  return (
+    <Card style={!item.active && styles.inactive}>
+      <AppText variant="heading">{item.name}</AppText>
+      {english ? <AppText variant="caption">{t("adminClients.englishName", { name: english })}</AppText> : null}
+      <View>
+        <Checkbox
+          label={t("adminClients.requiredForPark")}
+          checked={item.required}
+          onChange={(value) => void toggle({ required: value })}
+        />
+        <Checkbox
+          label={t("adminClients.typeActive")}
+          checked={item.active}
+          onChange={(value) => void toggle({ active: value })}
+        />
+      </View>
+      {saved ? (
+        <AppText variant="bodyStrong" accessibilityLiveRegion="polite">
+          {t("adminClients.typeSaved")}
+        </AppText>
+      ) : null}
+    </Card>
   );
 }
 

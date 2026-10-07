@@ -13,9 +13,18 @@ import {
 import { AdminGuard } from "@/components/admin-guard";
 import { ClientDogs } from "@/components/admin/clients/client-dogs";
 import { ClientHistory } from "@/components/admin/clients/client-history";
-import { ClientSanctions } from "@/components/admin/clients/client-sanctions";
+import { ClientSanctions, type SanctionIncident } from "@/components/admin/clients/client-sanctions";
 import { ClientBookingForm } from "@/components/admin/extra/client-booking-form";
-import { BadgeRow, dayDate, InfoLine, openProof, Section, todayIso, validity } from "@/components/admin/clients/shared";
+import {
+  BadgeRow,
+  dayDate,
+  InfoLine,
+  keepTogether,
+  openProof,
+  Section,
+  todayIso,
+  validity,
+} from "@/components/admin/clients/shared";
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Screen } from "@/components/screen";
@@ -38,7 +47,8 @@ export default function AdminClientRoute() {
 
 function ClientScreen() {
   const { t } = useLanguage();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // « incident » : fiche ouverte depuis un incident pour appliquer une sanction qui lui est liée.
+  const { id, incident } = useLocalSearchParams<{ id: string; incident?: string }>();
   const client = useClient(id);
 
   if (client.isLoading) {
@@ -71,6 +81,7 @@ function ClientScreen() {
   return (
     <ClientContent
       data={{ ...data, profile: data.profile }}
+      incidentId={incident}
       refreshing={client.isRefetching}
       onRefresh={() => void client.refetch()}
     />
@@ -80,18 +91,36 @@ function ClientScreen() {
 type Profile = NonNullable<ClientDetails["profile"]>;
 type Details = Omit<ClientDetails, "profile"> & { profile: Profile };
 
-function ClientContent({ data, refreshing, onRefresh }: { data: Details; refreshing: boolean; onRefresh: () => void }) {
+function ClientContent({
+  data,
+  incidentId,
+  refreshing,
+  onRefresh,
+}: {
+  data: Details;
+  incidentId?: string;
+  refreshing: boolean;
+  onRefresh: () => void;
+}) {
+  const { t } = useLanguage();
   const { profile, dogs, sanctions, incidents, history, bookings } = data;
   const name = profile.full_name?.trim() || profile.email;
   const dogNames = useMemo(() => new Map(dogs.map((dog) => [dog.id, dog.name])), [dogs]);
+  const source = incidentId ? incidents.find((item) => item.id === incidentId) : undefined;
+  const sanctionIncident: SanctionIncident | undefined = source
+    ? { id: source.id, date: source.occurred_at, kindLabel: t(KINDS[source.kind]) }
+    : undefined;
+  const sanctionsSection = <ClientSanctions userId={profile.id} sanctions={sanctions} incident={sanctionIncident} />;
 
   return (
     <Screen underHeader heading={name} refreshing={refreshing} onRefresh={onRefresh}>
       <StatusBadges data={data} />
+      {/* Depuis un incident : la sanction est le sujet, elle passe en tête de fiche. */}
+      {sanctionIncident ? sanctionsSection : null}
       <Identity profile={profile} />
       <Insurance profile={profile} />
       <ClientDogs dogs={dogs} />
-      <ClientSanctions userId={profile.id} sanctions={sanctions} />
+      {sanctionIncident ? null : sanctionsSection}
       <RoleSection profile={profile} />
       <Incidents incidents={incidents} />
       <ClientBookingForm clientId={profile.id} />
@@ -110,10 +139,10 @@ function StatusBadges({ data }: { data: Details }) {
   if (data.profile.role !== "admin" && !banned && !suspended && !protocol) return null;
   return (
     <BadgeRow>
-      {data.profile.role === "admin" ? <Badge label={t("adminClients.badgeAdmin")} tone="success" /> : null}
+      {data.profile.role === "admin" ? <Badge label={t("adminClients.badgeAdmin")} /> : null}
       {banned ? <Badge label={t("adminClients.badgeBanned")} tone="danger" /> : null}
       {suspended ? <Badge label={t("adminClients.badgeSuspended")} tone="danger" /> : null}
-      {protocol ? <Badge label={t("adminClients.badgeProtocol")} tone="warning" /> : null}
+      {protocol ? <Badge label={t("adminClients.badgeProtocol")} tone="danger" /> : null}
     </BadgeRow>
   );
 }
@@ -125,14 +154,19 @@ function isMinor(birthDate: string) {
 
 function Identity({ profile }: { profile: Profile }) {
   const { t } = useLanguage();
-  const emergency = [profile.emergency_contact_name, profile.emergency_contact_phone].filter(Boolean).join(" · ");
+  const emergency = [
+    profile.emergency_contact_name,
+    profile.emergency_contact_phone ? keepTogether(profile.emergency_contact_phone) : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <Section title={t("adminClients.identity")}>
       <AppText variant="body" style={styles.ink} selectable>
         {profile.email}
       </AppText>
       <AppText variant="body" style={styles.ink} selectable>
-        {profile.phone || t("adminClients.noPhone")}
+        {profile.phone ? keepTogether(profile.phone) : t("adminClients.noPhone")}
       </AppText>
       <View style={styles.actions}>
         {profile.phone ? (
@@ -246,20 +280,38 @@ const KINDS: Record<IncidentKind, TranslationKey> = {
 
 function Incidents({ incidents }: { incidents: ClientDetails["incidents"] }) {
   const { t } = useLanguage();
+  const shown = incidents.slice(0, 10);
   return (
     <Section title={t("adminClients.incidents")}>
       {incidents.length === 0 ? <AppText variant="body">{t("adminClients.noIncidents")}</AppText> : null}
-      {incidents.slice(0, 10).map((incident) => (
-        <View key={incident.id} style={styles.line}>
-          <View style={styles.wrapRow}>
-            <Badge label={t(KINDS[incident.kind])} tone={incident.kind === "bite" ? "danger" : "warning"} />
-            <AppText variant="caption">{formatDate(incident.occurred_at)}</AppText>
-          </View>
-          <AppText variant="body" numberOfLines={3}>
-            {incident.description}
-          </AppText>
-        </View>
-      ))}
+      {shown.map((incident, index) => {
+        const when = `${formatDate(incident.occurred_at)}, ${formatTime(incident.occurred_at)}`;
+        return (
+          <Pressable
+            key={incident.id}
+            accessibilityRole="button"
+            accessibilityLabel={t("adminClients.openIncident", { kind: t(KINDS[incident.kind]), date: when })}
+            onPress={() => router.push({ pathname: "/admin/incident/[id]", params: { id: incident.id } })}
+            style={({ pressed }) => [
+              styles.line,
+              styles.linkRow,
+              index === shown.length - 1 && styles.lastLine,
+              pressed && styles.pressed,
+            ]}
+          >
+            <View style={styles.flex}>
+              <View style={styles.wrapRow}>
+                <Badge label={t(KINDS[incident.kind])} tone={incident.kind === "bite" ? "danger" : "warning"} />
+                <AppText variant="caption">{when}</AppText>
+              </View>
+              <AppText variant="body" numberOfLines={3}>
+                {incident.description}
+              </AppText>
+            </View>
+            <AppText style={styles.chevron}>›</AppText>
+          </Pressable>
+        );
+      })}
     </Section>
   );
 }
@@ -279,13 +331,17 @@ function Bookings({ bookings }: { bookings: ClientDetails["bookings"] }) {
   return (
     <Section title={t("adminClients.bookings")}>
       {bookings.length === 0 ? <AppText variant="body">{t("adminClients.noBookings")}</AppText> : null}
-      {bookings.slice(0, 15).map((booking) => (
+      {bookings.slice(0, 15).map((booking, index, shown) => (
         <Pressable
           key={booking.id}
           accessibilityRole="button"
           accessibilityLabel={booking.appointment?.service?.name ?? t("admin.bookingAdminTitle")}
           onPress={() => router.push({ pathname: "/admin/booking/[id]", params: { id: booking.id } })}
-          style={({ pressed }) => [styles.line, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.line,
+            index === shown.length - 1 && styles.lastLine,
+            pressed && styles.pressed,
+          ]}
         >
           <View style={styles.wrapRow}>
             <AppText variant="bodyStrong" style={styles.flex}>
@@ -310,7 +366,7 @@ function Bookings({ bookings }: { bookings: ClientDetails["bookings"] }) {
 const styles = StyleSheet.create({
   ink: { color: colors.ink },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
-  action: { flexGrow: 1, flexBasis: 120 },
+  action: { minWidth: 150 },
   wrapRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: space.sm },
   flex: { flexShrink: 1, flexGrow: 1 },
   line: {
@@ -319,5 +375,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.line,
   },
+  lastLine: { borderBottomWidth: 0 },
+  linkRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  chevron: { fontSize: 24, color: colors.inkSoft },
   pressed: { opacity: 0.7 },
 });

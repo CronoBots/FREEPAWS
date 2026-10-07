@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 
 import { fetchBookingsForExport, type Stats, useStats } from "@/api/admin-park";
 import { BarList, ProgressBar, StatTile } from "@/components/admin/safety/charts";
@@ -8,14 +8,14 @@ import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { Chip } from "@/components/chip";
 import { Screen } from "@/components/screen";
-import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
+import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
-import { type TranslationKey, useLanguage } from "@/i18n";
+import { getLocale, type TranslationKey, useLanguage } from "@/i18n";
 import { notify } from "@/lib/confirm";
 import { shareTextFile } from "@/lib/share-file";
 import { colors, space } from "@/theme";
 import { toCsv } from "@/utils/csv";
-import { addDays, formatDate, formatDuration, formatTime, toIsoDay, weekdayName } from "@/utils/dates";
+import { addDays, formatDate, formatTime, toIsoDay, weekdayName } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 import { formatPrice } from "@/utils/format";
 import { parseRange } from "@/utils/range";
@@ -28,6 +28,17 @@ const PERIODS: [Period, TranslationKey][] = [
   ["month", "adminSafety.periodMonth"],
   ["year", "adminSafety.periodYear"],
 ];
+
+/** Heures d’ouverture ou réservées, toujours en heures (« 0 h », « 7,5 h ») pour comparer les deux chiffres. */
+function formatHours(minutes: number): string {
+  const hours = new Intl.NumberFormat(getLocale(), { maximumFractionDigits: 1 }).format(minutes / 60);
+  return `${hours}\u00a0h`;
+}
+
+/** Pourcentage selon la langue : « 42 % » en français, « 42% » en anglais. */
+function formatPercent(rate: number): string {
+  return new Intl.NumberFormat(getLocale(), { style: "percent", maximumFractionDigits: 0 }).format(rate);
+}
 
 /** Bornes AAAA-MM-JJ (incluses) de la période, en jours calendaires de Bruxelles. */
 function periodRange(period: Period, today: string): { from: string; to: string } {
@@ -122,11 +133,12 @@ function Dashboard() {
 
   return (
     <Screen underHeader refreshing={stats.isRefetching} onRefresh={() => void stats.refetch()}>
-      <View style={styles.chips}>
+      {/* Une seule ligne qui défile : aucun filtre ne se retrouve seul sur une deuxième ligne. */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
         {PERIODS.map(([key, label]) => (
           <Chip key={key} label={t(label)} selected={period === key} onPress={() => setPeriod(key)} />
         ))}
-      </View>
+      </ScrollView>
       <AppText variant="caption">
         {t("adminSafety.periodRange", { from: formatDate(`${from}T12:00:00Z`), to: formatDate(`${to}T12:00:00Z`) })}
       </AppText>
@@ -143,6 +155,7 @@ function Dashboard() {
         label={t("adminSafety.exportBookings")}
         variant="secondary"
         loading={exporting}
+        disabled={stats.data != null && stats.data.bookings === 0 && stats.data.cancellations === 0}
         onPress={() => void exportCsv()}
       />
     </Screen>
@@ -172,12 +185,15 @@ function StatsContent({ stats }: { stats: Stats }) {
   return (
     <>
       <View style={styles.tiles}>
-        <StatTile label={t("adminSafety.statBookings")} value={String(stats.bookings)} />
+        <StatTile
+          label={t("adminSafety.statBookings")}
+          value={String(stats.bookings)}
+          hint={t("adminSafety.statsHint")}
+        />
         <StatTile label={t("adminSafety.statCancellations")} value={String(stats.cancellations)} />
         <StatTile label={t("adminSafety.statRevenue")} value={formatPrice(stats.revenue_cents) ?? "—"} />
         <StatTile label={t("adminSafety.statNewClients")} value={String(stats.new_clients)} />
       </View>
-      <AppText variant="caption">{t("adminSafety.statsHint")}</AppText>
 
       {stats.fill_rate.length > 0 ? (
         <Card>
@@ -188,17 +204,15 @@ function StatsContent({ stats }: { stats: Stats }) {
                 <AppText variant="bodyStrong" style={styles.flex}>
                   {item.resource}
                 </AppText>
-                {item.rate != null ? (
-                  <AppText variant="bodyStrong">{`${Math.round(item.rate * 100)} %`}</AppText>
-                ) : null}
+                {item.rate != null ? <AppText variant="bodyStrong">{formatPercent(item.rate)}</AppText> : null}
               </View>
               {item.rate != null ? (
                 <>
                   <ProgressBar value={item.rate} label={item.resource} />
                   <AppText variant="caption">
                     {t("adminSafety.fillRateDetail", {
-                      booked: formatDuration(item.booked_minutes),
-                      open: formatDuration(item.open_minutes),
+                      booked: formatHours(item.booked_minutes),
+                      open: formatHours(item.open_minutes),
                     })}
                   </AppText>
                 </>
@@ -211,7 +225,9 @@ function StatsContent({ stats }: { stats: Stats }) {
       ) : null}
 
       {stats.bookings === 0 ? (
-        <EmptyView title={t("adminSafety.noBookings")} />
+        <AppText variant="body" style={styles.muted}>
+          {t("adminSafety.noBookings")}
+        </AppText>
       ) : (
         <>
           <Card>
@@ -248,7 +264,8 @@ function StatsContent({ stats }: { stats: Stats }) {
 }
 
 const styles = StyleSheet.create({
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  chips: { flexDirection: "row", gap: space.sm },
+  muted: { color: colors.inkSoft },
   tiles: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   fillRow: { gap: space.xs, paddingVertical: space.xs },
   fillHead: { flexDirection: "row", alignItems: "flex-start", gap: space.sm },

@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/text";
-import { colors, radius, space } from "@/theme";
+import { colors, fonts, radius, space } from "@/theme";
 
 type Props = { label: string; checked: boolean; onChange: (checked: boolean) => void };
 
@@ -25,7 +25,7 @@ export function Checkbox({ label, checked, onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "flex-start", gap: space.md, minHeight: 44, paddingVertical: space.xs },
+  row: { flexDirection: "row", alignItems: "flex-start", gap: space.md, minHeight: 44, paddingVertical: 2 },
   pressed: { opacity: 0.7 },
   box: {
     width: 26,
@@ -40,5 +40,5 @@ const styles = StyleSheet.create({
   },
   boxChecked: { backgroundColor: colors.ink },
   tick: { color: colors.cream, fontSize: 16, lineHeight: 20, fontWeight: "700" },
-  label: { flex: 1 },
+  label: { flex: 1, fontFamily: fonts.sansMedium, color: colors.ink },
 });

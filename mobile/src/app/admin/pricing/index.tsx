@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
+import { View } from "react-native";
 
 import { useAdminServices } from "@/api/admin";
 import { pricingKeys } from "@/api/pricing";
@@ -52,13 +53,21 @@ function Pricing() {
       <Card>
         <AppText variant="body">{t("pricing.intro")}</AppText>
         <AppText variant="bodyStrong">{t("pricing.orderTitle")}</AppText>
-        <AppText variant="body">{t("pricing.orderText")}</AppText>
+        <View>
+          {(["pricing.orderStep1", "pricing.orderStep2", "pricing.orderStep3"] as const).map((key) => (
+            <AppText key={key} variant="body">
+              {t(key)}
+            </AppText>
+          ))}
+        </View>
+        <AppText variant="body">{t("pricing.orderLast")}</AppText>
       </Card>
 
       <Card>
         <ListRow
           label={t("admin.hubCalendarDays")}
           detail={t("admin.hubCalendarDaysDetail")}
+          last
           onPress={() => router.push("/admin/calendar-days")}
         />
       </Card>
@@ -71,9 +80,10 @@ function Pricing() {
         <EmptyView title={t("pricing.noServices")} />
       ) : (
         <Card>
-          {services.data?.map((service) => (
+          {services.data?.map((service, index, list) => (
             <ListRow
               key={service.id}
+              last={index === list.length - 1}
               label={service.name}
               detail={[
                 formatPrice(service.price_cents) ?? t("pricing.noPrice"),

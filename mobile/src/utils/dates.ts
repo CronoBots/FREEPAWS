@@ -38,12 +38,21 @@ export function formatTime(date: Date | string): string {
 /** "Mercredi 14 octobre" */
 export function formatDayLong(date: Date | string): string {
   const text = formatter(DAY_LONG_OPTIONS).format(new Date(date));
-  return text.charAt(0).toUpperCase() + text.slice(1);
+  const withFirst = getLocale().startsWith("fr") ? text.replace(/ 1 /, " 1er ") : text;
+  return withFirst.charAt(0).toUpperCase() + withFirst.slice(1);
 }
 
-/** "14 octobre 2026" (s’insère au milieu d’une phrase, sans majuscule). */
+/** "14 octobre 2026" (s’insère au milieu d’une phrase, sans majuscule ; « 1er » en français). */
 export function formatDate(date: Date | string): string {
-  return formatter({ timeZone: TIME_ZONE, day: "numeric", month: "long", year: "numeric" }).format(new Date(date));
+  const text = formatter({ timeZone: TIME_ZONE, day: "numeric", month: "long", year: "numeric" }).format(
+    new Date(date),
+  );
+  return unbreakable(getLocale().startsWith("fr") ? text.replace(/^1 /, "1er ") : text);
+}
+
+/** Espaces insécables : une date ou une durée ne se coupe jamais en fin de ligne. */
+function unbreakable(text: string): string {
+  return text.replace(/ /g, "\u00a0");
 }
 
 /** Jour calendaire à Bruxelles au format AAAA-MM-JJ. */
@@ -66,12 +75,12 @@ export function dayParts(isoDay: string): { weekday: string; day: string; month:
   return { weekday: fmt({ weekday: "short" }), day: String(d), month: fmt({ month: "short" }) };
 }
 
-/** Durée lisible : 90 → "1h30", 120 → "2h", 45 → "45 min". */
+/** Durée lisible (espaces insécables) : 90 → "1 h 30", 120 → "2 h", 45 → "45 min". */
 export function formatDuration(minutes: number): string {
-  if (minutes < 60) return `${minutes} min`;
+  if (minutes < 60) return `${minutes}\u00a0min`;
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`;
+  return m === 0 ? `${h}\u00a0h` : `${h}\u00a0h\u00a0${String(m).padStart(2, "0")}`;
 }
 
 const partsFormat = new Intl.DateTimeFormat("en-GB", {

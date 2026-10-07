@@ -6,6 +6,7 @@ import { BadgeRow, ErrorText, Section, todayIso } from "@/components/admin/clien
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Chip } from "@/components/chip";
+import { DateField } from "@/components/date-field";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { type TranslationKey, useLanguage } from "@/i18n";
@@ -19,9 +20,18 @@ const LEVELS: { level: SanctionLevel; key: TranslationKey }[] = [
   { level: "suspension", key: "adminClients.levelSuspension" },
   { level: "ban", key: "adminClients.levelBan" },
 ];
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
+/** Incident à l’origine de la sanction (ouverture de la fiche depuis un incident). */
+export type SanctionIncident = { id: string; date: string; kindLabel: string };
 
-export function ClientSanctions({ userId, sanctions }: { userId: string; sanctions: Sanction[] }) {
+export function ClientSanctions({
+  userId,
+  sanctions,
+  incident,
+}: {
+  userId: string;
+  sanctions: Sanction[];
+  incident?: SanctionIncident;
+}) {
   const { t } = useLanguage();
   return (
     <Section title={t("adminClients.sanctions")}>
@@ -29,7 +39,7 @@ export function ClientSanctions({ userId, sanctions }: { userId: string; sanctio
       {sanctions.map((sanction) => (
         <SanctionLine key={sanction.id} sanction={sanction} />
       ))}
-      <SanctionForm userId={userId} />
+      <SanctionForm key={incident?.id ?? "none"} userId={userId} incident={incident} />
     </Section>
   );
 }
@@ -74,6 +84,7 @@ function SanctionLine({ sanction }: { sanction: Sanction }) {
           .filter(Boolean)
           .join(" · ")}
       </AppText>
+      {sanction.incident_id ? <AppText variant="caption">{t("adminClients.linkedToIncident")}</AppText> : null}
       {active ? (
         <Button
           label={t("adminClients.lift")}
@@ -86,20 +97,25 @@ function SanctionLine({ sanction }: { sanction: Sanction }) {
   );
 }
 
-function SanctionForm({ userId }: { userId: string }) {
+function SanctionForm({ userId, incident }: { userId: string; incident?: SanctionIncident }) {
   const { t } = useLanguage();
   const add = useAddSanction();
-  const [level, setLevel] = useState<SanctionLevel>("warning");
-  const [reason, setReason] = useState("");
+  const initialReason = incident
+    ? t("adminClients.incidentReason", { date: formatDate(incident.date), kind: incident.kindLabel })
+    : "";
+  // Aucun niveau présélectionné : l’administratrice choisit explicitement.
+  const [level, setLevel] = useState<SanctionLevel | null>(null);
+  const [reason, setReason] = useState(initialReason);
   const [endsOn, setEndsOn] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     setError(null);
+    if (!level) return setError(t("adminClients.levelRequired"));
     if (!reason.trim()) return setError(t("adminClients.reasonRequired"));
     let endsAt: string | null = null;
     if (level === "suspension" && endsOn) {
-      const date = DATE.test(endsOn) ? brusselsDateTime(endsOn, "23:59") : null;
+      const date = brusselsDateTime(endsOn, "23:59");
       if (!date || endsOn < todayIso()) return setError(t("adminClients.dateError"));
       endsAt = date.toISOString();
     }
@@ -113,12 +129,12 @@ function SanctionForm({ userId }: { userId: string }) {
       if (!ok) return;
     }
     add.mutate(
-      { user_id: userId, level, reason: reason.trim(), ends_at: endsAt, incident_id: null },
+      { user_id: userId, level, reason: reason.trim(), ends_at: endsAt, incident_id: incident?.id ?? null },
       {
         onSuccess: () => {
           setReason("");
           setEndsOn("");
-          setLevel("warning");
+          setLevel(null);
           notify(t("adminClients.sanctionAdded"), "");
         },
         onError: (err) => setError(toUserMessage(err)),
@@ -129,6 +145,11 @@ function SanctionForm({ userId }: { userId: string }) {
   return (
     <View style={styles.form}>
       <AppText variant="bodyStrong">{t("adminClients.newSanction")}</AppText>
+      {incident ? (
+        <AppText variant="body" style={styles.incident}>
+          {t("adminClients.incidentLinked", { date: formatDate(incident.date) })}
+        </AppText>
+      ) : null}
       <View style={styles.chips}>
         {LEVELS.map((item) => (
           <Chip
@@ -136,24 +157,24 @@ function SanctionForm({ userId }: { userId: string }) {
             label={t(item.key)}
             selected={level === item.level}
             onPress={() => setLevel(item.level)}
+            style={styles.chip}
           />
         ))}
       </View>
       <TextField label={t("adminClients.reason")} value={reason} onChangeText={setReason} multiline maxLength={1000} />
       {level === "suspension" ? (
-        <TextField
+        <DateField
           label={t("adminClients.endsOn")}
           hint={t("adminClients.endsOnHint")}
           value={endsOn}
-          onChangeText={setEndsOn}
-          keyboardType="numbers-and-punctuation"
-          maxLength={10}
+          onChange={setEndsOn}
         />
       ) : null}
       <ErrorText>{error}</ErrorText>
       <Button
         label={t("adminClients.addSanction")}
         variant={level === "ban" ? "danger" : "primary"}
+        disabled={!level || !reason.trim()}
         loading={add.isPending}
         onPress={() => void submit()}
       />
@@ -171,4 +192,6 @@ const styles = StyleSheet.create({
   reason: { color: colors.ink },
   form: { gap: space.sm, paddingTop: space.sm },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  chip: { flexGrow: 1 },
+  incident: { color: colors.ink },
 });

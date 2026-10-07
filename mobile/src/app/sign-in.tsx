@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useRef, useState } from "react";
-import { Platform, type TextInput } from "react-native";
+import { Platform, StyleSheet, type TextInput } from "react-native";
 
 import { Button } from "@/components/button";
 import { Screen } from "@/components/screen";
@@ -79,6 +79,7 @@ export default function SignInRoute() {
           <AppText variant="body">{t("signIn.intro")}</AppText>
           <TextField
             label={t("signIn.email")}
+            placeholder={t("signIn.emailPlaceholder")}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -90,8 +91,15 @@ export default function SignInRoute() {
             error={error}
           />
           <Button label={t("signIn.sendCode")} loading={busy} onPress={() => void sendCode()} />
-          <AppText variant="caption">{t("signIn.consent")}</AppText>
-          <Button label={t("signIn.readPolicy")} variant="ghost" onPress={() => router.push("/legal")} />
+          <AppText variant="body" style={styles.consent}>
+            {t("signIn.consent")}
+          </AppText>
+          <Button
+            label={t("signIn.readPolicy")}
+            variant="ghost"
+            onPress={() => router.push("/legal")}
+            style={styles.link}
+          />
         </>
       ) : step === "password" ? (
         <>
@@ -146,3 +154,9 @@ export default function SignInRoute() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  consent: { fontSize: 14, lineHeight: 20 },
+  // Lien aligné à gauche comme le reste de l’écran.
+  link: { alignSelf: "flex-start", paddingHorizontal: 0, minHeight: 44 },
+});

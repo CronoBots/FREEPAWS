@@ -1,7 +1,9 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
+import { useWindowDimensions } from "react-native";
 
+import { CONTENT_MAX_WIDTH } from "@/components/screen";
 import { type TranslationKey, useLanguage } from "@/i18n";
 import { colors, fonts } from "@/theme";
 
@@ -17,11 +19,14 @@ const TABS: { name: string; title: TranslationKey; icon: IconName; iconActive: I
 
 export default function TabsLayout() {
   const { t } = useLanguage();
+  const { width } = useWindowDimensions();
+  // Sur grand écran, les onglets restent alignés sur la colonne de contenu.
+  const gutter = Math.max(0, (width - CONTENT_MAX_WIDTH) / 2);
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.ink,
+        tabBarActiveTintColor: colors.olive,
         tabBarInactiveTintColor: colors.inkSoft,
         tabBarStyle: {
           backgroundColor: colors.creamAlt,
@@ -29,8 +34,9 @@ export default function TabsLayout() {
           height: 76,
           paddingTop: 8,
           paddingBottom: 10,
+          paddingHorizontal: gutter,
         },
-        tabBarLabelStyle: { fontFamily: fonts.sansMedium, fontSize: 11, lineHeight: 16, marginTop: 2 },
+        tabBarLabelStyle: { fontFamily: fonts.sansSemiBold, fontSize: 13, lineHeight: 17, marginTop: 2 },
       }}
     >
       {TABS.map((tab) => (

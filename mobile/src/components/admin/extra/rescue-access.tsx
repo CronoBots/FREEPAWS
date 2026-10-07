@@ -5,7 +5,7 @@ import { Platform, Share, StyleSheet, View } from "react-native";
 import { useCreateRescueAccess, useRescueAccesses, useRevokeRescueAccess } from "@/api/admin-extra";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
-import { Chip } from "@/components/chip";
+import { Segmented } from "@/components/segmented";
 import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
@@ -66,26 +66,33 @@ export function RescueAccessCard() {
     <Card>
       <AppText variant="heading">{t("adminExtra.rescueTitle")}</AppText>
       <AppText variant="body">{t("adminExtra.rescueText")}</AppText>
-      <TextField label={t("adminExtra.rescueLabel")} value={label} onChangeText={setLabel} maxLength={120} />
+      <TextField
+        label={t("adminExtra.rescueLabel")}
+        placeholder={t("adminExtra.rescueLabelPlaceholder")}
+        value={label}
+        onChangeText={setLabel}
+        maxLength={120}
+      />
       <AppText variant="bodyStrong">{t("adminExtra.rescueDuration")}</AppText>
-      <View style={styles.chips}>
-        {DURATIONS.map((value) => (
-          <Chip
-            key={value}
-            label={tp("adminExtra.hours", value)}
-            selected={hours === value}
-            onPress={() => setHours(value)}
-          />
-        ))}
-      </View>
+      <Segmented
+        accessibilityLabel={t("adminExtra.rescueDuration")}
+        options={DURATIONS.map((value) => ({ value, label: tp("adminExtra.hours", value) }))}
+        value={hours}
+        onChange={setHours}
+      />
       <Button label={t("adminExtra.rescueCreate")} loading={create.isPending} onPress={submit} />
 
+      <AppText variant="heading" style={styles.activeTitle}>
+        {t("adminExtra.rescueActiveTitle")}
+      </AppText>
       {accesses.isLoading ? (
         <LoadingView />
       ) : accesses.isError ? (
         <ErrorView error={accesses.error} onRetry={() => void accesses.refetch()} />
       ) : (accesses.data ?? []).length === 0 ? (
-        <AppText variant="caption">{t("adminExtra.rescueNone")}</AppText>
+        <AppText variant="body" style={styles.empty}>
+          {t("adminExtra.rescueNone")}
+        </AppText>
       ) : (
         (accesses.data ?? []).map((access) => (
           <View key={access.id} style={styles.access}>
@@ -96,13 +103,20 @@ export function RescueAccessCard() {
                 time: formatTime(access.expires_at),
               })}
             </AppText>
-            <View style={styles.chips}>
+            <View style={styles.actions}>
               <Button
                 label={Platform.OS === "web" ? t("adminExtra.rescueCopy") : t("adminExtra.rescueShare")}
                 variant="secondary"
                 onPress={() => void copy(access.token)}
+                style={styles.action}
               />
-              <Button label={t("adminExtra.rescueRevoke")} variant="ghost" onPress={() => void askRevoke(access.id)} />
+              <Button
+                label={t("adminExtra.rescueRevoke")}
+                variant="dangerText"
+                loading={revoke.isPending && revoke.variables === access.id}
+                onPress={() => void askRevoke(access.id)}
+                style={[styles.action, styles.revoke]}
+              />
             </View>
           </View>
         ))
@@ -112,7 +126,12 @@ export function RescueAccessCard() {
 }
 
 const styles = StyleSheet.create({
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  activeTitle: { marginTop: space.md },
+  empty: { color: colors.inkSoft },
+  // Deux boutons de même forme ; « Révoquer » en contour rouge, car l’action coupe l’accès des secours.
+  actions: { flexDirection: "row", flexWrap: "wrap", gap: space.sm, marginTop: space.xs },
+  action: { flexGrow: 1, flexBasis: 140 },
+  revoke: { borderWidth: 1, borderColor: colors.danger, backgroundColor: colors.creamAlt },
   access: {
     gap: space.xs,
     paddingTop: space.md,

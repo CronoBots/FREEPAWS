@@ -13,6 +13,7 @@ import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { Checkbox } from "@/components/checkbox";
 import { Chip } from "@/components/chip";
+import { DateField } from "@/components/date-field";
 import { Screen } from "@/components/screen";
 import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
@@ -20,11 +21,11 @@ import { TextField } from "@/components/text-field";
 import { useLanguage } from "@/i18n";
 import { notify } from "@/lib/confirm";
 import { colors, space } from "@/theme";
+import { formatDate } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 import { formatPrice } from "@/utils/format";
 
 const CODE = /^[A-Z0-9-]{4,32}$/;
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default function AdminDiscountsRoute() {
   return (
@@ -50,17 +51,18 @@ function Discounts() {
   const [maxUses, setMaxUses] = useState("");
   const [cap, setCap] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [capError, setCapError] = useState<string | null>(null);
 
   const capValue = cap ?? (settings.data?.social_monthly_cap == null ? "" : String(settings.data.social_monthly_cap));
+  const valueLabel = t(kind === "percent" ? "pricing.codeValuePercent" : "pricing.codeValueAmount");
 
   const submit = () => {
     setError(null);
     if (!CODE.test(code)) return setError(t("admin.invalidCode"));
     const amount = kind === "percent" ? Number(value) : Math.round(Number(value.replace(",", ".")) * 100);
-    if (!Number.isFinite(amount) || amount <= 0 || (kind === "percent" && amount > 100)) {
-      return setError(t("admin.invalidNumber", { field: t("admin.codeValue") }));
+    if (!value.trim() || !Number.isFinite(amount) || amount <= 0 || (kind === "percent" && amount > 100)) {
+      return setError(t("admin.invalidNumber", { field: valueLabel }));
     }
-    if (validUntil && !DATE.test(validUntil)) return setError(t("dogs.dateError"));
     const uses = maxUses ? Number(maxUses) : null;
     if (uses != null && (!Number.isInteger(uses) || uses < 1)) {
       return setError(t("admin.invalidNumber", { field: t("admin.maxUses") }));
@@ -81,66 +83,20 @@ function Discounts() {
   };
 
   const saveCap = () => {
+    setCapError(null);
     const parsed = capValue.trim() === "" ? null : Number(capValue);
     if (parsed != null && (!Number.isInteger(parsed) || parsed < 0)) {
-      return setError(t("admin.invalidNumber", { field: t("admin.monthlyCap") }));
+      return setCapError(t("admin.invalidNumber", { field: t("pricing.capField") }));
     }
     updateSettings.mutate(
       { social_monthly_cap: parsed },
-      { onSuccess: () => notify(t("admin.saved"), ""), onError: (err) => setError(toUserMessage(err)) },
+      { onSuccess: () => notify(t("admin.saved"), ""), onError: (err) => setCapError(toUserMessage(err)) },
     );
   };
 
   return (
     <Screen underHeader refreshing={codes.isRefetching} onRefresh={() => void codes.refetch()}>
-      <Card>
-        <AppText variant="heading">{t("admin.newCode")}</AppText>
-        <TextField
-          label={t("admin.codeField")}
-          value={code}
-          onChangeText={(text) => setCode(text.toUpperCase().replace(/[^A-Z0-9-]/g, ""))}
-          autoCapitalize="characters"
-          maxLength={32}
-        />
-        <TextField label={t("admin.codeLabel")} value={label} onChangeText={setLabel} maxLength={120} />
-        <View style={styles.chips}>
-          <Chip label={t("admin.kindPercent")} selected={kind === "percent"} onPress={() => setKind("percent")} />
-          <Chip label={t("admin.kindAmount")} selected={kind === "amount"} onPress={() => setKind("amount")} />
-        </View>
-        <TextField
-          label={t("admin.codeValue")}
-          value={value}
-          onChangeText={setValue}
-          keyboardType="decimal-pad"
-          maxLength={8}
-        />
-        <TextField label={t("admin.validUntil")} value={validUntil} onChangeText={setValidUntil} maxLength={10} />
-        <TextField
-          label={t("admin.maxUses")}
-          value={maxUses}
-          onChangeText={(text) => setMaxUses(text.replace(/\D/g, ""))}
-          keyboardType="number-pad"
-          maxLength={6}
-        />
-        {error ? (
-          <AppText variant="bodyStrong" style={styles.error} accessibilityRole="alert">
-            {error}
-          </AppText>
-        ) : null}
-        <Button label={t("admin.create")} loading={create.isPending} onPress={submit} />
-      </Card>
-
-      <Card>
-        <TextField
-          label={t("admin.monthlyCap")}
-          value={capValue}
-          onChangeText={(text) => setCap(text.replace(/\D/g, ""))}
-          keyboardType="number-pad"
-          maxLength={6}
-        />
-        <Button label={t("common.save")} variant="secondary" loading={updateSettings.isPending} onPress={saveCap} />
-      </Card>
-
+      <AppText variant="heading">{t("pricing.codesTitle")}</AppText>
       {codes.isLoading ? (
         <LoadingView />
       ) : codes.isError ? (
@@ -154,11 +110,15 @@ function Discounts() {
             <Card key={item.id}>
               <AppText variant="heading">{item.code}</AppText>
               {item.label ? <AppText variant="body">{item.label}</AppText> : null}
-              <AppText variant="caption">
+              <AppText variant="caption" style={styles.help}>
                 {[
-                  item.kind === "percent" ? `−${item.value} %` : `−${formatPrice(item.value)}`,
-                  item.valid_until,
-                  item.max_uses ? `max ${item.max_uses}` : null,
+                  item.kind === "percent"
+                    ? t("pricing.percentValue", { value: `−${item.value}` })
+                    : `−${formatPrice(item.value) ?? ""}`,
+                  item.valid_until
+                    ? t("pricing.codeValidUntil", { date: formatDate(`${item.valid_until}T12:00:00Z`) })
+                    : null,
+                  item.max_uses ? tp("pricing.codeMaxUses", item.max_uses) : null,
                   tp("admin.codeUses", uses),
                 ]
                   .filter(Boolean)
@@ -173,11 +133,63 @@ function Discounts() {
           );
         })
       )}
+
+      <Card>
+        <AppText variant="heading">{t("admin.newCode")}</AppText>
+        <TextField
+          label={t("admin.codeField")}
+          value={code}
+          onChangeText={(text) => setCode(text.toUpperCase().replace(/[^A-Z0-9-]/g, ""))}
+          autoCapitalize="characters"
+          maxLength={32}
+        />
+        <TextField label={t("admin.codeLabel")} value={label} onChangeText={setLabel} maxLength={120} />
+        <AppText variant="bodyStrong">{t("pricing.discountKind")}</AppText>
+        <View style={styles.chips}>
+          <Chip label={t("admin.kindPercent")} selected={kind === "percent"} onPress={() => setKind("percent")} />
+          <Chip label={t("admin.kindAmount")} selected={kind === "amount"} onPress={() => setKind("amount")} />
+        </View>
+        <TextField label={valueLabel} value={value} onChangeText={setValue} keyboardType="decimal-pad" maxLength={8} />
+        <DateField label={t("pricing.validUntilField")} value={validUntil} onChange={setValidUntil} />
+        <TextField
+          label={t("admin.maxUses")}
+          hint={t("pricing.maxUsesHint")}
+          value={maxUses}
+          onChangeText={(text) => setMaxUses(text.replace(/\D/g, ""))}
+          keyboardType="number-pad"
+          maxLength={6}
+        />
+        {error ? (
+          <AppText variant="bodyStrong" style={styles.error} accessibilityRole="alert">
+            {error}
+          </AppText>
+        ) : null}
+        <Button label={t("admin.create")} loading={create.isPending} onPress={submit} />
+      </Card>
+
+      <Card>
+        <AppText variant="heading">{t("pricing.capTitle")}</AppText>
+        <AppText variant="body">{t("pricing.capHint")}</AppText>
+        <TextField
+          label={t("pricing.capField")}
+          value={capValue}
+          onChangeText={(text) => setCap(text.replace(/\D/g, ""))}
+          keyboardType="number-pad"
+          maxLength={6}
+        />
+        {capError ? (
+          <AppText variant="bodyStrong" style={styles.error} accessibilityRole="alert">
+            {capError}
+          </AppText>
+        ) : null}
+        <Button label={t("common.save")} variant="secondary" loading={updateSettings.isPending} onPress={saveCap} />
+      </Card>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  help: { fontSize: 14, lineHeight: 20 },
   error: { color: colors.danger },
 });

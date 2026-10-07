@@ -71,7 +71,8 @@ function Agenda() {
       />
       <View>
         <AppText variant="heading">{formatDayLong(`${day}T12:00:00Z`)}</AppText>
-        <AppText variant="caption">{tp("admin.appointments", counts[day] ?? 0)}</AppText>
+        {/* Pas de « 0 rendez-vous » tant que l’agenda n’est pas chargé (ou en erreur). */}
+        {agenda.isSuccess ? <AppText variant="caption">{tp("admin.appointments", counts[day] ?? 0)}</AppText> : null}
       </View>
 
       {agenda.isLoading ? (

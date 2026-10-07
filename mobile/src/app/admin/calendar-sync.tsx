@@ -1,7 +1,8 @@
+import * as Clipboard from "expo-clipboard";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
-import { useResources } from "@/api/admin";
+import { useResources, useSettings } from "@/api/admin";
 import { type CalendarFeed, useCalendarFeeds, useDeleteCalendarFeed, useSaveCalendarFeed } from "@/api/pricing";
 import { maskUrl } from "@/components/admin/pricing/format";
 import { AdminGuard } from "@/components/admin-guard";
@@ -16,6 +17,7 @@ import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { useLanguage } from "@/i18n";
 import { confirm, notify } from "@/lib/confirm";
+import { env } from "@/lib/env";
 import { colors, space } from "@/theme";
 import { formatDate, formatTime } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
@@ -34,6 +36,7 @@ function CalendarSync() {
   const { t, tp } = useLanguage();
   const feeds = useCalendarFeeds();
   const resources = useResources();
+  const settings = useSettings();
   const save = useSaveCalendarFeed();
   const remove = useDeleteCalendarFeed();
 
@@ -42,6 +45,12 @@ function CalendarSync() {
   const [label, setLabel] = useState("");
   const [url, setUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [howOpen, setHowOpen] = useState(false);
+
+  // Même lien d’abonnement que sur l’accueil de l’administration.
+  const feedUrl = settings.data
+    ? `${env.supabaseUrl}/functions/v1/calendar-feed?token=${settings.data.calendar_token}`
+    : null;
 
   const resourceName = (id: string) => {
     const slug = resources.data?.find((resource) => resource.id === id)?.slug;
@@ -82,26 +91,61 @@ function CalendarSync() {
 
   return (
     <Screen underHeader refreshing={feeds.isRefetching} onRefresh={() => void feeds.refetch()}>
-      <AppText variant="body">{t("pricing.syncIntro")}</AppText>
-
       <Card>
         <AppText variant="heading">{t("pricing.syncOutTitle")}</AppText>
         <AppText variant="body">{t("pricing.syncOutText")}</AppText>
+        {settings.isLoading ? (
+          <LoadingView />
+        ) : settings.isError ? (
+          <ErrorView error={settings.error} onRetry={() => void settings.refetch()} />
+        ) : feedUrl ? (
+          <>
+            <AppText variant="caption" style={styles.help} selectable>
+              {feedUrl}
+            </AppText>
+            <Button
+              label={t("admin.copyLink")}
+              variant="secondary"
+              onPress={() => void Clipboard.setStringAsync(feedUrl).then(() => notify(t("admin.linkCopied"), ""))}
+            />
+          </>
+        ) : null}
       </Card>
 
       <Card>
         <AppText variant="heading">{t("pricing.syncInTitle")}</AppText>
         <AppText variant="body">{t("pricing.syncInText")}</AppText>
-        <AppText variant="caption">{t("pricing.syncHowGoogle")}</AppText>
-        <AppText variant="caption">{t("pricing.syncHowOther")}</AppText>
-        <AppText variant="caption">{t("pricing.syncFrequency")}</AppText>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: howOpen }}
+          onPress={() => setHowOpen((open) => !open)}
+          style={({ pressed }) => [styles.disclosure, pressed && styles.pressed]}
+        >
+          <AppText variant="bodyStrong" style={styles.disclosureText}>
+            {t("pricing.syncHowTitle")}
+          </AppText>
+          <AppText variant="bodyStrong">{howOpen ? "▴" : "▾"}</AppText>
+        </Pressable>
+        {howOpen ? (
+          <View style={styles.how}>
+            <AppText variant="body">{t("pricing.syncHowGoogle")}</AppText>
+            <AppText variant="body">{t("pricing.syncHowOther")}</AppText>
+            <AppText variant="body">{t("pricing.syncFrequency")}</AppText>
+          </View>
+        ) : null}
       </Card>
 
       <Card>
         <AppText variant="heading">{t("pricing.addFeed")}</AppText>
         <AppText variant="bodyStrong">{t("pricing.fieldResource")}</AppText>
         <ResourceSwitch value={resourceId} onChange={setPicked} />
-        <TextField label={t("pricing.fieldFeedLabel")} value={label} onChangeText={setLabel} maxLength={120} />
+        <TextField
+          label={t("pricing.fieldFeedLabel")}
+          placeholder={t("pricing.feedLabelPlaceholder")}
+          value={label}
+          onChangeText={setLabel}
+          maxLength={120}
+        />
         <TextField
           label={t("pricing.fieldUrl")}
           hint={`${t("pricing.fieldUrlHint")} · ${t("pricing.syncSecret")}`}
@@ -117,12 +161,7 @@ function CalendarSync() {
             {error}
           </AppText>
         ) : null}
-        <Button
-          label={t("pricing.add")}
-          disabled={!url.trim()}
-          loading={save.isPending && !save.variables?.id}
-          onPress={submit}
-        />
+        <Button label={t("pricing.add")} loading={save.isPending && !save.variables?.id} onPress={submit} />
       </Card>
 
       <AppText variant="heading">{t("pricing.feedsTitle")}</AppText>
@@ -161,12 +200,14 @@ function CalendarSync() {
               checked={feed.active}
               onChange={(active) => toggle(feed, active)}
             />
-            <Button
-              label={t("pricing.deleteFeed")}
-              variant="ghost"
-              loading={remove.isPending && remove.variables === feed.id}
-              onPress={() => void askDelete(feed)}
-            />
+            <View style={styles.actions}>
+              <Button
+                label={t("pricing.deleteFeed")}
+                variant="dangerText"
+                loading={remove.isPending && remove.variables === feed.id}
+                onPress={() => void askDelete(feed)}
+              />
+            </View>
           </Card>
         ))
       )}
@@ -176,5 +217,11 @@ function CalendarSync() {
 
 const styles = StyleSheet.create({
   badges: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  help: { fontSize: 14, lineHeight: 20 },
+  disclosure: { flexDirection: "row", alignItems: "center", gap: space.sm, minHeight: 44 },
+  disclosureText: { flex: 1, color: colors.olive },
+  pressed: { opacity: 0.6 },
+  how: { gap: space.sm },
+  actions: { flexDirection: "row", justifyContent: "flex-end" },
   error: { color: colors.danger },
 });

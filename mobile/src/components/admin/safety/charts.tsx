@@ -4,13 +4,14 @@ import { AppText } from "@/components/text";
 import { colors, radius, space } from "@/theme";
 
 /** Chiffre clé du tableau de bord (deux par ligne, une seule colonne sur très petit écran). */
-export function StatTile({ label, value }: { label: string; value: string }) {
+export function StatTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <View style={styles.tile} accessible accessibilityLabel={`${label}: ${value}`}>
+    <View style={styles.tile} accessible accessibilityLabel={`${label}: ${value}${hint ? `, ${hint}` : ""}`}>
       <AppText variant="caption">{label}</AppText>
       <AppText variant="title" style={styles.tileValue}>
         {value}
       </AppText>
+      {hint ? <AppText variant="caption">{hint}</AppText> : null}
     </View>
   );
 }

@@ -12,6 +12,7 @@ import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { useLanguage } from "@/i18n";
+import { confirm, notify } from "@/lib/confirm";
 import { colors, space } from "@/theme";
 import { weekdayName } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
@@ -41,9 +42,18 @@ function Availability() {
 
   const mine = (rules.data ?? []).filter((rule) => rule.resource_id === resourceId);
 
+  // Une ligne par plage horaire ; le nom du jour n’apparaît que sur la première plage du jour.
+  const rows = WEEKDAYS.flatMap((weekday) =>
+    mine
+      .filter((rule) => rule.weekday === weekday)
+      .sort((a, b) => a.start_time.localeCompare(b.start_time))
+      .map((rule, index) => ({ rule, dayLabel: index === 0 ? weekdayName(weekday) : "" })),
+  );
+
   const add = () => {
     setError(null);
-    if (!resourceId || days.length === 0 || !TIME.test(from) || !TIME.test(to) || to <= from) {
+    if (days.length === 0) return setError(t("pricing.availabilityNoDays"));
+    if (!resourceId || !TIME.test(from) || !TIME.test(to) || to <= from) {
       return setError(t("admin.invalidTime"));
     }
     addRules.mutate(
@@ -59,9 +69,22 @@ function Availability() {
     );
   };
 
+  const askDelete = async (id: string) => {
+    const ok = await confirm({
+      title: t("pricing.deleteRangeTitle"),
+      message: t("pricing.deleteRangeMessage"),
+      confirmLabel: t("admin.delete"),
+      destructive: true,
+    });
+    if (ok) deleteRule.mutate(id, { onError: (err) => notify(t("pricing.deleteRangeTitle"), toUserMessage(err)) });
+  };
+
   return (
     <Screen underHeader refreshing={rules.isRefetching} onRefresh={() => void rules.refetch()}>
-      <ResourceSwitch value={resourceId} onChange={setPicked} />
+      <View style={styles.resource}>
+        <AppText variant="bodyStrong">{t("pricing.resourceLabel")}</AppText>
+        <ResourceSwitch value={resourceId} onChange={setPicked} />
+      </View>
 
       {rules.isLoading ? (
         <LoadingView />
@@ -70,31 +93,28 @@ function Availability() {
       ) : mine.length === 0 ? (
         <AppText variant="body">{t("admin.noRules")}</AppText>
       ) : (
-        <Card>
-          {WEEKDAYS.map((weekday) => {
-            const ranges = mine.filter((rule) => rule.weekday === weekday);
-            if (ranges.length === 0) return null;
-            return (
-              <View key={weekday} style={styles.day}>
-                <AppText variant="bodyStrong">{weekdayName(weekday)}</AppText>
-                {ranges.map((rule) => (
-                  <View key={rule.id} style={styles.range}>
-                    <AppText variant="body" style={styles.rangeText}>
-                      {rule.start_time.slice(0, 5)}
-                      {" –⁠ "}
-                      {rule.end_time.slice(0, 5)}
-                    </AppText>
-                    <Button
-                      label={t("admin.delete")}
-                      variant="ghost"
-                      loading={deleteRule.isPending && deleteRule.variables === rule.id}
-                      onPress={() => deleteRule.mutate(rule.id)}
-                    />
-                  </View>
-                ))}
+        <Card style={styles.list}>
+          {rows.map(({ rule, dayLabel }, index) => (
+            <View key={rule.id} style={[styles.row, index === rows.length - 1 && styles.lastRow]}>
+              <View style={styles.rowText}>
+                <AppText variant="bodyStrong" style={styles.dayName}>
+                  {dayLabel}
+                </AppText>
+                <AppText variant="body">
+                  {rule.start_time.slice(0, 5)}
+                  {" – "}
+                  {rule.end_time.slice(0, 5)}
+                </AppText>
               </View>
-            );
-          })}
+              <Button
+                label={t("admin.delete")}
+                variant="dangerText"
+                style={styles.delete}
+                loading={deleteRule.isPending && deleteRule.variables === rule.id}
+                onPress={() => void askDelete(rule.id)}
+              />
+            </View>
+          ))}
         </Card>
       )}
 
@@ -118,11 +138,11 @@ function Availability() {
               value={from}
               onChangeText={setFrom}
               maxLength={5}
-              placeholder="09:00"
+              placeholder="HH:MM"
             />
           </View>
           <View style={styles.time}>
-            <TextField label={t("admin.ruleTo")} value={to} onChangeText={setTo} maxLength={5} placeholder="12:00" />
+            <TextField label={t("admin.ruleTo")} value={to} onChangeText={setTo} maxLength={5} placeholder="HH:MM" />
           </View>
         </View>
         {error ? (
@@ -137,9 +157,19 @@ function Availability() {
 }
 
 const styles = StyleSheet.create({
-  day: { gap: space.xs, paddingVertical: space.xs },
-  range: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  rangeText: { flex: 1 },
+  resource: { gap: space.sm },
+  list: { paddingVertical: space.xs, gap: 0 },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.line,
+  },
+  lastRow: { borderBottomWidth: 0 },
+  rowText: { flex: 1, flexDirection: "row", flexWrap: "wrap", columnGap: space.md, paddingVertical: space.sm },
+  dayName: { minWidth: 96 },
+  delete: { paddingHorizontal: 0, minHeight: 44 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   times: { flexDirection: "row", gap: space.md },
   time: { flex: 1 },

@@ -5,8 +5,8 @@ import { useParkSettings, useUpdateParkSettings } from "@/api/admin-park";
 import { AdminGuard } from "@/components/admin-guard";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
-import { Chip } from "@/components/chip";
 import { Screen } from "@/components/screen";
+import { Segmented } from "@/components/segmented";
 import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
@@ -110,26 +110,24 @@ function RulesForm({ settings }: { settings: Settings }) {
         {RULES.map(([key, label]) => (
           <View key={key} style={styles.rule}>
             <AppText variant="bodyStrong">{t(label)}</AppText>
-            <View style={styles.chips}>
-              {MODES.map(([mode, modeLabel]) => (
-                <Chip
-                  key={mode}
-                  label={t(modeLabel)}
-                  selected={rules[key] === mode}
-                  onPress={() => setRules({ ...rules, [key]: mode })}
-                />
-              ))}
-            </View>
+            <Segmented
+              accessibilityLabel={t(label)}
+              options={MODES.map(([mode, modeLabel]) => ({ value: mode, label: t(modeLabel) }))}
+              value={rules[key]}
+              onChange={(mode) => setRules({ ...rules, [key]: mode })}
+            />
           </View>
         ))}
-        <TextField
-          label={t("adminSafety.expiryDays")}
-          hint={t("adminSafety.expiryHint")}
-          value={expiryDays}
-          onChangeText={(text) => setExpiryDays(text.replace(/\D/g, ""))}
-          keyboardType="number-pad"
-          maxLength={3}
-        />
+        <View style={styles.rule}>
+          <TextField
+            label={t("adminSafety.expiryDays")}
+            hint={t("adminSafety.expiryHint")}
+            value={expiryDays}
+            onChangeText={(text) => setExpiryDays(text.replace(/\D/g, ""))}
+            keyboardType="number-pad"
+            maxLength={3}
+          />
+        </View>
       </Card>
 
       <Card>
@@ -157,7 +155,13 @@ function RulesForm({ settings }: { settings: Settings }) {
 
 const styles = StyleSheet.create({
   rescue: { minHeight: 180 },
-  rule: { gap: space.sm },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  // Filet et marge entre deux règles : chaque règle se lit comme un bloc distinct.
+  rule: {
+    gap: space.sm,
+    marginTop: space.xs,
+    paddingTop: space.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.line,
+  },
   error: { color: colors.danger },
 });

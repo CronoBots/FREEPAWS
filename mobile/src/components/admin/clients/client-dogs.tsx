@@ -1,6 +1,6 @@
 import { router } from "expo-router";
-import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Children, type PropsWithChildren, useState } from "react";
+import { StyleSheet, useWindowDimensions, View } from "react-native";
 
 import { type ClientDetails, useSetDogProtocol } from "@/api/admin-park";
 import {
@@ -8,6 +8,7 @@ import {
   dayDate,
   ErrorText,
   InfoLine,
+  keepTogether,
   openProof,
   Section,
   todayIso,
@@ -20,7 +21,7 @@ import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { type TranslationKey, useLanguage } from "@/i18n";
 import { notify } from "@/lib/confirm";
-import { colors, space } from "@/theme";
+import { colors, radius, space } from "@/theme";
 import { formatDate } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 
@@ -36,20 +37,12 @@ const SIZES: Record<string, TranslationKey> = {
 
 export function ClientDogs({ dogs }: { dogs: Dog[] }) {
   const { t } = useLanguage();
-  const hasPending = dogs.some((dog) => dog.vaccinations.some((item) => item.status === "pending"));
   return (
     <Section title={t("adminClients.dogsTitle")}>
       {dogs.length === 0 ? <AppText variant="body">{t("adminClients.noDogs")}</AppText> : null}
       {dogs.map((dog) => (
         <DogBlock key={dog.id} dog={dog} />
       ))}
-      {hasPending ? (
-        <Button
-          label={t("adminClients.toReview")}
-          variant="secondary"
-          onPress={() => router.push("/admin/vaccinations")}
-        />
-      ) : null}
     </Section>
   );
 }
@@ -60,16 +53,16 @@ function DogBlock({ dog }: { dog: Dog }) {
     value == null ? t("adminClients.unknown") : value ? t("adminClients.yes") : t("adminClients.no");
   const sex = dog.sex === "male" ? t("adminClients.male") : dog.sex === "female" ? t("adminClients.female") : null;
   const size = dog.size && SIZES[dog.size] ? t(SIZES[dog.size]!) : null;
-  const vet = [dog.vet_name, dog.vet_phone].filter(Boolean).join(" · ");
+  const vet = [dog.vet_name, dog.vet_phone ? keepTogether(dog.vet_phone) : null].filter(Boolean).join(" · ");
 
   return (
     <View style={styles.dog}>
       <AppText variant="heading">{dog.name}</AppText>
       <BadgeRow>
-        {dog.protocol ? <Badge label={t("adminClients.badgeProtocol")} tone="warning" /> : null}
-        {dog.in_heat ? <Badge label={t("adminClients.inHeat")} tone="warning" /> : null}
+        {dog.protocol ? <Badge label={t("adminClients.badgeProtocol")} tone="danger" /> : null}
+        {dog.in_heat ? <Badge label={t("adminClients.inHeat")} tone="danger" /> : null}
       </BadgeRow>
-      <View style={styles.grid}>
+      <Grid>
         <InfoLine label={t("adminClients.breed")} value={dog.breed} />
         <InfoLine
           label={t("adminClients.dogBirth")}
@@ -85,15 +78,15 @@ function DogBlock({ dog }: { dog: Dog }) {
         <InfoLine label={t("adminClients.sterilised")} value={yesNo(dog.sterilised)} />
         <InfoLine label={t("adminClients.inHeat")} value={yesNo(dog.in_heat)} />
         <InfoLine label={t("adminClients.vet")} value={vet} />
-        {dog.notes ? <InfoLine label={t("adminClients.notes")} value={dog.notes} /> : null}
-      </View>
+      </Grid>
+      {dog.notes ? <InfoLine label={t("adminClients.notes")} value={dog.notes} /> : null}
 
       <AppText variant="bodyStrong">{t("adminClients.admission")}</AppText>
-      <View style={styles.grid}>
+      <Grid>
         <InfoLine label={t("adminClients.biteHistory")} value={yesNo(dog.bite_history)} />
         <InfoLine label={t("adminClients.reactivity")} value={dog.reactivity} />
         <InfoLine label={t("adminClients.specialNeeds")} value={dog.special_needs} />
-      </View>
+      </Grid>
 
       <ProtocolForm dog={dog} />
 
@@ -103,6 +96,17 @@ function DogBlock({ dog }: { dog: Dog }) {
       ) : (
         dog.vaccinations.map((item) => <VaccinationLine key={item.id} item={item} />)
       )}
+    </View>
+  );
+}
+
+/** Libellés et valeurs en deux colonnes dès que la largeur le permet. */
+function Grid({ children }: PropsWithChildren) {
+  const { width } = useWindowDimensions();
+  const wide = width >= 600;
+  return (
+    <View style={[styles.grid, wide && styles.gridWide]}>
+      {Children.map(children, (child) => (child ? <View style={wide && styles.cell}>{child}</View> : null))}
     </View>
   );
 }
@@ -174,9 +178,14 @@ function VaccinationLine({ item }: { item: Vaccination }) {
       {item.review_note ? (
         <AppText variant="caption">{t("adminClients.reviewNote", { note: item.review_note })}</AppText>
       ) : null}
-      {item.proof_path ? (
-        <Button label={t("adminClients.proof")} variant="ghost" onPress={() => openProof(item.proof_path!)} />
-      ) : null}
+      <View style={styles.vaccineActions}>
+        {item.proof_path ? (
+          <Button label={t("adminClients.proof")} variant="secondary" onPress={() => openProof(item.proof_path!)} />
+        ) : null}
+        {item.status === "pending" ? (
+          <Button label={t("adminClients.toReview")} onPress={() => router.push("/admin/vaccinations")} />
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -184,17 +193,22 @@ function VaccinationLine({ item }: { item: Vaccination }) {
 const styles = StyleSheet.create({
   dog: {
     gap: space.sm,
-    paddingTop: space.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.line,
+    padding: space.md,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    backgroundColor: colors.cream,
   },
   grid: { gap: space.sm },
+  gridWide: { flexDirection: "row", flexWrap: "wrap", rowGap: space.sm, columnGap: space.md },
+  cell: { width: "47%" },
   protocol: {
     gap: space.sm,
     padding: space.md,
-    borderRadius: 12,
-    backgroundColor: colors.cream,
+    borderRadius: radius.md,
+    backgroundColor: colors.white,
   },
   vaccine: { gap: space.xs, paddingVertical: space.xs },
+  vaccineActions: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   strong: { color: colors.ink },
 });

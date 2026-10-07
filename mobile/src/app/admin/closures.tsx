@@ -8,14 +8,15 @@ import { AdminGuard } from "@/components/admin-guard";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { Checkbox } from "@/components/checkbox";
+import { DateField } from "@/components/date-field";
+import { ListRow } from "@/components/list-row";
 import { ResourceSwitch, useDefaultResource } from "@/components/resource-switch";
 import { Screen } from "@/components/screen";
 import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
 import { useLanguage } from "@/i18n";
-import { notify } from "@/lib/confirm";
-import { useCompact } from "@/hooks/use-compact";
+import { confirm, notify } from "@/lib/confirm";
 import { colors, space } from "@/theme";
 import { brusselsDateTime, formatDate, formatTime } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
@@ -28,12 +29,11 @@ export default function AdminClosuresRoute() {
   );
 }
 
+/** « 1er novembre 2026 18:15 », sans coupure de ligne. */
+const when = (date: Date | string) => `${formatDate(date)} ${formatTime(date)}`;
+
 function Closures() {
   const { t, tp } = useLanguage();
-  const compact = useCompact();
-  const pair = compact ? styles.stack : styles.pair;
-  const time = compact ? undefined : styles.time;
-  const flex = compact ? undefined : styles.flex;
   const [picked, setPicked] = useState<string | null>(null);
   const resourceId = useDefaultResource(picked);
   const blackouts = useBlackouts();
@@ -62,7 +62,7 @@ function Closures() {
 
   const submit = () => {
     setError(null);
-    if (!valid || !resourceId || !start || !end) return setError(t("admin.invalidDate"));
+    if (!valid || !resourceId || !start || !end) return setError(t("pricing.errorClosure"));
     closePeriod.mutate(
       { resourceId, start, end, reason: reason.trim(), cancelExisting },
       {
@@ -78,42 +78,54 @@ function Closures() {
     );
   };
 
+  const askDelete = async (id: string) => {
+    const ok = await confirm({
+      title: t("pricing.deleteClosureTitle"),
+      message: t("pricing.deleteClosureMessage"),
+      confirmLabel: t("admin.delete"),
+      destructive: true,
+    });
+    if (ok) {
+      deleteBlackout.mutate(id, { onError: (err) => notify(t("pricing.deleteClosureTitle"), toUserMessage(err)) });
+    }
+  };
+
   const mine = (blackouts.data ?? []).filter((blackout) => blackout.resource_id === resourceId);
 
   return (
     <Screen underHeader refreshing={blackouts.isRefetching} onRefresh={() => void blackouts.refetch()}>
-      <ResourceSwitch value={resourceId} onChange={setPicked} />
+      <View style={styles.resource}>
+        <AppText variant="bodyStrong">{t("pricing.resourceLabel")}</AppText>
+        <ResourceSwitch value={resourceId} onChange={setPicked} />
+      </View>
 
       <Card>
         <AppText variant="heading">{t("admin.closeTitle")}</AppText>
-        <View style={pair}>
-          <View style={flex}>
-            <TextField
-              label={t("admin.startDate")}
-              placeholder={t("dogs.datePlaceholder")}
-              value={startDay}
-              onChangeText={setStartDay}
-              maxLength={10}
-            />
+        {(
+          [
+            ["pricing.closureStart", startDay, setStartDay, startTime, setStartTime],
+            ["pricing.closureEnd", endDay, setEndDay, endTime, setEndTime],
+          ] as const
+        ).map(([title, day, setDay, time, setTime]) => (
+          <View key={title} style={styles.group}>
+            <AppText variant="bodyStrong">{t(title)}</AppText>
+            <View style={styles.pair}>
+              <View style={styles.date}>
+                <DateField label={t("pricing.fieldDate")} value={day} onChange={setDay} />
+              </View>
+              <View style={styles.time}>
+                <TextField
+                  label={t("pricing.fieldTime")}
+                  value={time}
+                  onChangeText={setTime}
+                  maxLength={5}
+                  placeholder="HH:MM"
+                  keyboardType="numbers-and-punctuation"
+                />
+              </View>
+            </View>
           </View>
-          <View style={time}>
-            <TextField label={t("admin.startTime")} value={startTime} onChangeText={setStartTime} maxLength={5} />
-          </View>
-        </View>
-        <View style={pair}>
-          <View style={flex}>
-            <TextField
-              label={t("admin.endDate")}
-              placeholder={t("dogs.datePlaceholder")}
-              value={endDay}
-              onChangeText={setEndDay}
-              maxLength={10}
-            />
-          </View>
-          <View style={time}>
-            <TextField label={t("admin.endTime")} value={endTime} onChangeText={setEndTime} maxLength={5} />
-          </View>
-        </View>
+        ))}
         <TextField label={t("admin.reason")} value={reason} onChangeText={setReason} maxLength={200} />
         {affected ? (
           <>
@@ -128,12 +140,19 @@ function Closures() {
             {error}
           </AppText>
         ) : null}
-        <Button label={t("admin.closeButton")} disabled={!valid} loading={closePeriod.isPending} onPress={submit} />
+        <Button label={t("admin.closeButton")} loading={closePeriod.isPending} onPress={submit} />
       </Card>
 
       <AppText variant="heading">{t("admin.upcomingClosures")}</AppText>
-      <AppText variant="caption">{t("pricing.closuresExternalNote")}</AppText>
-      <Button label={t("admin.hubCalendarSync")} variant="ghost" onPress={() => router.push("/admin/calendar-sync")} />
+      <Card>
+        <AppText variant="body">{t("pricing.closuresExternalNote")}</AppText>
+        <ListRow
+          label={t("admin.hubCalendarSync")}
+          detail={t("admin.hubCalendarSyncDetail")}
+          last
+          onPress={() => router.push("/admin/calendar-sync")}
+        />
+      </Card>
       {blackouts.isLoading ? (
         <LoadingView />
       ) : blackouts.isError ? (
@@ -143,18 +162,17 @@ function Closures() {
       ) : (
         mine.map((blackout) => (
           <Card key={blackout.id}>
-            <AppText variant="bodyStrong">
-              {formatDate(blackout.start)} {formatTime(blackout.start)}
-              {" –⁠ "}
-              {formatDate(blackout.end)} {formatTime(blackout.end)}
-            </AppText>
+            <AppText variant="bodyStrong">{t("pricing.closureFrom", { date: when(blackout.start) })}</AppText>
+            <AppText variant="bodyStrong">{t("pricing.closureTo", { date: when(blackout.end) })}</AppText>
             {blackout.reason ? <AppText variant="body">{blackout.reason}</AppText> : null}
-            <Button
-              label={t("admin.delete")}
-              variant="ghost"
-              loading={deleteBlackout.isPending && deleteBlackout.variables === blackout.id}
-              onPress={() => deleteBlackout.mutate(blackout.id)}
-            />
+            <View style={styles.actions}>
+              <Button
+                label={t("admin.delete")}
+                variant="dangerText"
+                loading={deleteBlackout.isPending && deleteBlackout.variables === blackout.id}
+                onPress={() => void askDelete(blackout.id)}
+              />
+            </View>
           </Card>
         ))
       )}
@@ -163,10 +181,13 @@ function Closures() {
 }
 
 const styles = StyleSheet.create({
-  pair: { flexDirection: "row", gap: space.md },
-  stack: { gap: space.md },
-  flex: { flex: 1 },
-  time: { width: 110 },
+  resource: { gap: space.sm },
+  group: { gap: space.xs },
+  // Champs alignés en bas : un libellé qui passerait sur deux lignes ne décale plus la saisie.
+  pair: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-end", gap: space.md },
+  date: { flexGrow: 1, flexBasis: 140 },
+  time: { flexGrow: 0, flexBasis: 100 },
+  actions: { flexDirection: "row", justifyContent: "flex-end" },
   warning: { color: colors.reserved },
   error: { color: colors.danger },
 });

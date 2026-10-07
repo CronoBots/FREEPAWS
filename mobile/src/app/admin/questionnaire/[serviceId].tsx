@@ -96,6 +96,12 @@ function QuestionnaireEditor() {
         <AppText variant="caption">{t("v11Admin.introAnswers")}</AppText>
       </Card>
 
+      {editing === "new" ? (
+        <QuestionForm serviceId={serviceId} nextPosition={nextPosition} onDone={() => setEditing(null)} />
+      ) : (
+        <Button label={t("v11Admin.addQuestion")} onPress={() => setEditing("new")} style={styles.add} />
+      )}
+
       {list.length === 0 && editing !== "new" ? (
         <EmptyView title={t("v11Admin.emptyTitle")} message={t("v11Admin.emptyText")} />
       ) : null}
@@ -121,12 +127,6 @@ function QuestionnaireEditor() {
             onEdit={() => setEditing(question.id)}
           />
         ),
-      )}
-
-      {editing === "new" ? (
-        <QuestionForm serviceId={serviceId} nextPosition={nextPosition} onDone={() => setEditing(null)} />
-      ) : (
-        <Button label={t("v11Admin.addQuestion")} onPress={() => setEditing("new")} />
       )}
     </Screen>
   );
@@ -196,26 +196,24 @@ function QuestionCard({
       {english?.label ? <AppText variant="caption">EN · {english.label}</AppText> : null}
       <View style={styles.badges}>
         <Badge label={kindLabel(question.kind, t)} />
-        <Badge
-          label={question.required ? t("v11Admin.badgeRequired") : t("v11Admin.badgeOptional")}
-          tone={question.required ? "warning" : "neutral"}
-        />
         {!question.active ? <Badge label={t("v11Admin.badgeInactive")} tone="danger" /> : null}
       </View>
       {options.length > 0 ? (
         <AppText variant="caption">{options.map((option) => option.label).join(" · ")}</AppText>
       ) : null}
-      <Checkbox label={t("v11Admin.active")} checked={question.active} onChange={(active) => toggle({ active })} />
-      <Checkbox
-        label={t("v11Admin.required")}
-        checked={question.required}
-        onChange={(required) => toggle({ required })}
-      />
+      <View>
+        <Checkbox label={t("v11Admin.active")} checked={question.active} onChange={(active) => toggle({ active })} />
+        <Checkbox
+          label={t("v11Admin.required")}
+          checked={question.required}
+          onChange={(required) => toggle({ required })}
+        />
+      </View>
       <View style={styles.actions}>
         <Button label={t("v11Admin.edit")} variant="secondary" style={styles.action} onPress={onEdit} />
         <Button
           label={t("v11Admin.delete")}
-          variant="ghost"
+          variant="dangerText"
           style={styles.action}
           loading={remove.isPending}
           onPress={() => void onDelete()}
@@ -256,7 +254,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: space.xs },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
-  action: { flexGrow: 1, flexBasis: 120 },
+  action: { minWidth: 130 },
+  add: { alignSelf: "flex-start" },
   move: {
     width: 44,
     height: 44,

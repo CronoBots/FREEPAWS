@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 
 import { type ClientRow, fetchClientsForExport, isActiveSanction, type Sanction, useClients } from "@/api/admin-park";
 import { AdminGuard } from "@/components/admin-guard";
-import { BadgeRow } from "@/components/admin/clients/shared";
+import { BadgeRow, keepTogether } from "@/components/admin/clients/shared";
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
@@ -96,12 +96,6 @@ function Clients() {
         returnKeyType="search"
         maxLength={80}
       />
-      <Button
-        label={t("adminClients.export")}
-        variant="secondary"
-        loading={exporting}
-        onPress={() => void exportCsv()}
-      />
 
       {clients.isLoading ? (
         <LoadingView />
@@ -117,6 +111,14 @@ function Clients() {
       ) : (
         clients.data.map((client) => <ClientCard key={client.id} client={client} />)
       )}
+
+      <Button
+        label={t("adminClients.export")}
+        variant="secondary"
+        loading={exporting}
+        onPress={() => void exportCsv()}
+        style={styles.export}
+      />
     </Screen>
   );
 }
@@ -151,13 +153,13 @@ function ClientCard({ client }: { client: ClientRow }) {
             {client.email}
           </AppText>
         ) : null}
-        {client.phone ? <AppText variant="caption">{client.phone}</AppText> : null}
+        {client.phone ? <AppText variant="caption">{keepTogether(client.phone)}</AppText> : null}
         <BadgeRow>
-          {client.role === "admin" ? <Badge label={t("adminClients.badgeAdmin")} tone="success" /> : null}
+          {client.role === "admin" ? <Badge label={t("adminClients.badgeAdmin")} /> : null}
           {banned ? <Badge label={t("adminClients.badgeBanned")} tone="danger" /> : null}
           {suspended ? <Badge label={t("adminClients.badgeSuspended")} tone="danger" /> : null}
           <Badge label={tp("adminClients.dogs", dogs.length)} />
-          {protocol ? <Badge label={t("adminClients.badgeProtocol")} tone="warning" /> : null}
+          {protocol ? <Badge label={t("adminClients.badgeProtocol")} tone="danger" /> : null}
         </BadgeRow>
       </Card>
     </Pressable>
@@ -166,6 +168,7 @@ function ClientCard({ client }: { client: ClientRow }) {
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.75 },
+  export: { alignSelf: "flex-start" },
   head: { flexDirection: "row", alignItems: "flex-start", gap: space.sm },
   name: { flex: 1 },
   wrap: { flexShrink: 1 },

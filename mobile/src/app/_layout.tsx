@@ -11,6 +11,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 
 import { usePushRegistration, useSyncProfileLanguage } from "@/api/profile";
+import { HeaderHome } from "@/components/header-home";
 import { ConfigMissing } from "@/screens/config-missing";
 import { loadStoredLanguage, useLanguage } from "@/i18n";
 import { AuthProvider, useAuth } from "@/lib/auth";
@@ -58,6 +59,9 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   return <AppStack />;
 }
 
+// Écrans sans retour de secours : les onglets, et les liens invités / secours (personnes sans compte).
+const NO_FALLBACK = new Set(["(tabs)", "live/[token]", "rescue/[token]"]);
+
 function AppStack() {
   const { t } = useLanguage();
   useSyncProfileLanguage();
@@ -65,7 +69,11 @@ function AppStack() {
 
   return (
     <Stack
-      screenOptions={{
+      screenOptions={({ navigation, route }) => ({
+        headerLeft:
+          navigation.canGoBack() || NO_FALLBACK.has(route.name)
+            ? undefined
+            : () => <HeaderHome admin={route.name.startsWith("admin/")} />,
         headerStyle: { backgroundColor: colors.cream },
         headerTintColor: colors.ink,
         headerTitleStyle: { fontFamily: fonts.serif, color: colors.ink },
@@ -74,7 +82,7 @@ function AppStack() {
         headerTitleAlign: "center",
         headerBackButtonDisplayMode: "minimal",
         contentStyle: { backgroundColor: colors.cream },
-      }}
+      })}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false, title: "FreePaws" }} />
       <Stack.Screen name="sign-in" options={{ presentation: "modal", title: t("titles.signIn") }} />

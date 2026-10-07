@@ -144,7 +144,7 @@ export function useAdminBooking(id: string | undefined) {
              party_size, price_cents, discount_cents, group_dogs, group_certified_at, health_warnings,
              appointment:appointments ( period, service:services ( id, name, mode ) ),
              client:profiles!bookings_client_id_fkey ( id, full_name, email, phone ),
-             dog:dogs ( id, name, breed, size, protocol ),
+             dog:dogs!bookings_dog_id_fkey ( id, name, breed, size, protocol ),
              booking_dogs ( dog:dogs ( id, name, breed, size, protocol ) ),
              guests:booking_guests ( id, full_name, phone, email, emergency_contact_name, emergency_contact_phone,
                dog, profile_completed_at )`,

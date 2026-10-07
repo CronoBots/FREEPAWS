@@ -1,76 +1,121 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams } from "expo-router";
-import { Linking, StyleSheet, View } from "react-native";
+import { Linking, Pressable, StyleSheet, View } from "react-native";
 
-import { useRescueLive } from "@/api/admin-extra";
+import { useRescueAccessCheck, useRescueLive } from "@/api/admin-extra";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { LivePlayer } from "@/components/live-player";
 import { Screen } from "@/components/screen";
-import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
+import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { useLanguage } from "@/i18n";
-import { colors, space } from "@/theme";
+import { colors, fonts, radius, space } from "@/theme";
 
-/** Page des services de secours (lien temporaire, sans compte) : direct et fiche secours. */
+/**
+ * Page des services de secours (lien temporaire, sans compte) : bouton 112, fiche secours et direct.
+ * Le 112 est toujours affiché ; la fiche dépend seulement de la validité du lien (lue en base), et une
+ * panne de la vidéo reste locale au bloc du direct.
+ */
 export default function RescueRoute() {
   const { t } = useLanguage();
   const { token } = useLocalSearchParams<{ token: string }>();
-  const live = useRescueLive(token);
+  const access = useRescueAccessCheck(token);
+  const valid = access.data?.valid === true;
+  const live = useRescueLive(token, valid);
 
-  if (live.isLoading) {
-    return (
-      <Screen>
-        <LoadingView />
-      </Screen>
-    );
-  }
-  if (live.isError) {
-    return (
-      <Screen>
-        <ErrorView error={live.error} onRetry={() => void live.refetch()} />
-      </Screen>
-    );
-  }
-  if (!live.data || live.data.mode !== "rescue") {
-    return (
-      <Screen>
-        <EmptyView title={t("adminExtra.rescuePageTitle")} message={t("adminExtra.rescueDenied")} />
-      </Screen>
-    );
-  }
+  const refresh = () => {
+    void access.refetch();
+    if (valid) void live.refetch();
+  };
 
-  const { streams, rescueInfo, label } = live.data;
   return (
-    <Screen
-      heading={t("adminExtra.rescuePageTitle")}
-      refreshing={live.isRefetching}
-      onRefresh={() => void live.refetch()}
-    >
-      {label ? <AppText variant="bodyStrong">{label}</AppText> : null}
-      <Button label={t("adminExtra.call112")} onPress={() => void Linking.openURL("tel:112")} />
-      {rescueInfo?.trim() ? (
+    <Screen underHeader refreshing={access.isRefetching || live.isRefetching} onRefresh={refresh}>
+      <Call112 />
+
+      {access.isLoading ? (
+        <LoadingView />
+      ) : access.isError ? (
+        <ErrorView error={access.error} onRetry={() => void access.refetch()} />
+      ) : !valid ? (
         <Card>
-          <AppText variant="heading">{t("adminExtra.rescueInfoTitle")}</AppText>
-          <AppText variant="body" selectable>
-            {rescueInfo.trim()}
-          </AppText>
-        </Card>
-      ) : null}
-      {streams.length === 0 ? (
-        <Card>
-          <AppText variant="body">{t("adminExtra.rescueNoCamera")}</AppText>
+          <AppText variant="bodyStrong">{t("adminExtra.rescueDenied")}</AppText>
         </Card>
       ) : (
-        <View style={styles.streams}>
-          {streams.map((stream) => (
-            <LivePlayer key={stream.id} url={stream.url} label={stream.name} />
-          ))}
-        </View>
+        <>
+          {access.data?.label ? <AppText variant="bodyStrong">{access.data.label}</AppText> : null}
+          {access.data?.rescueInfo ? (
+            <Card>
+              <AppText variant="heading">{t("adminExtra.rescueInfoTitle")}</AppText>
+              <AppText variant="body" selectable>
+                {access.data.rescueInfo}
+              </AppText>
+            </Card>
+          ) : null}
+
+          <AppText variant="heading">{t("adminExtra.rescueLiveTitle")}</AppText>
+          {live.isLoading ? (
+            <LoadingView />
+          ) : live.isError ? (
+            <Card>
+              <AppText variant="body">{t("adminExtra.rescueVideoUnavailable")}</AppText>
+              <Button
+                label={t("adminExtra.rescueVideoRetry")}
+                variant="secondary"
+                loading={live.isRefetching}
+                onPress={() => void live.refetch()}
+              />
+            </Card>
+          ) : live.data?.mode !== "rescue" ? (
+            // Le lien a expiré entre les deux vérifications : la prochaine lecture en base le dira.
+            <Card>
+              <AppText variant="body">{t("adminExtra.rescueDenied")}</AppText>
+            </Card>
+          ) : live.data.streams.length === 0 ? (
+            <Card>
+              <AppText variant="body">{t("adminExtra.rescueNoCamera")}</AppText>
+            </Card>
+          ) : (
+            <View style={styles.streams}>
+              {live.data.streams.map((stream) => (
+                <LivePlayer key={stream.id} url={stream.url} label={stream.name} />
+              ))}
+            </View>
+          )}
+        </>
       )}
     </Screen>
   );
 }
 
+function Call112() {
+  const { t } = useLanguage();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t("adminExtra.call112")}
+      onPress={() => void Linking.openURL("tel:112").catch(() => undefined)}
+      style={({ pressed }) => [styles.call112, pressed && styles.pressed]}
+    >
+      <Ionicons name="call" size={26} color={colors.white} />
+      <AppText style={styles.call112Label}>{t("adminExtra.call112")}</AppText>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
-  streams: { gap: space.md, borderColor: colors.line },
+  streams: { gap: space.md },
+  call112: {
+    minHeight: 60,
+    borderRadius: radius.lg,
+    backgroundColor: colors.danger,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: space.md,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+  },
+  call112Label: { fontFamily: fonts.sansSemiBold, fontSize: 19, lineHeight: 25, color: colors.white },
+  pressed: { opacity: 0.82 },
 });

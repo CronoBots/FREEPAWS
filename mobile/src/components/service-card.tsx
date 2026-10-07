@@ -20,7 +20,7 @@ export function ServiceCard({ service }: { service: Service }) {
       <AppText variant="heading">{service.name}</AppText>
       <AppText variant="body">{service.summary}</AppText>
       {price ? <AppText variant="bodyStrong">{price}</AppText> : null}
-      <AppText variant="caption" style={styles.more}>
+      <AppText variant="bodyStrong" style={styles.more}>
         {t("coaching.more")}
       </AppText>
     </Pressable>
@@ -37,5 +37,6 @@ const styles = StyleSheet.create({
     gap: space.sm,
   },
   pressed: { opacity: 0.8 },
-  more: { color: colors.ink },
+  // Seule action de la carte : couleur de marque pour qu’on la repère.
+  more: { color: colors.olive },
 });

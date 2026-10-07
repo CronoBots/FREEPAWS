@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 
 import { Button } from "@/components/button";
@@ -21,10 +22,20 @@ type Props = {
   /** Plus de chien possible (plafond de la prestation atteint avec les chiens du compte). */
   canAdd: boolean;
   showErrors?: boolean;
+  /** Affiché en bas de la carte (ex. total des chiens). */
+  footer?: ReactNode;
 };
 
 /** Chiens d’autres foyers (M2-06) : listés par la personne qui réserve, avec certification. */
-export function GroupDogsEditor({ value, onChange, certified, onCertifiedChange, canAdd, showErrors = false }: Props) {
+export function GroupDogsEditor({
+  value,
+  onChange,
+  certified,
+  onCertifiedChange,
+  canAdd,
+  showErrors = false,
+  footer,
+}: Props) {
   const { t } = useLanguage();
   const update = (key: string, patch: Partial<DogDraft>) =>
     onChange(value.map((dog) => (dog.key === key ? { ...dog, ...patch } : dog)));
@@ -43,7 +54,7 @@ export function GroupDogsEditor({ value, onChange, certified, onCertifiedChange,
             </AppText>
             <Button
               label={t("v11Client.groupRemove")}
-              variant="ghost"
+              variant="dangerText"
               onPress={() => onChange(value.filter((item) => item.key !== dog.key))}
               style={styles.remove}
             />
@@ -73,6 +84,7 @@ export function GroupDogsEditor({ value, onChange, certified, onCertifiedChange,
           ) : null}
         </View>
       ) : null}
+      {footer}
     </Card>
   );
 }

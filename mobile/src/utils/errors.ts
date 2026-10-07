@@ -64,5 +64,17 @@ export function toUserMessage(error: unknown): string {
       if (text === code || text.includes(code)) return t(`errors.${code}` as TranslationKey);
     }
   }
+  if (isNetworkError(error)) return t("common.networkError");
   return t("common.error");
+}
+
+// supabase-js : « TypeError: Failed to fetch » (web), « Network request failed » (natif),
+// FunctionsFetchError pour les Edge Functions.
+function isNetworkError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const { name, message } = error as { name?: unknown; message?: unknown };
+  if (name === "FunctionsFetchError") return true;
+  return (
+    typeof message === "string" && /failed to fetch|network request failed|networkerror|load failed/i.test(message)
+  );
 }
