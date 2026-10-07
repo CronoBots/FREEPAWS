@@ -64,7 +64,7 @@ export function useClients(search: string) {
     queryFn: async () => {
       let query = supabase
         .from("profiles")
-        .select("*, dogs ( id, name, protocol ), sanctions ( level, starts_at, ends_at )")
+        .select("*, dogs ( id, name, protocol ), sanctions!sanctions_user_id_fkey ( level, starts_at, ends_at )")
         .order("created_at", { ascending: false })
         .limit(100);
       if (term) query = query.or(`full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`);
