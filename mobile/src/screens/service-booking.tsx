@@ -5,6 +5,7 @@ import { type ScrollView, StyleSheet, View } from "react-native";
 import { useBookEvent, useBookSlot, useRescheduleBooking } from "@/api/bookings";
 import { checkDiscountCode, useRequiredDocuments } from "@/api/documents";
 import { useDogs } from "@/api/dogs";
+import { useSetBookingGuests } from "@/api/park-profile";
 import { PARK_SERVICE_SLUG, type Service } from "@/api/services";
 import { type Slot, useSlots } from "@/api/slots";
 import { Button } from "@/components/button";
@@ -14,10 +15,13 @@ import { Chip } from "@/components/chip";
 import { DayPicker } from "@/components/day-picker";
 import { Screen } from "@/components/screen";
 import { SlotGrid } from "@/components/slot-grid";
+import { type GuestDraft, GuestsEditor, guestsValid, toGuestInputs } from "@/components/guests-editor";
+import { ParkReadiness } from "@/components/park-readiness";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { Stepper } from "@/components/stepper";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
+import { WaitlistSection } from "@/components/waitlist-button";
 import { useLanguage } from "@/i18n";
 import { useAuth } from "@/lib/auth";
 import { notify } from "@/lib/confirm";
@@ -36,6 +40,11 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
   const { userId } = useAuth();
   const rescheduling = Boolean(rescheduleBookingId);
   const isPark = service.slug === PARK_SERVICE_SLUG;
+  // Parc (ou toute prestation soumise aux mêmes conditions) : plusieurs chiens, invités, fiche complète.
+  const parkProfile = service.requires_park_profile;
+  const showAdults = isPark || parkProfile;
+  const maxDogs = service.max_dogs ?? 20;
+  const maxPeople = service.max_people;
   const today = toIsoDay(new Date());
   const lastDay = addDays(today, Math.min(service.max_advance_days, WINDOW_DAYS));
   const slots = useSlots(service.id, today, lastDay);
@@ -50,6 +59,9 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
   const [dogsCount, setDogsCount] = useState(1);
+  const [dogIds, setDogIds] = useState<string[]>([]);
+  const [guests, setGuests] = useState<GuestDraft[]>([]);
+  const [showGuestErrors, setShowGuestErrors] = useState(false);
   const [codeInput, setCodeInput] = useState("");
   const [discount, setDiscount] = useState<DiscountState>(null);
   const [accepted, setAccepted] = useState<Record<string, boolean>>({});
@@ -60,7 +72,8 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
   const bookSlot = useBookSlot();
   const bookEvent = useBookEvent();
   const reschedule = useRescheduleBooking();
-  const submitting = bookSlot.isPending || bookEvent.isPending || reschedule.isPending;
+  const saveGuests = useSetBookingGuests();
+  const submitting = bookSlot.isPending || bookEvent.isPending || reschedule.isPending || saveGuests.isPending;
 
   const selectSlot = (slot: Slot | null) => {
     setSelected(slot);
@@ -82,6 +95,16 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
   const pendingDocuments = (documents.data ?? []).filter((document) => !document.accepted);
   const documentsOk = pendingDocuments.every((document) => accepted[document.documentId]);
   const addressOk = !service.requires_address || address.trim().length > 0;
+  const fullDays = days.filter((day) => (counts[day] ?? 0) === 0);
+
+  // Plafond de personnes (adultes + enfants) quand l’administratrice l’a renseigné.
+  const adultsMax = maxPeople ? Math.max(1, maxPeople - children) : 20;
+  const childrenMax = maxPeople ? Math.max(0, maxPeople - (showAdults ? adults : 1)) : 20;
+
+  const toggleDog = (id: string) =>
+    setDogIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : prev.length >= maxDogs ? prev : [...prev, id],
+    );
 
   const onCheckCode = async () => {
     const code = codeInput.trim();
@@ -118,19 +141,40 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
 
     if (!addressOk) return setError(t("errors.address_required"));
     if (!documentsOk) return setError(t("booking.documentsRequired"));
+    if (parkProfile && dogIds.length === 0) return setError(t("parkBooking.dogRequired"));
+    if (parkProfile && !guestsValid(guests)) {
+      setShowGuestErrors(true);
+      return setError(t("parkBooking.guestNamesRequired"));
+    }
 
     const details = {
-      dogId,
+      dogId: parkProfile ? null : dogId,
+      dogIds: parkProfile ? dogIds : undefined,
       notes,
       visitAddress: service.requires_address ? address : undefined,
-      adultsCount: isPark ? adults : undefined,
+      adultsCount: showAdults ? adults : undefined,
       childrenCount: children,
-      dogsCount,
+      dogsCount: parkProfile ? dogIds.length : dogsCount,
       discountCode: discount?.valid ? discount.code : undefined,
       documentIds: pendingDocuments.map((document) => document.documentId),
     };
-    const onSuccess = (bookingId: string) =>
+    const guestInputs = parkProfile ? toGuestInputs(guests) : [];
+    const goToBooking = (bookingId: string) =>
       router.replace({ pathname: "/booking/[id]", params: { id: bookingId, created: "1" } });
+    const onSuccess = (bookingId: string) => {
+      if (guestInputs.length === 0) return goToBooking(bookingId);
+      // La réservation existe : un échec sur les invités ne doit pas la faire paraître ratée.
+      saveGuests.mutate(
+        { bookingId, guests: guestInputs },
+        {
+          onSuccess: () => goToBooking(bookingId),
+          onError: () => {
+            notify(t("booking.created"), t("parkBooking.guestsSaveFailed"));
+            goToBooking(bookingId);
+          },
+        },
+      );
+    };
 
     if (service.mode === "event") {
       if (!selected.appointmentId) return;
@@ -179,6 +223,8 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
           </View>
         ) : null}
 
+        {userId && parkProfile && !rescheduling ? <ParkReadiness day={activeDay} /> : null}
+
         <AppText variant="heading">{t("booking.chooseDay")}</AppText>
         {slots.isLoading ? (
           <LoadingView label={t("booking.searching")} />
@@ -220,6 +266,8 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
           </>
         )}
 
+        {!slots.isLoading && !slots.isError ? <WaitlistSection serviceId={service.id} fullDays={fullDays} /> : null}
+
         {error ? (
           <AppText variant="bodyStrong" style={styles.error} accessibilityRole="alert">
             {error}
@@ -241,31 +289,69 @@ export function ServiceBooking({ service, rescheduleBookingId }: { service: Serv
             ) : null}
 
             <Card>
-              {isPark ? <Stepper label={t("booking.adults")} value={adults} onChange={setAdults} min={1} /> : null}
-              <Stepper label={t("booking.children")} value={children} onChange={setChildren} />
-              <Stepper
-                label={t("booking.dogsCount")}
-                value={dogsCount}
-                onChange={setDogsCount}
-                max={service.max_dogs ?? 20}
-              />
+              {showAdults ? (
+                <Stepper label={t("booking.adults")} value={adults} onChange={setAdults} min={1} max={adultsMax} />
+              ) : null}
+              <Stepper label={t("booking.children")} value={children} onChange={setChildren} max={childrenMax} />
+              {parkProfile ? null : (
+                <Stepper label={t("booking.dogsCount")} value={dogsCount} onChange={setDogsCount} max={maxDogs} />
+              )}
+              {maxPeople ? (
+                <AppText variant="caption">{t("parkBooking.maxPeople", { count: maxPeople })}</AppText>
+              ) : null}
               {service.max_dogs ? (
                 <AppText variant="caption">{t("booking.maxDogs", { count: service.max_dogs })}</AppText>
               ) : null}
             </Card>
 
-            <AppText variant="heading">{t("booking.whichDog")}</AppText>
-            <View style={styles.chips}>
-              <Chip label={t("booking.dogUnspecified")} selected={dogId === null} onPress={() => setDogId(null)} />
-              {dogs.data?.map((dog) => (
-                <Chip key={dog.id} label={dog.name} selected={dogId === dog.id} onPress={() => setDogId(dog.id)} />
-              ))}
-              <Chip
-                label={t("booking.addDog")}
-                selected={false}
-                onPress={() => router.push({ pathname: "/dogs/[id]", params: { id: "new" } })}
-              />
-            </View>
+            {parkProfile ? (
+              <Card>
+                <AppText variant="heading">{t("parkBooking.dogsTitle")}</AppText>
+                <AppText variant="caption">
+                  {service.max_dogs
+                    ? t("parkBooking.dogsHint", { max: service.max_dogs })
+                    : t("parkBooking.dogsHintNoMax")}
+                </AppText>
+                <View style={styles.chips}>
+                  {dogs.data?.map((dog) => {
+                    const checked = dogIds.includes(dog.id);
+                    return (
+                      <Chip
+                        key={dog.id}
+                        label={checked ? `✓ ${dog.name}` : dog.name}
+                        accessibilityLabel={dog.name}
+                        selected={checked}
+                        disabled={!checked && dogIds.length >= maxDogs}
+                        onPress={() => toggleDog(dog.id)}
+                      />
+                    );
+                  })}
+                  <Chip
+                    label={t("booking.addDog")}
+                    selected={false}
+                    onPress={() => router.push({ pathname: "/dogs/[id]", params: { id: "new" } })}
+                  />
+                </View>
+                <AppText variant="bodyStrong">{tp("parkBooking.dogsSelected", dogIds.length)}</AppText>
+              </Card>
+            ) : (
+              <>
+                <AppText variant="heading">{t("booking.whichDog")}</AppText>
+                <View style={styles.chips}>
+                  <Chip label={t("booking.dogUnspecified")} selected={dogId === null} onPress={() => setDogId(null)} />
+                  {dogs.data?.map((dog) => (
+                    <Chip key={dog.id} label={dog.name} selected={dogId === dog.id} onPress={() => setDogId(dog.id)} />
+                  ))}
+                  <Chip
+                    label={t("booking.addDog")}
+                    selected={false}
+                    onPress={() => router.push({ pathname: "/dogs/[id]", params: { id: "new" } })}
+                  />
+                </View>
+              </>
+            )}
+
+            {parkProfile ? <GuestsEditor value={guests} onChange={setGuests} showErrors={showGuestErrors} /> : null}
 
             <TextField
               label={t("booking.notes")}

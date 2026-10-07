@@ -1,11 +1,16 @@
 import { router, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
-import { canCancel, canReschedule, useBooking, useCancelBooking } from "@/api/bookings";
+import { type Booking, canCancel, canReschedule, useBooking, useCancelBooking } from "@/api/bookings";
+import { useBookingExtras, useSetBookingGuests } from "@/api/park-profile";
+import { useService } from "@/api/services";
 import { Badge } from "@/components/badge";
 import { bookingBadge } from "@/components/booking-card";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
+import { EmergencyButton } from "@/components/emergency-button";
+import { type GuestDraft, GuestsEditor, guestsValid, toGuestDrafts, toGuestInputs } from "@/components/guests-editor";
 import { Screen } from "@/components/screen";
 import { EmptyView, ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
@@ -109,6 +114,10 @@ export default function BookingRoute() {
         {data.client_notes ? <AppText variant="caption">« {data.client_notes} »</AppText> : null}
       </Card>
 
+      <EmergencyButton booking={data} />
+
+      <BookingExtras booking={data} />
+
       {data.status === "confirmed" ? (
         cancellable ? (
           <View style={styles.actions}>
@@ -141,7 +150,104 @@ export default function BookingRoute() {
   );
 }
 
+/** Chiens et invités de la réservation ; invités modifiables tant qu’elle est confirmée et à venir. */
+function BookingExtras({ booking }: { booking: Booking }) {
+  const { t } = useLanguage();
+  const extras = useBookingExtras(booking.id);
+  const service = useService(booking.service.slug);
+  const save = useSetBookingGuests();
+  const [drafts, setDrafts] = useState<GuestDraft[] | null>(null);
+  const [showErrors, setShowErrors] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (extras.isLoading) return <LoadingView />;
+  if (extras.isError) return <ErrorView error={extras.error} onRetry={() => void extras.refetch()} />;
+  const dogs = extras.data?.dogs ?? [];
+  const guests = extras.data?.guests ?? [];
+  const parkLike = Boolean(service.data?.requires_park_profile);
+  const editable = booking.status === "confirmed" && booking.start > new Date() && (parkLike || guests.length > 0);
+  if (dogs.length === 0 && guests.length === 0 && !editable) return null;
+
+  const onSave = () => {
+    if (!drafts) return;
+    setShowErrors(true);
+    if (!guestsValid(drafts)) return setError(t("parkBooking.guestNamesRequired"));
+    setError(null);
+    save.mutate(
+      { bookingId: booking.id, guests: toGuestInputs(drafts) },
+      {
+        onSuccess: () => {
+          setDrafts(null);
+          setShowErrors(false);
+        },
+        onError: (err) => setError(toUserMessage(err)),
+      },
+    );
+  };
+
+  return (
+    <>
+      {dogs.length > 0 ? (
+        <Card>
+          <AppText variant="heading">{t("parkBooking.extrasDogs")}</AppText>
+          {dogs.map((dog) => (
+            <AppText key={dog.id} variant="body">
+              {dog.breed ? `${dog.name} · ${dog.breed}` : dog.name}
+            </AppText>
+          ))}
+        </Card>
+      ) : null}
+
+      {drafts ? (
+        <View style={styles.actions}>
+          <GuestsEditor value={drafts} onChange={setDrafts} showErrors={showErrors} />
+          {error ? (
+            <AppText variant="bodyStrong" style={styles.error} accessibilityRole="alert">
+              {error}
+            </AppText>
+          ) : null}
+          <Button label={t("parkBooking.guestsSave")} loading={save.isPending} onPress={onSave} />
+          <Button
+            label={t("parkBooking.guestsCancel")}
+            variant="ghost"
+            onPress={() => {
+              setDrafts(null);
+              setError(null);
+              setShowErrors(false);
+            }}
+          />
+        </View>
+      ) : guests.length > 0 || editable ? (
+        <Card>
+          <AppText variant="heading">{t("parkBooking.extrasGuests")}</AppText>
+          {guests.length === 0 ? <AppText variant="body">{t("parkBooking.guestsEmpty")}</AppText> : null}
+          {guests.map((guest) => (
+            <View key={guest.id} style={styles.guest}>
+              <AppText variant="bodyStrong">{guest.full_name}</AppText>
+              {guest.email || guest.phone ? (
+                <AppText variant="caption">{[guest.email, guest.phone].filter(Boolean).join(" · ")}</AppText>
+              ) : null}
+            </View>
+          ))}
+          {editable ? (
+            <>
+              <AppText variant="caption">{t("parkBooking.guestsResponsibility")}</AppText>
+              <Button
+                label={t("parkBooking.guestsEdit")}
+                variant="secondary"
+                onPress={() => setDrafts(toGuestDrafts(guests))}
+              />
+            </>
+          ) : null}
+        </Card>
+      ) : null}
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
+  guest: { gap: 2 },
+  error: { color: colors.danger },
   success: { backgroundColor: colors.freeSoft, borderRadius: radius.lg, padding: space.lg, gap: space.xs },
   successText: { color: colors.free },
   actions: { gap: space.md },

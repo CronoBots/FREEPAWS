@@ -83,6 +83,8 @@ export function useInvalidateBookings() {
 /** Informations communes à toute réservation (selon la prestation). */
 export type BookingDetails = {
   dogId: string | null;
+  /** Plusieurs chiens (parc) : prioritaire sur dogId côté serveur. */
+  dogIds?: string[];
   notes: string;
   visitAddress?: string;
   adultsCount?: number;
@@ -95,6 +97,7 @@ export type BookingDetails = {
 function detailArgs(details: BookingDetails) {
   return {
     p_dog_id: details.dogId ?? undefined,
+    p_dog_ids: details.dogIds?.length ? details.dogIds : undefined,
     p_notes: details.notes || undefined,
     p_adults_count: details.adultsCount,
     p_children_count: details.childrenCount,

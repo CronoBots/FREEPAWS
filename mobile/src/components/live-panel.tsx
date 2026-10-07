@@ -2,6 +2,7 @@ import { StyleSheet, View } from "react-native";
 
 import { type ParkStatus, useLiveStream } from "@/api/park";
 import { Card } from "@/components/card";
+import { CurrentBookingEmergency } from "@/components/emergency-button";
 import { LivePlayer } from "@/components/live-player";
 import { LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
@@ -54,10 +55,14 @@ export function LivePanel({ status, statusFailed }: { status: ParkStatus | undef
   }
 
   return (
-    <Card>
-      <AppText variant="eyebrow">{t("camera.eyebrow")}</AppText>
-      {body}
-    </Card>
+    <>
+      <Card>
+        <AppText variant="eyebrow">{t("camera.eyebrow")}</AppText>
+        {body}
+      </Card>
+      {/* Accès privé = réservation en cours : bouton urgence à portée de main. */}
+      {live.data?.mode === "private" ? <CurrentBookingEmergency /> : null}
+    </>
   );
 }
 

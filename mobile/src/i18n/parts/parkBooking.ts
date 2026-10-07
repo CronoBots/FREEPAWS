@@ -1,6 +1,141 @@
 import type { Widen } from "@/i18n/fr";
 
-// Textes « parkBooking » : le français fait référence, l’anglais doit avoir exactement les mêmes clés.
-export const fr = {};
+// Textes « parkBooking » : le français fait référence, l’anglais doit avoir exactement les mêmes clés.
+export const fr = {
+  // Chiens (plusieurs par réservation)
+  dogsTitle: "Chiens présents",
+  dogsHint: "Touchez les chiens qui viennent ({max} au plus).",
+  dogsHintNoMax: "Touchez les chiens qui viennent.",
+  dogsSelected_one: "{count} chien sélectionné",
+  dogsSelected_other: "{count} chiens sélectionnés",
+  dogRequired: "Choisissez au moins un chien.",
+  maxPeople: "{count} personnes au plus, adultes et enfants compris.",
+  guestNamesRequired: "Indiquez le nom de chaque invité, ou retirez les lignes vides.",
+  guestsSaveFailed:
+    "Votre réservation est confirmée, mais les invités n’ont pas pu être enregistrés. Vous pouvez les ajouter depuis la réservation.",
 
-export const en: Widen<typeof fr> = {};
+  // Invités
+  guestsTitle: "Invités",
+  guestsResponsibility: "La personne qui réserve est responsable de tout le groupe, invités compris.",
+  guestsEmpty: "Aucun invité.",
+  guestLabel: "Invité {n}",
+  guestName: "Nom et prénom",
+  guestEmail: "Email (facultatif)",
+  guestPhone: "Téléphone (facultatif)",
+  guestNameError: "Nom obligatoire",
+  guestRemove: "Retirer",
+  guestAdd: "Ajouter un invité",
+  guestsMax: "{count} invités au plus.",
+  guestsEdit: "Modifier les invités",
+  guestsSave: "Enregistrer les invités",
+  guestsSaved: "Invités enregistrés",
+  guestsCancel: "Annuler",
+
+  // Fiche à compléter avant de réserver le parc
+  readinessTitle: "Avant de réserver le parc",
+  readinessText: "Ces informations sont vérifiées au moment de la réservation.",
+  missingBirthDate: "Date de naissance à renseigner",
+  missingEmergency: "Contact d’urgence à renseigner (nom et téléphone)",
+  missingInsurance: "Assurance à renseigner (compagnie et date de fin de validité)",
+  insuranceExpired: "Assurance expirée le {date} : mettez-la à jour",
+  notAdult: "Seule une personne majeure peut réserver le parc",
+  missingDogs: "Aucun chien enregistré",
+  completeProfile: "Compléter mon profil",
+  addDogs: "Ajouter un chien",
+  vaccinesReminder: "Les vaccins de chaque chien doivent aussi être validés par FreePaws avant la venue.",
+
+  // Liste d’attente
+  waitlistTitle: "Liste d’attente",
+  waitlistIntro: "Un jour est complet ? Choisissez-le : vous recevrez une notification si un créneau se libère.",
+  waitlistShowDays: "Un jour est complet ?",
+  waitlistHideDays: "Masquer les jours complets",
+  waitlistJoin: "Me prévenir si un créneau se libère",
+  waitlistJoined: "Vous recevrez une notification si un créneau se libère le {day}.",
+  waitlistLeave: "Me désinscrire",
+  waitlistDayA11y: "{day}, aucun créneau libre",
+
+  // Urgence
+  emergencyTitle: "Urgence",
+  emergencyButton: "Urgence",
+  emergencyHint: "Alerte immédiatement FreePaws pendant votre réservation.",
+  emergencyMessage: "Message (facultatif)",
+  emergencyMessagePlaceholder: "Ce qui se passe, où vous êtes…",
+  emergencyConfirmTitle: "Alerter FreePaws ?",
+  emergencyConfirmText: "FreePaws va recevoir une alerte immédiatement. En cas de danger vital, appelez aussi le 112.",
+  emergencyConfirm: "Alerter",
+  emergencySent: "FreePaws a été alertée",
+  emergencySentText: "Restez joignable. En cas de danger vital, appelez le 112.",
+  emergencyFailed: "L’alerte n’a pas pu être envoyée",
+  call112: "Appeler le 112",
+  rescueTitle: "Fiche secours",
+
+  // Détail d’une réservation
+  extrasDogs: "Chiens",
+  extrasGuests: "Invités",
+};
+
+export const en: Widen<typeof fr> = {
+  dogsTitle: "Dogs coming",
+  dogsHint: "Tap the dogs who are coming ({max} at most).",
+  dogsHintNoMax: "Tap the dogs who are coming.",
+  dogsSelected_one: "{count} dog selected",
+  dogsSelected_other: "{count} dogs selected",
+  dogRequired: "Choose at least one dog.",
+  maxPeople: "{count} people at most, adults and children included.",
+  guestNamesRequired: "Enter each guest’s name, or remove the empty rows.",
+  guestsSaveFailed: "Your booking is confirmed, but the guests could not be saved. You can add them from the booking.",
+
+  guestsTitle: "Guests",
+  guestsResponsibility: "The person who books is responsible for the whole group, guests included.",
+  guestsEmpty: "No guests.",
+  guestLabel: "Guest {n}",
+  guestName: "Full name",
+  guestEmail: "Email (optional)",
+  guestPhone: "Phone (optional)",
+  guestNameError: "Name required",
+  guestRemove: "Remove",
+  guestAdd: "Add a guest",
+  guestsMax: "{count} guests at most.",
+  guestsEdit: "Edit guests",
+  guestsSave: "Save guests",
+  guestsSaved: "Guests saved",
+  guestsCancel: "Cancel",
+
+  readinessTitle: "Before booking the park",
+  readinessText: "This information is checked when you book.",
+  missingBirthDate: "Date of birth missing",
+  missingEmergency: "Emergency contact missing (name and phone)",
+  missingInsurance: "Insurance missing (company and expiry date)",
+  insuranceExpired: "Insurance expired on {date}: please update it",
+  notAdult: "Only adults can book the park",
+  missingDogs: "No dog registered",
+  completeProfile: "Complete my profile",
+  addDogs: "Add a dog",
+  vaccinesReminder: "Each dog’s vaccinations must also be validated by FreePaws before your visit.",
+
+  waitlistTitle: "Waiting list",
+  waitlistIntro: "Is a day fully booked? Choose it and you will be notified if a slot becomes free.",
+  waitlistShowDays: "Is a day fully booked?",
+  waitlistHideDays: "Hide fully booked days",
+  waitlistJoin: "Notify me if a slot frees up",
+  waitlistJoined: "You will be notified if a slot frees up on {day}.",
+  waitlistLeave: "Unsubscribe",
+  waitlistDayA11y: "{day}, no free slot",
+
+  emergencyTitle: "Emergency",
+  emergencyButton: "Emergency",
+  emergencyHint: "Alerts FreePaws immediately during your booking.",
+  emergencyMessage: "Message (optional)",
+  emergencyMessagePlaceholder: "What is happening, where you are…",
+  emergencyConfirmTitle: "Alert FreePaws?",
+  emergencyConfirmText: "FreePaws will be alerted immediately. If a life is in danger, also call 112.",
+  emergencyConfirm: "Alert",
+  emergencySent: "FreePaws has been alerted",
+  emergencySentText: "Stay reachable. If a life is in danger, call 112.",
+  emergencyFailed: "The alert could not be sent",
+  call112: "Call 112",
+  rescueTitle: "Rescue information",
+
+  extrasDogs: "Dogs",
+  extrasGuests: "Guests",
+};
