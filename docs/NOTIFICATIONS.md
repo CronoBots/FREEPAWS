@@ -31,14 +31,22 @@ Les erreurs d’envoi restent visibles dans `notifications.last_error` (lecture 
 
 ## Mise en service (une fois le projet Supabase créé)
 
-1. Créer un compte Resend et vérifier le domaine d’envoi (`freepaws.be`) : enregistrements DNS
-   fournis par Resend, à ajouter chez l’hébergeur du domaine.
+1. Choisir l’envoi :
+   - **Infomaniak (recommandé, FreePaws y a déjà son domaine et sa messagerie)** : créer une adresse
+     d’envoi (ex. `reservations@freepaws.be`) dans le Manager Infomaniak. Serveur `mail.infomaniak.com`,
+     port 465 (SSL). Les Edge Functions Supabase n’autorisent pas les ports 25 et 587 : garder le 465.
+   - ou **Resend** : créer un compte et vérifier le domaine (enregistrements DNS à ajouter chez Infomaniak).
+   - Les emails de connexion (code à 6 chiffres) passent par Supabase Auth : dans le tableau de bord,
+     Authentication → Emails → SMTP Settings, renseigner le même serveur Infomaniak.
 2. Secrets de la fonction :
 
    ```bash
-   npx supabase secrets set RESEND_API_KEY=re_xxx \
+   # Infomaniak :
+   npx supabase secrets set SMTP_HOST=mail.infomaniak.com SMTP_PORT=465 \
+     SMTP_USER=reservations@freepaws.be SMTP_PASSWORD='…' \
      NOTIFY_FROM="FreePaws <reservations@freepaws.be>" \
      NOTIFY_CRON_SECRET=$(openssl rand -hex 32)
+   # ou Resend à la place de SMTP_* : RESEND_API_KEY=re_xxx
    npx supabase functions deploy send-notifications calendar-import
    # Lien live des invités : adresse web de l'app si elle est publiée (sinon freepaws:// ouvre l'app).
    npx supabase secrets set APP_URL=https://app.freepaws.be

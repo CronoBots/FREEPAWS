@@ -1082,6 +1082,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      rescue_access: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          expires_at: string;
+          id: string;
+          label: string;
+          revoked_at: string | null;
+          token: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          expires_at: string;
+          id?: string;
+          label?: string;
+          revoked_at?: string | null;
+          token?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          expires_at?: string;
+          id?: string;
+          label?: string;
+          revoked_at?: string | null;
+          token?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "rescue_access_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       resources: {
         Row: {
           created_at: string;
@@ -1393,6 +1432,18 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      admin_book_for_client: {
+        Args: {
+          p_client_id: string;
+          p_duration_minutes: number;
+          p_notes?: string;
+          p_price_cents?: number;
+          p_service_id: string;
+          p_starts_at: string;
+          p_visit_address?: string;
+        };
+        Returns: string;
+      };
       admin_stats: { Args: { p_from: string; p_to: string }; Returns: Json };
       assert_booking_quota: { Args: { p_client_id: string }; Returns: undefined };
       assert_dog_owner: { Args: { p_dog_id: string; p_owner_id: string }; Returns: undefined };
@@ -1600,6 +1651,15 @@ export type Database = {
       };
       replace_external_busy: { Args: { p_error?: string; p_events: Json; p_feed_id: string }; Returns: number };
       reschedule_booking: { Args: { p_booking_id: string; p_starts_at: string }; Returns: undefined };
+      rescue_camera_access: {
+        Args: { p_token: string };
+        Returns: {
+          expires_at: string;
+          label: string;
+          mode: string;
+          rescue_info: string;
+        }[];
+      };
       schedule_booking_reminder: { Args: { p_booking_id: string; p_starts_at: string }; Returns: undefined };
       set_booking_guests: { Args: { p_booking_id: string; p_guests: Json }; Returns: undefined };
       set_user_role: {

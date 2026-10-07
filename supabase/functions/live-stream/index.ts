@@ -59,19 +59,25 @@ Deno.serve(async (req) => {
   });
 
   // Invité d'une réservation (sans compte) : lien personnel valable pendant le créneau (M8-03).
-  const body = (await req.json().catch(() => ({}))) as { guest_token?: unknown };
+  const body = (await req.json().catch(() => ({}))) as { guest_token?: unknown; rescue_token?: unknown };
   const guestToken = typeof body.guest_token === "string" ? body.guest_token : null;
+  // Services de secours (M9-04) : lien temporaire créé par l'administratrice, lecture seule.
+  const rescueToken = typeof body.rescue_token === "string" ? body.rescue_token : null;
 
   type Access = {
-    mode: "public" | "private" | "admin" | "denied" | "not_started";
+    mode: "public" | "private" | "admin" | "denied" | "not_started" | "rescue";
     expires_at: string | null;
     starts_at?: string | null;
     ends_at?: string | null;
     guest_name?: string | null;
+    rescue_info?: string | null;
+    label?: string | null;
   };
-  const { data: access, error: accessError } = guestToken
-    ? await asCaller.rpc("guest_camera_access", { p_token: guestToken }).single<Access>()
-    : await asCaller.rpc("camera_access", { p_resource_slug: RESOURCE_SLUG }).single<Access>();
+  const { data: access, error: accessError } = rescueToken
+    ? await asCaller.rpc("rescue_camera_access", { p_token: rescueToken }).single<Access>()
+    : guestToken
+      ? await asCaller.rpc("guest_camera_access", { p_token: guestToken }).single<Access>()
+      : await asCaller.rpc("camera_access", { p_resource_slug: RESOURCE_SLUG }).single<Access>();
   if (accessError) return json({ error: "access_check_failed" }, 502);
 
   if (access.mode === "not_started") {
@@ -80,9 +86,10 @@ Deno.serve(async (req) => {
   if (access.mode === "denied" || !access.expires_at) {
     return json({ mode: "denied", streams: [] });
   }
+  const extra = access.mode === "rescue" ? { rescueInfo: access.rescue_info ?? "", label: access.label ?? "" } : {};
   if (!baseUrl || !secret) {
     // Caméras pas encore installées : l'app affiche « direct bientôt disponible ».
-    return json({ mode: access.mode, expiresAt: access.expires_at, streams: [] });
+    return json({ mode: access.mode, expiresAt: access.expires_at, streams: [], ...extra });
   }
 
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
@@ -109,5 +116,5 @@ Deno.serve(async (req) => {
     }),
   );
 
-  return json({ mode: access.mode, expiresAt: access.expires_at, streams });
+  return json({ mode: access.mode, expiresAt: access.expires_at, streams, ...extra });
 });

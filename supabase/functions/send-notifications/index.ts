@@ -5,13 +5,18 @@
 // `Authorization: Bearer <NOTIFY_CRON_SECRET>`. Les lignes sont réclamées par
 // claim_notifications() : pas de double envoi entre deux exécutions, 5 tentatives au plus.
 //
+// Envoi : par le serveur mail du domaine (SMTP, ex. Infomaniak) si SMTP_HOST est défini, sinon par Resend.
+//
 // Variables d'environnement (secrets Supabase) :
-//   RESEND_API_KEY      clé de l'API Resend (https://resend.com), domaine expéditeur vérifié
+//   SMTP_HOST, SMTP_PORT (465), SMTP_USER, SMTP_PASSWORD   ex. mail.infomaniak.com, adresse et mot de passe
+//                                                          de la boîte expéditrice (port 465 : TLS direct)
+//   RESEND_API_KEY      clé de l'API Resend (https://resend.com), si pas de SMTP
 //   NOTIFY_FROM         ex. FreePaws <reservations@freepaws.be>
 //   NOTIFY_CRON_SECRET  secret partagé avec la tâche pg_cron
 //   APP_URL             (optionnel) adresse web de l'app pour les liens (défaut : freepaws://)
 //   RESEND_API_URL      (optionnel, tests) autre adresse d'envoi que l'API Resend
 import { createClient } from "npm:@supabase/supabase-js@2";
+import nodemailer from "npm:nodemailer@6";
 
 type Lang = "fr" | "en";
 type Kind =
@@ -363,9 +368,20 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const resendKey = Deno.env.get("RESEND_API_KEY");
+  const smtpHost = Deno.env.get("SMTP_HOST");
   const from = Deno.env.get("NOTIFY_FROM");
   // Sans fournisseur d'email, on laisse la file intacte (rien n'est réclamé ni perdu).
-  if (!supabaseUrl || !serviceKey || !resendKey || !from) return new Response("not_configured", { status: 503 });
+  if (!supabaseUrl || !serviceKey || !(resendKey || smtpHost) || !from) {
+    return new Response("not_configured", { status: 503 });
+  }
+  const smtp = smtpHost
+    ? nodemailer.createTransport({
+        host: smtpHost,
+        port: Number(Deno.env.get("SMTP_PORT") ?? 465),
+        secure: Number(Deno.env.get("SMTP_PORT") ?? 465) === 465,
+        auth: { user: Deno.env.get("SMTP_USER") ?? "", pass: Deno.env.get("SMTP_PASSWORD") ?? "" },
+      })
+    : null;
 
   const db = makeDb(supabaseUrl, serviceKey);
   const { data: settings } = await db.from("settings").select("admin_email").single();
@@ -373,6 +389,10 @@ Deno.serve(async (req) => {
   if (error) return new Response("error", { status: 500 });
 
   const send = async (email: Email) => {
+    if (smtp) {
+      await smtp.sendMail({ from, to: email.to, subject: email.subject, html: email.html });
+      return;
+    }
     const response = await fetch(Deno.env.get("RESEND_API_URL") ?? "https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
