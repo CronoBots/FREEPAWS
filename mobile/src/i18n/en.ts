@@ -351,7 +351,7 @@ export const en: Dictionary = {
     questionnaireAdminTitle: "Questionnaire",
     bookingAdminTitle: "Booking",
     liveGuestTitle: "Park live",
-    hubCalendar: "Export my appointments to my calendar",
+    hubCalendar: "Your FreePaws appointments in your calendar",
     calendarText:
       "Add this link to Google Calendar, Apple Calendar or Outlook (“subscribe by URL”) to see your appointments there.",
     copyLink: "Copy link",

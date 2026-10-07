@@ -244,7 +244,11 @@ function DogsSection({ booking }: { booking: AdminBooking }) {
   return (
     <>
       <Section title={t("v11Admin.sectionOwnDogs")}>
-        {booking.ownDogs.length === 0 ? <AppText variant="body">{t("v11Admin.noOwnDogs")}</AppText> : null}
+        {booking.ownDogs.length === 0 ? (
+          <AppText variant="body" style={styles.empty}>
+            {t("v11Admin.noOwnDogs")}
+          </AppText>
+        ) : null}
         {booking.ownDogs.map((dog, index) => (
           <DogLine key={dog.id} dog={dog} warnings={warnings} last={index === booking.ownDogs.length - 1} />
         ))}
@@ -277,7 +281,7 @@ function GuestsSection({ guests }: { guests: AdminBooking["guests"] }) {
               label={guest.profile_completed_at ? t("v11Admin.guestCompleted") : t("v11Admin.guestPending")}
               tone={guest.profile_completed_at ? "success" : "warning"}
             />
-            <CallRow name={guest.full_name} phone={guest.phone} />
+            <CallRow name={guest.full_name} phone={guest.phone} style={styles.callRow} />
             {guest.email ? (
               <AppText variant="caption" selectable>
                 {guest.email}
@@ -288,9 +292,12 @@ function GuestsSection({ guests }: { guests: AdminBooking["guests"] }) {
                 caption={t("v11Admin.guestEmergency")}
                 name={guest.emergency_contact_name || t("v11Admin.guestEmergency")}
                 phone={guest.emergency_contact_phone}
+                style={styles.callRow}
               />
             ) : (
-              <AppText variant="caption">{t("v11Admin.guestNoEmergency")}</AppText>
+              <AppText variant="body" style={styles.empty}>
+                {t("v11Admin.guestNoEmergency")}
+              </AppText>
             )}
             {dog ? (
               <View style={styles.badges}>
@@ -298,7 +305,9 @@ function GuestsSection({ guests }: { guests: AdminBooking["guests"] }) {
                 {dog.protocol ? <Badge label={t("v11Admin.protocol")} tone="warning" /> : null}
               </View>
             ) : (
-              <AppText variant="caption">{t("v11Admin.guestNoDog")}</AppText>
+              <AppText variant="body" style={styles.empty}>
+                {t("v11Admin.guestNoDog")}
+              </AppText>
             )}
           </View>
         );
@@ -340,7 +349,7 @@ function QuestionnaireSection({ booking }: { booking: AdminBooking }) {
           ))}
         </>
       ) : (
-        <AppText variant="body">
+        <AppText variant="body" style={styles.empty}>
           {booking.hasQuestionnaire ? t("v11Admin.questionnaireNotReceived") : t("v11Admin.questionnaireNone")}
         </AppText>
       )}
@@ -398,7 +407,7 @@ function CancelAction({ booking, onCancelled }: { booking: AdminBooking; onCance
   return (
     <Button
       label={t("v11Admin.cancelBooking")}
-      variant="danger"
+      variant="dangerText"
       loading={cancel.isPending}
       onPress={() => void onCancel()}
     />
@@ -412,6 +421,10 @@ const styles = StyleSheet.create({
   badges: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: space.xs },
   info: { gap: 2 },
   ink: { color: colors.ink },
+  // Messages « Aucun … renseigné » : même taille et même gris partout dans la fiche.
+  empty: { color: colors.inkSoft },
+  // Dans une ligne déjà espacée (gap), pas de marge verticale en plus autour du contact.
+  callRow: { paddingVertical: 0 },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   action: { flexGrow: 1, flexBasis: 140 },
   danger: { backgroundColor: colors.dangerSoft, borderColor: colors.danger, borderWidth: 1 },

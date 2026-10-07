@@ -2,15 +2,17 @@ import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
 import type { AuditEntry } from "@/api/admin-park";
-import { Section } from "@/components/admin/clients/shared";
+import { dayDate, Section } from "@/components/admin/clients/shared";
 import { Button } from "@/components/button";
 import { AppText } from "@/components/text";
 import { type TranslationKey, useLanguage } from "@/i18n";
 import { colors, space } from "@/theme";
-import { formatDateTime } from "@/utils/dates";
+import { formatDate, formatDateTime } from "@/utils/dates";
 
 const PAGE = 15;
 const MAX_LENGTH = 60;
+/** Jour au format AAAA-MM-JJ (date de naissance, validités) : affiché comme une date. */
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 /** Colonnes techniques jamais affichées. */
 const HIDDEN = new Set(["id", "owner_id", "user_id", "created_by", "updated_at", "created_at"]);
 
@@ -35,6 +37,8 @@ const FIELDS: Record<string, TranslationKey> = {
   dogid_registered: "adminClients.dogid",
   sterilised: "adminClients.sterilised",
   in_heat: "adminClients.inHeat",
+  currently_ill: "fiche.currentlyIll",
+  antiparasitic_until: "adminClients.antiparasiticUntil",
   vet_name: "adminClients.vet",
   vet_phone: "adminClients.fieldVetPhone",
   notes: "adminClients.notes",
@@ -54,6 +58,7 @@ const VALUES: Record<string, Record<string, TranslationKey>> = {
     giant: "adminClients.sizeGiant",
   },
   role: { client: "adminClients.roleClient", admin: "adminClients.roleAdmin" },
+  language: { fr: "adminClients.languageFr", en: "adminClients.languageEn" },
 };
 
 type Change = { old?: unknown; new?: unknown };
@@ -71,7 +76,8 @@ export function ClientHistory({ history, dogNames }: { history: AuditEntry[]; do
     if (typeof value === "boolean") return value ? t("adminClients.yes") : t("adminClients.no");
     if (typeof value === "string") {
       const mapped = VALUES[field]?.[value];
-      return truncate(mapped ? t(mapped) : value);
+      if (mapped) return truncate(t(mapped));
+      return truncate(ISO_DAY.test(value) ? formatDate(dayDate(value)) : value);
     }
     if (typeof value === "number") return String(value);
     if (Array.isArray(value))
@@ -86,7 +92,8 @@ export function ClientHistory({ history, dogNames }: { history: AuditEntry[]; do
     return truncate(String(value));
   };
 
-  const label = (field: string) => (FIELDS[field] ? t(FIELDS[field]!) : field.replace(/_/g, " "));
+  // Champ sans libellé connu : intitulé générique plutôt que le nom technique de la colonne.
+  const label = (field: string) => t(FIELDS[field] ?? "adminClients.fieldOther");
 
   return (
     <Section title={t("adminClients.history")}>

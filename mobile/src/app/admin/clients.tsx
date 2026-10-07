@@ -159,7 +159,7 @@ function ClientCard({ client }: { client: ClientRow }) {
           {banned ? <Badge label={t("adminClients.badgeBanned")} tone="danger" /> : null}
           {suspended ? <Badge label={t("adminClients.badgeSuspended")} tone="danger" /> : null}
           <Badge label={tp("adminClients.dogs", dogs.length)} />
-          {protocol ? <Badge label={t("adminClients.badgeProtocol")} tone="danger" /> : null}
+          {protocol ? <Badge label={t("adminClients.badgeProtocol")} tone="warning" /> : null}
         </BadgeRow>
       </Card>
     </Pressable>

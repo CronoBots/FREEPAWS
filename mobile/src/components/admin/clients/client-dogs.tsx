@@ -67,10 +67,11 @@ function DogCard({ dog }: { dog: Dog }) {
 
   return (
     <Section title={dog.name}>
-      {/* Badge « En chaleur » seul (pas de ligne qui le répète) ; le protocole a sa propre rubrique. */}
-      {dog.in_heat ? (
+      {/* Badges « En chaleur » / « Malade » seuls (pas de ligne qui les répète) ; le protocole a sa rubrique. */}
+      {dog.in_heat || dog.currently_ill ? (
         <BadgeRow>
-          <Badge label={t("adminClients.inHeat")} tone="danger" />
+          {dog.in_heat ? <Badge label={t("adminClients.inHeat")} tone="danger" /> : null}
+          {dog.currently_ill ? <Badge label={t("adminClients.ill")} tone="danger" /> : null}
         </BadgeRow>
       ) : null}
       <Grid>
@@ -88,6 +89,10 @@ function DogCard({ dog }: { dog: Dog }) {
         />
         <InfoLine label={t("adminClients.sterilised")} value={yesNo(dog.sterilised)} />
         <InfoLine label={t("adminClients.vet")} value={vet} />
+        <InfoLine
+          label={t("adminClients.antiparasiticUntil")}
+          value={dog.antiparasitic_until ? formatDate(dayDate(dog.antiparasitic_until)) : null}
+        />
       </Grid>
       {dog.notes ? <InfoLine label={t("adminClients.notes")} value={dog.notes} /> : null}
 
@@ -163,7 +168,7 @@ function Protocol({ dog }: { dog: Dog }) {
         {dog.protocol ? (
           <>
             <BadgeRow>
-              <Badge label={t("adminClients.badgeProtocol")} tone="danger" />
+              <Badge label={t("adminClients.badgeProtocol")} tone="warning" />
             </BadgeRow>
             <AppText variant="body" style={styles.strong}>
               {dog.protocol_note?.trim() || t("adminClients.protocolNoNote")}

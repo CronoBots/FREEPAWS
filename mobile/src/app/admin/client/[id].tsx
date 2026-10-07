@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo } from "react";
-import { Linking, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
+import { Linking, Pressable, StyleSheet, View } from "react-native";
 
 import {
   type ClientDetails,
@@ -15,6 +15,7 @@ import { ClientDogs } from "@/components/admin/clients/client-dogs";
 import { ClientHistory } from "@/components/admin/clients/client-history";
 import { ClientSanctions, type SanctionIncident } from "@/components/admin/clients/client-sanctions";
 import { ClientBookingForm } from "@/components/admin/extra/client-booking-form";
+import { CallButton } from "@/components/admin/safety/call-button";
 import {
   BadgeRow,
   dayDate,
@@ -142,7 +143,7 @@ function StatusBadges({ data }: { data: Details }) {
       {data.profile.role === "admin" ? <Badge label={t("adminClients.badgeAdmin")} /> : null}
       {banned ? <Badge label={t("adminClients.badgeBanned")} tone="danger" /> : null}
       {suspended ? <Badge label={t("adminClients.badgeSuspended")} tone="danger" /> : null}
-      {protocol ? <Badge label={t("adminClients.badgeProtocol")} tone="danger" /> : null}
+      {protocol ? <Badge label={t("adminClients.badgeProtocol")} tone="warning" /> : null}
     </BadgeRow>
   );
 }
@@ -179,8 +180,6 @@ function Email({ email }: { email: string }) {
 
 function Identity({ profile }: { profile: Profile }) {
   const { t } = useLanguage();
-  // « Appeler » et « Envoyer un e-mail » côte à côte, de même largeur ; empilés sur très petit écran.
-  const narrow = useWindowDimensions().width < 340;
   const emergency = [
     profile.emergency_contact_name,
     profile.emergency_contact_phone ? keepTogether(profile.emergency_contact_phone) : null,
@@ -190,24 +189,18 @@ function Identity({ profile }: { profile: Profile }) {
   return (
     <Section title={t("adminClients.identity")}>
       <Email email={profile.email} />
-      <AppText variant="body" style={styles.ink} selectable>
-        {profile.phone ? keepTogether(profile.phone) : t("adminClients.noPhone")}
-      </AppText>
-      <View style={[styles.actions, narrow && styles.actionsStacked]}>
-        {profile.phone ? (
-          <Button
-            label={t("adminClients.call")}
-            variant="secondary"
-            style={narrow ? undefined : styles.action}
-            onPress={() => void Linking.openURL(`tel:${profile.phone!.replace(/[^\d+]/g, "")}`)}
-          />
-        ) : null}
-        <Button
-          label={t("adminClients.write")}
-          variant="secondary"
-          style={narrow ? undefined : styles.action}
-          onPress={() => void Linking.openURL(`mailto:${profile.email}`)}
-        />
+      <Button
+        label={t("adminClients.write")}
+        variant="secondary"
+        style={styles.mailButton}
+        onPress={() => void Linking.openURL(`mailto:${profile.email}`).catch(() => undefined)}
+      />
+      {/* Même pastille d’appel que la fiche réservation et l’écran d’urgence. */}
+      <View style={styles.phoneRow}>
+        <AppText variant="body" style={[styles.ink, styles.flex]} selectable>
+          {profile.phone ? keepTogether(profile.phone) : t("adminClients.noPhone")}
+        </AppText>
+        <CallButton name={profile.full_name?.trim() || profile.email} phone={profile.phone} />
       </View>
       <View style={styles.wrapRow}>
         <AppText variant="body">
@@ -391,9 +384,8 @@ function Bookings({ bookings }: { bookings: ClientDetails["bookings"] }) {
 const styles = StyleSheet.create({
   ink: { color: colors.ink },
   email: { flexDirection: "row", flexWrap: "wrap" },
-  actions: { flexDirection: "row", gap: space.sm },
-  actionsStacked: { flexDirection: "column" },
-  action: { flexGrow: 1, flexBasis: 0, paddingHorizontal: space.sm },
+  mailButton: { alignSelf: "flex-start" },
+  phoneRow: { flexDirection: "row", alignItems: "center", gap: space.md },
   wrapRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: space.sm },
   flex: { flexShrink: 1, flexGrow: 1 },
   line: {

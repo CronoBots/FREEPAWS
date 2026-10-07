@@ -18,7 +18,7 @@ import { TextField } from "@/components/text-field";
 import { useLanguage } from "@/i18n";
 import { confirm, notify } from "@/lib/confirm";
 import { colors, space } from "@/theme";
-import { brusselsDateTime, formatDate, formatTime } from "@/utils/dates";
+import { brusselsDateTime, formatDateTime } from "@/utils/dates";
 import { toUserMessage } from "@/utils/errors";
 
 export default function AdminClosuresRoute() {
@@ -30,7 +30,7 @@ export default function AdminClosuresRoute() {
 }
 
 /** « 1er novembre 2026 18:15 », sans coupure de ligne. */
-const when = (date: Date | string) => `${formatDate(date)} ${formatTime(date)}`;
+const when = (date: Date | string) => formatDateTime(date);
 
 function Closures() {
   const { t, tp } = useLanguage();
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   groupEnd: { marginTop: space.sm },
   groupTitle: { fontSize: 17, lineHeight: 22 },
   // Champs alignés en bas : un libellé qui passerait sur deux lignes ne décale plus la saisie.
-  pair: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-end", gap: space.md },
+  pair: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", gap: space.md },
   date: { flexGrow: 1, flexBasis: 140 },
   time: { flexGrow: 0, flexBasis: 100 },
   // Même position que sur les autres écrans admin : « Supprimer » à gauche.

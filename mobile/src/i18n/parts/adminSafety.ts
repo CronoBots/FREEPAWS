@@ -102,7 +102,7 @@ export const fr = {
   inProgress: "En cours",
   upcoming: "À venir",
   callPerson: "Appeler {name}",
-  noPhone: "Pas de téléphone renseigné",
+  noPhone: "Aucun téléphone renseigné",
   emergencyContact: "Contact d’urgence",
   noEmergencyContact: "Aucun contact d’urgence renseigné",
   adults_one: "{count} adulte",

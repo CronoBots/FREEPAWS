@@ -132,7 +132,7 @@ function CodeCard({ code, uses, onEdit }: { code: Tables<"discount_codes">; uses
           tp("admin.codeUses", uses),
         ]
           .filter(Boolean)
-          .join(" · ")}
+          .join("\u00a0· ")}
       </AppText>
       <Checkbox
         label={t("admin.codeActive")}

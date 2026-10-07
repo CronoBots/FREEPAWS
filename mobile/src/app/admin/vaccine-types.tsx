@@ -73,7 +73,12 @@ function VaccineTypes() {
         />
         <Checkbox label={t("adminClients.requiredForPark")} checked={required} onChange={setRequired} />
         <ErrorText>{error}</ErrorText>
-        <Button label={t("adminClients.add")} loading={save.isPending && !save.variables?.id} onPress={submit} />
+        <Button
+          label={t("adminClients.add")}
+          disabled={!name.trim()}
+          loading={save.isPending && !save.variables?.id}
+          onPress={submit}
+        />
       </Card>
 
       {types.isLoading ? (

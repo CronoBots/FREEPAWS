@@ -1,16 +1,50 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Linking, Pressable, StyleSheet, View } from "react-native";
+import { Linking, Pressable, type StyleProp, StyleSheet, View, type ViewStyle } from "react-native";
 
 import { AppText } from "@/components/text";
 import { useLanguage } from "@/i18n";
 import { colors, radius, space } from "@/theme";
 
-/** Ligne « nom + numéro » avec un bouton d’appel (tel:). Sans numéro, le signale simplement. */
-export function CallRow({ name, phone, caption }: { name: string; phone: string | null; caption?: string }) {
+/** Numéro composable (chiffres et « + »), vide s’il n’y a rien à appeler. */
+function dialable(phone: string | null | undefined) {
+  return phone?.replace(/[^\d+]/g, "") ?? "";
+}
+
+/**
+ * Pastille d’appel (tel:), seul bouton d’appel de l’administration : fiche client, fiche réservation,
+ * urgence. Rien n’est affiché sans numéro.
+ */
+export function CallButton({ name, phone }: { name: string; phone: string | null | undefined }) {
   const { t } = useLanguage();
-  const number = phone?.replace(/[^\d+]/g, "") ?? "";
+  const number = dialable(phone);
+  if (!number) return null;
   return (
-    <View style={styles.row}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t("adminSafety.callPerson", { name })}
+      onPress={() => void Linking.openURL(`tel:${number}`).catch(() => undefined)}
+      style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+    >
+      <Ionicons name="call" size={22} color={colors.white} />
+    </Pressable>
+  );
+}
+
+/** Ligne « nom + numéro » avec la pastille d’appel. Sans numéro, le signale simplement. */
+export function CallRow({
+  name,
+  phone,
+  caption,
+  style,
+}: {
+  name: string;
+  phone: string | null;
+  caption?: string;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const { t } = useLanguage();
+  return (
+    <View style={[styles.row, style]}>
       <View style={styles.texts}>
         {caption ? <AppText variant="caption">{caption}</AppText> : null}
         <AppText variant="bodyStrong">{name}</AppText>
@@ -18,16 +52,7 @@ export function CallRow({ name, phone, caption }: { name: string; phone: string 
           {phone || t("adminSafety.noPhone")}
         </AppText>
       </View>
-      {number ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t("adminSafety.callPerson", { name })}
-          onPress={() => void Linking.openURL(`tel:${number}`).catch(() => undefined)}
-          style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-        >
-          <Ionicons name="call" size={22} color={colors.white} />
-        </Pressable>
-      ) : null}
+      <CallButton name={name} phone={phone} />
     </View>
   );
 }

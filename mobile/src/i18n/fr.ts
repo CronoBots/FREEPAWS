@@ -353,7 +353,7 @@ export const fr = {
     questionnaireAdminTitle: "Questionnaire",
     bookingAdminTitle: "Réservation",
     liveGuestTitle: "Direct du parc",
-    hubCalendar: "Exporter mes rendez-vous vers mon agenda",
+    hubCalendar: "Vos rendez-vous FreePaws dans votre agenda",
     calendarText:
       "Ajoutez ce lien dans Google Agenda, Calendrier d’Apple ou Outlook (« s’abonner par URL ») pour y voir vos rendez-vous.",
     copyLink: "Copier le lien",

@@ -1,5 +1,5 @@
-import { forwardRef, useState } from "react";
-import { StyleSheet, TextInput, type TextInputProps, View } from "react-native";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { Platform, StyleSheet, TextInput, type TextInputProps, View } from "react-native";
 
 import { AppText } from "@/components/text";
 import { colors, fonts, radius, space } from "@/theme";
@@ -12,12 +12,33 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
 ) {
   // Champ multiligne : grandit avec le texte (aucune ligne coupée à mi-hauteur), dans une limite raisonnable.
   const [contentHeight, setContentHeight] = useState(0);
+  const input = useRef<TextInput>(null);
+  useImperativeHandle(ref, () => input.current as TextInput);
+
+  // Web : onContentSizeChange n’est pas fiable (mesure faite avant la largeur ou la police finale).
+  // On mesure le textarea lui-même : hauteur remise à « auto », puis scrollHeight.
+  const measureWeb = useCallback(() => {
+    if (Platform.OS !== "web" || !multiline) return;
+    const node = input.current as unknown as HTMLTextAreaElement | null;
+    if (!node || typeof node.scrollHeight !== "number") return;
+    const previous = node.style.height;
+    node.style.height = "auto";
+    const height = node.scrollHeight + 2; // bordures
+    node.style.height = previous;
+    setContentHeight(height);
+  }, [multiline]);
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || !multiline) return;
+    const frame = requestAnimationFrame(measureWeb);
+    return () => cancelAnimationFrame(frame);
+  }, [measureWeb, multiline, props.value]);
   const autoHeight = multiline ? { height: Math.min(MAX_MULTILINE, Math.max(MIN_MULTILINE, contentHeight)) } : null;
   return (
     <View style={styles.field}>
       <AppText variant="bodyStrong">{label}</AppText>
       <TextInput
-        ref={ref}
+        ref={input}
         accessibilityLabel={label}
         accessibilityHint={hint}
         placeholderTextColor="rgba(74, 92, 76, 0.55)"
@@ -25,8 +46,12 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
         style={[styles.input, multiline && styles.multiline, autoHeight, error ? styles.inputError : null, style]}
         {...props}
         onContentSizeChange={(event) => {
-          if (multiline) setContentHeight(event.nativeEvent.contentSize.height);
+          if (multiline && Platform.OS !== "web") setContentHeight(event.nativeEvent.contentSize.height);
           props.onContentSizeChange?.(event);
+        }}
+        onLayout={(event) => {
+          measureWeb();
+          props.onLayout?.(event);
         }}
       />
       {error ? (
