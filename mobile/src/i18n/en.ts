@@ -4,6 +4,7 @@ import { en as ficheEn } from "@/i18n/parts/fiche";
 import { en as parkBookingEn } from "@/i18n/parts/parkBooking";
 import { en as adminClientsEn } from "@/i18n/parts/adminClients";
 import { en as adminSafetyEn } from "@/i18n/parts/adminSafety";
+import { en as pricingEn } from "@/i18n/parts/pricing";
 
 // Traduction anglaise. Les textes FreePaws (parc, coaching) sont des traductions du site
 // www.freepaws.be, à faire valider par FreePaws.
@@ -293,6 +294,14 @@ export const en: Dictionary = {
     mfaBanner: "Turn on two-factor authentication to protect administration.",
     clientTitle: "Client profile",
     incidentTitle: "Incident",
+    hubPricing: "Pricing",
+    hubPricingDetail: "Off-peak, extra dogs, group rate",
+    hubCalendarDays: "Public and school holidays",
+    hubCalendarDaysDetail: "Used by pricing rules",
+    hubCalendarSync: "Personal calendar",
+    hubCalendarSyncDetail: "Your appointments block slots",
+    pricingRulesTitle: "Pricing rules",
+    liveGuestTitle: "Park live",
     hubCalendar: "External calendar",
     calendarText:
       "Add this link to Google Calendar, Apple Calendar or Outlook (“subscribe by URL”) to see your appointments there.",
@@ -413,6 +422,7 @@ export const en: Dictionary = {
   parkBooking: parkBookingEn,
   adminClients: adminClientsEn,
   adminSafety: adminSafetyEn,
+  pricing: pricingEn,
   errors: {
     slot_unavailable: "This time is no longer available. Please choose another one.",
     appointment_full: "There are not enough places left for this session.",
@@ -451,6 +461,9 @@ export const en: Dictionary = {
     user_not_found: "Account not found.",
     invalid_guests: "Invalid guest list (20 at most).",
     file_too_large: "File too large (10 MB at most).",
+    dog_ill: "One of the dogs is marked as ill and cannot come to the park for now.",
+    antiparasitic_missing: "Add an antiparasitic treatment valid on that date to the dog’s profile.",
+    feed_not_found: "Calendar not found.",
     otp_expired: "This code has expired or is incorrect. Request a new one.",
     over_email_send_rate_limit: "Too many requests. Wait a minute before requesting a new code.",
     email_address_invalid: "Invalid email address.",

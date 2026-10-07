@@ -3,6 +3,7 @@ import { fr as ficheFr } from "@/i18n/parts/fiche";
 import { fr as parkBookingFr } from "@/i18n/parts/parkBooking";
 import { fr as adminClientsFr } from "@/i18n/parts/adminClients";
 import { fr as adminSafetyFr } from "@/i18n/parts/adminSafety";
+import { fr as pricingFr } from "@/i18n/parts/pricing";
 
 // Dictionnaire de référence (français). Les autres langues doivent avoir exactement les mêmes clés.
 // Les contenus FreePaws (textes du parc, du coaching) sont repris de www.freepaws.be.
@@ -294,6 +295,14 @@ export const fr = {
     mfaBanner: "Activez la double authentification pour protéger l’administration.",
     clientTitle: "Fiche client",
     incidentTitle: "Incident",
+    hubPricing: "Tarifs",
+    hubPricingDetail: "Heures creuses, chiens supplémentaires, forfait groupe",
+    hubCalendarDays: "Jours fériés et vacances",
+    hubCalendarDaysDetail: "Utilisés par les règles de prix",
+    hubCalendarSync: "Agenda personnel",
+    hubCalendarSyncDetail: "Vos rendez-vous bloquent les créneaux",
+    pricingRulesTitle: "Règles de prix",
+    liveGuestTitle: "Direct du parc",
     hubCalendar: "Agenda externe",
     calendarText:
       "Ajoutez ce lien dans Google Agenda, Apple Calendrier ou Outlook (« s’abonner par URL ») pour y voir vos rendez-vous.",
@@ -414,6 +423,7 @@ export const fr = {
   parkBooking: parkBookingFr,
   adminClients: adminClientsFr,
   adminSafety: adminSafetyFr,
+  pricing: pricingFr,
   errors: {
     slot_unavailable: "Ce créneau n’est plus disponible. Choisissez-en un autre.",
     appointment_full: "Il n’y a plus assez de places pour cette séance.",
@@ -453,6 +463,9 @@ export const fr = {
     user_not_found: "Compte introuvable.",
     invalid_guests: "Liste d’invités invalide (20 au maximum).",
     file_too_large: "Fichier trop lourd (10 Mo au maximum).",
+    dog_ill: "Un des chiens est signalé malade : il ne peut pas venir au parc pour le moment.",
+    antiparasitic_missing: "Indiquez un traitement antiparasitaire valable à cette date dans la fiche du chien.",
+    feed_not_found: "Agenda introuvable.",
     otp_expired: "Ce code a expiré ou est incorrect. Demandez-en un nouveau.",
     over_email_send_rate_limit: "Trop de demandes. Patientez une minute avant de redemander un code.",
     email_address_invalid: "Adresse email invalide.",
