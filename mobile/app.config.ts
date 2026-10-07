@@ -48,6 +48,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-secure-store",
     "expo-video",
     "expo-image",
+    "expo-notifications",
   ],
   experiments: {
     typedRoutes: true,

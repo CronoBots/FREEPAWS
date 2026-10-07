@@ -10,7 +10,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 
-import { useSyncProfileLanguage } from "@/api/profile";
+import { usePushRegistration, useSyncProfileLanguage } from "@/api/profile";
 import { ConfigMissing } from "@/screens/config-missing";
 import { loadStoredLanguage, useLanguage } from "@/i18n";
 import { AuthProvider, useAuth } from "@/lib/auth";
@@ -61,6 +61,7 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
 function AppStack() {
   const { t } = useLanguage();
   useSyncProfileLanguage();
+  usePushRegistration();
 
   return (
     <Stack

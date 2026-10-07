@@ -4,7 +4,7 @@ import type { Widen } from "@/i18n/fr";
 export const fr = {
   bookTitle: "Ajouter un rendez-vous",
   bookText:
-    "Pour un suivi : vous choisissez la date, l’heure et la durée. Les horaires d’ouverture ne s’appliquent pas, mais l’agenda refuse tout chevauchement. Le client reçoit la confirmation et le rappel.",
+    "Pour un suivi : vous choisissez la date, l’heure et la durée. Les horaires d’ouverture ne s’appliquent pas, mais l’agenda refuse tout chevauchement. Le client reçoit la confirmation et le rappel.",
   service: "Prestation",
   date: "Date (AAAA-MM-JJ)",
   time: "Heure (HH:MM)",
@@ -22,7 +22,7 @@ export const fr = {
   noService: "Aucune prestation sur rendez-vous.",
   rescueTitle: "Accès temporaire des secours",
   rescueText:
-    "Créez un lien à transmettre aux services de secours : direct de toutes les caméras du parc et fiche secours, en lecture seule, pendant la durée choisie. Vous pouvez le révoquer à tout moment.",
+    "Créez un lien à transmettre aux services de secours : direct de toutes les caméras du parc et fiche secours, en lecture seule, pendant la durée choisie. Vous pouvez le révoquer à tout moment.",
   rescueLabel: "Pour qui (ex. zone de secours)",
   rescueDuration: "Durée",
   hours_one: "{count} heure",
@@ -32,7 +32,7 @@ export const fr = {
   rescueCopied: "Lien copié",
   rescueShare: "Partager",
   rescueRevoke: "Révoquer",
-  rescueRevokeConfirm: "Révoquer ce lien ? Il cessera de fonctionner immédiatement.",
+  rescueRevokeConfirm: "Révoquer ce lien ? Il cessera de fonctionner immédiatement.",
   rescueUntil: "Valable jusqu’au {date} à {time}",
   rescueNone: "Aucun accès en cours.",
   rescuePageTitle: "Accès secours FreePaws Park",

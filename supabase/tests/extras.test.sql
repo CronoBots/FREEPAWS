@@ -77,6 +77,11 @@ select pg_temp.assert(exists (select 1 from public.notifications where kind = 'g
 create temp table tok as select access_token from public.booking_guests where full_name = 'Invitée';
 grant select on tok to anon;
 select pg_temp.act_as(null);
+select pg_temp.assert((select mode from public.guest_camera_access((select access_token from tok))) = 'profile_required', 'profil invité à compléter (M2-10)');
+select pg_temp.expect_error($$select public.complete_guest_profile((select access_token from tok), '{"full_name":"Invitée"}', '{}')$$, 'profile_incomplete');
+select public.complete_guest_profile((select access_token from tok),
+  '{"full_name":"Invitée","email":"i@example.com","emergency_contact_name":"Paul","emergency_contact_phone":"+32 400","dog":{"name":"Rex","size":"large","protocol":true}}', '{}');
+select pg_temp.assert((select get_guest_invitation((select access_token from tok)) ->> 'profile_completed')::boolean, 'profil complété');
 select pg_temp.assert((select mode from public.guest_camera_access((select access_token from tok))) = 'not_started', 'pas encore commencé');
 select pg_temp.assert((select mode from public.guest_camera_access(repeat('a', 64))) = 'denied', 'lien inconnu');
 select pg_temp.reset_role();
@@ -115,7 +120,7 @@ select pg_temp.reset_role();
 
 -- Critères d'admission : chien malade, antiparasitaire.
 update public.services set requires_park_profile = true where slug = 'park-session';
-update public.settings set refuse_ill_dogs = true, require_antiparasitic = true;
+update public.settings set illness_rule = 'block', antiparasitic_rule = 'block';
 update public.profiles set birth_date = '1990-01-01', emergency_contact_name = 'P', emergency_contact_phone = '1',
   insurance_company = 'A', insurance_valid_until = current_date + 365 where id = '11111111-1111-4111-8111-111111111111';
 insert into public.dogs (id, owner_id, name, currently_ill) values ('d0000000-0000-4000-8000-000000000009', '11111111-1111-4111-8111-111111111111', 'Rex', true);

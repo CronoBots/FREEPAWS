@@ -31,7 +31,7 @@ update public.resources set is_open = true where slug = 'park';
 update public.services set booking_enabled = true, min_notice_hours = 1, max_advance_days = 60,
   cancel_notice_hours = 0, requires_park_profile = true, max_people = 4
   where slug = 'park-session';
-update public.settings set admin_email = 'admin@example.com', min_dog_age_months = 6;
+update public.settings set admin_email = 'admin@example.com', min_dog_age_months = 6, min_age_rule = 'block';
 insert into public.availability_rules (resource_id, weekday, start_time, end_time, valid_from)
 select '00000000-0000-4000-a000-000000000001', d, '08:00', '20:00', date '2026-01-01' from generate_series(1, 7) d;
 insert into public.vaccine_types (id, name) values ('99999999-9999-4999-8999-999999999999', 'Vaccin test');

@@ -321,7 +321,7 @@ export function useParkSettings() {
         supabase
           .from("settings")
           .select(
-            "min_dog_age_months, refuse_dogs_in_heat, refuse_ill_dogs, require_antiparasitic, expiry_alert_days, rescue_info",
+            "min_dog_age_months, min_age_rule, heat_rule, illness_rule, antiparasitic_rule, expiry_alert_days, rescue_info",
           )
           .single(),
       ),
@@ -334,9 +334,10 @@ export function useUpdateParkSettings() {
       values: Pick<
         TablesUpdate<"settings">,
         | "min_dog_age_months"
-        | "refuse_dogs_in_heat"
-        | "refuse_ill_dogs"
-        | "require_antiparasitic"
+        | "min_age_rule"
+        | "heat_rule"
+        | "illness_rule"
+        | "antiparasitic_rule"
         | "expiry_alert_days"
         | "rescue_info"
       >,

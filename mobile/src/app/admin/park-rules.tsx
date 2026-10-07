@@ -1,21 +1,36 @@
 import { useState } from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { useParkSettings, useUpdateParkSettings } from "@/api/admin-park";
 import { AdminGuard } from "@/components/admin-guard";
 import { Button } from "@/components/button";
 import { Card } from "@/components/card";
-import { Checkbox } from "@/components/checkbox";
+import { Chip } from "@/components/chip";
 import { Screen } from "@/components/screen";
 import { ErrorView, LoadingView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { TextField } from "@/components/text-field";
-import { useLanguage } from "@/i18n";
+import { type TranslationKey, useLanguage } from "@/i18n";
 import { notify } from "@/lib/confirm";
-import { colors } from "@/theme";
+import { colors, space } from "@/theme";
 import { toUserMessage } from "@/utils/errors";
 
 type Settings = NonNullable<ReturnType<typeof useParkSettings>["data"]>;
+type RuleMode = "off" | "warn" | "block";
+type RuleKey = "min_age_rule" | "heat_rule" | "illness_rule" | "antiparasitic_rule";
+
+// M2-09 : chaque règle de santé est désactivée, simple avertissement ou bloquante, au choix.
+const RULES: [RuleKey, TranslationKey][] = [
+  ["min_age_rule", "adminSafety.ruleMinAge"],
+  ["heat_rule", "adminSafety.refuseHeat"],
+  ["illness_rule", "adminSafety.refuseIll"],
+  ["antiparasitic_rule", "adminSafety.requireAntiparasitic"],
+];
+const MODES: [RuleMode, TranslationKey][] = [
+  ["off", "adminSafety.modeOff"],
+  ["warn", "adminSafety.modeWarn"],
+  ["block", "adminSafety.modeBlock"],
+];
 
 export default function AdminParkRulesRoute() {
   return (
@@ -48,9 +63,12 @@ function RulesForm({ settings }: { settings: Settings }) {
   const { t } = useLanguage();
   const update = useUpdateParkSettings();
   const [minAge, setMinAge] = useState(settings.min_dog_age_months == null ? "" : String(settings.min_dog_age_months));
-  const [refuseHeat, setRefuseHeat] = useState(settings.refuse_dogs_in_heat);
-  const [refuseIll, setRefuseIll] = useState(settings.refuse_ill_dogs);
-  const [requireAntiparasitic, setRequireAntiparasitic] = useState(settings.require_antiparasitic);
+  const [rules, setRules] = useState<Record<RuleKey, RuleMode>>({
+    min_age_rule: settings.min_age_rule as RuleMode,
+    heat_rule: settings.heat_rule as RuleMode,
+    illness_rule: settings.illness_rule as RuleMode,
+    antiparasitic_rule: settings.antiparasitic_rule as RuleMode,
+  });
   const [expiryDays, setExpiryDays] = useState(String(settings.expiry_alert_days));
   const [rescue, setRescue] = useState(settings.rescue_info);
   const [error, setError] = useState<string | null>(null);
@@ -68,9 +86,7 @@ function RulesForm({ settings }: { settings: Settings }) {
     update.mutate(
       {
         min_dog_age_months: age,
-        refuse_dogs_in_heat: refuseHeat,
-        refuse_ill_dogs: refuseIll,
-        require_antiparasitic: requireAntiparasitic,
+        ...rules,
         expiry_alert_days: days,
         rescue_info: rescue.trim(),
       },
@@ -90,13 +106,22 @@ function RulesForm({ settings }: { settings: Settings }) {
           keyboardType="number-pad"
           maxLength={2}
         />
-        <Checkbox label={t("adminSafety.refuseHeat")} checked={refuseHeat} onChange={setRefuseHeat} />
-        <Checkbox label={t("adminSafety.refuseIll")} checked={refuseIll} onChange={setRefuseIll} />
-        <Checkbox
-          label={t("adminSafety.requireAntiparasitic")}
-          checked={requireAntiparasitic}
-          onChange={setRequireAntiparasitic}
-        />
+        <AppText variant="caption">{t("adminSafety.rulesModesText")}</AppText>
+        {RULES.map(([key, label]) => (
+          <View key={key} style={styles.rule}>
+            <AppText variant="bodyStrong">{t(label)}</AppText>
+            <View style={styles.chips}>
+              {MODES.map(([mode, modeLabel]) => (
+                <Chip
+                  key={mode}
+                  label={t(modeLabel)}
+                  selected={rules[key] === mode}
+                  onPress={() => setRules({ ...rules, [key]: mode })}
+                />
+              ))}
+            </View>
+          </View>
+        ))}
         <TextField
           label={t("adminSafety.expiryDays")}
           hint={t("adminSafety.expiryHint")}
@@ -132,5 +157,7 @@ function RulesForm({ settings }: { settings: Settings }) {
 
 const styles = StyleSheet.create({
   rescue: { minHeight: 180 },
+  rule: { gap: space.sm },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   error: { color: colors.danger },
 });

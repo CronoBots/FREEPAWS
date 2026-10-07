@@ -19,6 +19,8 @@ export const en: Dictionary = {
     with: "With {name}",
     hours: "{count} h",
     error: "Something went wrong. Check your connection and try again.",
+    notifications: "Notifications",
+    urgentNotifications: "Emergency alerts",
     logoLabel: "FreePaws logo",
   },
   tabs: {

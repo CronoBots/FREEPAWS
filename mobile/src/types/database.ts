@@ -246,29 +246,41 @@ export type Database = {
           access_token: string;
           booking_id: string;
           created_at: string;
+          dog: Json | null;
           email: string | null;
+          emergency_contact_name: string | null;
+          emergency_contact_phone: string | null;
           full_name: string;
           id: string;
           phone: string | null;
+          profile_completed_at: string | null;
         };
         ComputedFields: never;
         Insert: {
           access_token?: string;
           booking_id: string;
           created_at?: string;
+          dog?: Json | null;
           email?: string | null;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
           full_name: string;
           id?: string;
           phone?: string | null;
+          profile_completed_at?: string | null;
         };
         Update: {
           access_token?: string;
           booking_id?: string;
           created_at?: string;
+          dog?: Json | null;
           email?: string | null;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
           full_name?: string;
           id?: string;
           phone?: string | null;
+          profile_completed_at?: string | null;
         };
         Relationships: [
           {
@@ -294,6 +306,9 @@ export type Database = {
           discount_code_id: string | null;
           dog_id: string | null;
           dogs_count: number | null;
+          group_certified_at: string | null;
+          group_dogs: NonNullable<Json>;
+          health_warnings: string[];
           id: string;
           party_size: number;
           price_cents: number | null;
@@ -315,6 +330,9 @@ export type Database = {
           discount_code_id?: string | null;
           dog_id?: string | null;
           dogs_count?: number | null;
+          group_certified_at?: string | null;
+          group_dogs?: NonNullable<Json>;
+          health_warnings?: string[];
           id?: string;
           party_size?: number;
           price_cents?: number | null;
@@ -335,6 +353,9 @@ export type Database = {
           discount_code_id?: string | null;
           dog_id?: string | null;
           dogs_count?: number | null;
+          group_certified_at?: string | null;
+          group_dogs?: NonNullable<Json>;
+          health_warnings?: string[];
           id?: string;
           party_size?: number;
           price_cents?: number | null;
@@ -775,6 +796,40 @@ export type Database = {
           },
         ];
       };
+      guest_document_acceptances: {
+        Row: {
+          accepted_at: string;
+          document_id: string;
+          guest_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          accepted_at?: string;
+          document_id: string;
+          guest_id: string;
+        };
+        Update: {
+          accepted_at?: string;
+          document_id?: string;
+          guest_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "guest_document_acceptances_document_id_fkey";
+            columns: ["document_id"];
+            isOneToOne: false;
+            referencedRelation: "legal_documents";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "guest_document_acceptances_guest_id_fkey";
+            columns: ["guest_id"];
+            isOneToOne: false;
+            referencedRelation: "booking_guests";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       incidents: {
         Row: {
           booking_id: string | null;
@@ -885,6 +940,7 @@ export type Database = {
           locked_until: string | null;
           payload: NonNullable<Json>;
           profile_id: string | null;
+          push_sent_at: string | null;
           ref_date: string | null;
           send_after: string;
           sent_at: string | null;
@@ -904,6 +960,7 @@ export type Database = {
           locked_until?: string | null;
           payload?: NonNullable<Json>;
           profile_id?: string | null;
+          push_sent_at?: string | null;
           ref_date?: string | null;
           send_after?: string;
           sent_at?: string | null;
@@ -922,6 +979,7 @@ export type Database = {
           locked_until?: string | null;
           payload?: NonNullable<Json>;
           profile_id?: string | null;
+          push_sent_at?: string | null;
           ref_date?: string | null;
           send_after?: string;
           sent_at?: string | null;
@@ -1081,6 +1139,123 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      push_tokens: {
+        Row: {
+          created_at: string;
+          last_seen_at: string;
+          platform: string | null;
+          token: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          last_seen_at?: string;
+          platform?: string | null;
+          token: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          last_seen_at?: string;
+          platform?: string | null;
+          token?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "push_tokens_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      questionnaire_questions: {
+        Row: {
+          active: boolean;
+          created_at: string;
+          help: string | null;
+          id: string;
+          kind: string;
+          label: string;
+          options: NonNullable<Json>;
+          position: number;
+          required: boolean;
+          service_id: string;
+          translations: NonNullable<Json>;
+        };
+        ComputedFields: never;
+        Insert: {
+          active?: boolean;
+          created_at?: string;
+          help?: string | null;
+          id?: string;
+          kind: string;
+          label: string;
+          options?: NonNullable<Json>;
+          position?: number;
+          required?: boolean;
+          service_id: string;
+          translations?: NonNullable<Json>;
+        };
+        Update: {
+          active?: boolean;
+          created_at?: string;
+          help?: string | null;
+          id?: string;
+          kind?: string;
+          label?: string;
+          options?: NonNullable<Json>;
+          position?: number;
+          required?: boolean;
+          service_id?: string;
+          translations?: NonNullable<Json>;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "questionnaire_questions_service_id_fkey";
+            columns: ["service_id"];
+            isOneToOne: false;
+            referencedRelation: "services";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      questionnaire_responses: {
+        Row: {
+          answers: NonNullable<Json>;
+          booking_id: string;
+          questions_snapshot: NonNullable<Json>;
+          submitted_at: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          answers?: NonNullable<Json>;
+          booking_id: string;
+          questions_snapshot?: NonNullable<Json>;
+          submitted_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          answers?: NonNullable<Json>;
+          booking_id?: string;
+          questions_snapshot?: NonNullable<Json>;
+          submitted_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "questionnaire_responses_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: true;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       rescue_access: {
         Row: {
@@ -1310,14 +1485,15 @@ export type Database = {
       settings: {
         Row: {
           admin_email: string | null;
+          antiparasitic_rule: string;
           calendar_token: string;
           expiry_alert_days: number;
+          heat_rule: string;
           id: boolean;
+          illness_rule: string;
+          min_age_rule: string;
           min_dog_age_months: number | null;
-          refuse_dogs_in_heat: boolean;
-          refuse_ill_dogs: boolean;
           reminder_hours: number;
-          require_antiparasitic: boolean;
           rescue_info: string;
           social_monthly_cap: number | null;
           updated_at: string;
@@ -1325,28 +1501,30 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           admin_email?: string | null;
+          antiparasitic_rule?: string;
           calendar_token?: string;
           expiry_alert_days?: number;
+          heat_rule?: string;
           id?: boolean;
+          illness_rule?: string;
+          min_age_rule?: string;
           min_dog_age_months?: number | null;
-          refuse_dogs_in_heat?: boolean;
-          refuse_ill_dogs?: boolean;
           reminder_hours?: number;
-          require_antiparasitic?: boolean;
           rescue_info?: string;
           social_monthly_cap?: number | null;
           updated_at?: string;
         };
         Update: {
           admin_email?: string | null;
+          antiparasitic_rule?: string;
           calendar_token?: string;
           expiry_alert_days?: number;
+          heat_rule?: string;
           id?: boolean;
+          illness_rule?: string;
+          min_age_rule?: string;
           min_dog_age_months?: number | null;
-          refuse_dogs_in_heat?: boolean;
-          refuse_ill_dogs?: boolean;
           reminder_hours?: number;
-          require_antiparasitic?: boolean;
           rescue_info?: string;
           social_monthly_cap?: number | null;
           updated_at?: string;
@@ -1451,6 +1629,7 @@ export type Database = {
       assert_eligibility: {
         Args: {
           p_dog_ids: string[];
+          p_group_count?: number;
           p_service: Omit<
             Database["public"]["Tables"]["services"]["Row"],
             Database["public"]["Tables"]["services"]["ComputedFields"]
@@ -1471,6 +1650,8 @@ export type Database = {
           p_dog_id?: string;
           p_dog_ids?: string[];
           p_dogs_count?: number;
+          p_group_certified?: boolean;
+          p_group_dogs?: Json;
           p_guests?: Json;
           p_notes?: string;
           p_party_size?: number;
@@ -1486,6 +1667,8 @@ export type Database = {
           p_dog_id?: string;
           p_dog_ids?: string[];
           p_dogs_count?: number;
+          p_group_certified?: boolean;
+          p_group_dogs?: Json;
           p_guests?: Json;
           p_notes?: string;
           p_service_id: string;
@@ -1510,6 +1693,10 @@ export type Database = {
           valid: boolean;
         }[];
       };
+      check_park_eligibility: {
+        Args: { p_dog_ids: string[]; p_group_count?: number; p_service_id: string; p_starts_at: string };
+        Returns: Json;
+      };
       claim_notifications: {
         Args: { p_limit?: number };
         Returns: {
@@ -1526,6 +1713,7 @@ export type Database = {
           locked_until: string | null;
           payload: NonNullable<Json>;
           profile_id: string | null;
+          push_sent_at: string | null;
           ref_date: string | null;
           send_after: string;
           sent_at: string | null;
@@ -1537,6 +1725,7 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      clean_group_dogs: { Args: { p_dogs: Json }; Returns: Json };
       clean_guests: { Args: { p_guests: Json }; Returns: Json };
       close_period: {
         Args: {
@@ -1547,6 +1736,10 @@ export type Database = {
           p_starts_at: string;
         };
         Returns: number;
+      };
+      complete_guest_profile: {
+        Args: { p_document_ids: string[]; p_profile: Json; p_token: string };
+        Returns: undefined;
       };
       compute_price: {
         Args: {
@@ -1565,6 +1758,30 @@ export type Database = {
         Returns: number;
       };
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
+      dog_health_issues: {
+        Args: {
+          p_day: string;
+          p_dog: Omit<
+            Database["public"]["Tables"]["dogs"]["Row"],
+            Database["public"]["Tables"]["dogs"]["ComputedFields"]
+          >;
+        };
+        Returns: {
+          code: string;
+          mode: string;
+        }[];
+      };
+      eligibility_warnings: {
+        Args: {
+          p_dog_ids: string[];
+          p_service: Omit<
+            Database["public"]["Tables"]["services"]["Row"],
+            Database["public"]["Tables"]["services"]["ComputedFields"]
+          >;
+          p_starts_at: string;
+        };
+        Returns: string[];
+      };
       enqueue_expiry_alerts: { Args: Record<PropertyKey, never>; Returns: number };
       export_my_data: { Args: Record<PropertyKey, never>; Returns: Json };
       get_available_slots: {
@@ -1578,6 +1795,7 @@ export type Database = {
       };
       get_emergency_overview: { Args: { p_resource_slug?: string }; Returns: Json };
       get_full_days: { Args: { p_from: string; p_service_id: string; p_to: string }; Returns: string[] };
+      get_guest_invitation: { Args: { p_language?: string; p_token: string }; Returns: Json };
       get_required_documents: {
         Args: { p_language?: string; p_service_id: string };
         Returns: {
@@ -1666,6 +1884,7 @@ export type Database = {
         Args: { p_role: Database["public"]["Enums"]["user_role"]; p_user_id: string };
         Returns: undefined;
       };
+      submit_questionnaire: { Args: { p_answers: Json; p_booking_id: string }; Returns: undefined };
     };
     Enums: {
       appointment_status: "scheduled" | "cancelled";
@@ -1688,7 +1907,8 @@ export type Database = {
         | "admin_documents_expired"
         | "admin_vaccination_to_review"
         | "admin_emergency"
-        | "guest_live_link";
+        | "guest_live_link"
+        | "admin_questionnaire_submitted";
       review_status: "pending" | "validated" | "rejected";
       sanction_level: "warning" | "suspension" | "ban";
       user_role: "client" | "admin";
@@ -1823,6 +2043,7 @@ export const Constants = {
         "admin_vaccination_to_review",
         "admin_emergency",
         "guest_live_link",
+        "admin_questionnaire_submitted",
       ],
       review_status: ["pending", "validated", "rejected"],
       sanction_level: ["warning", "suspension", "ban"],

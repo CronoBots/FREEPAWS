@@ -14,6 +14,7 @@
 //   NOTIFY_FROM         ex. FreePaws <reservations@freepaws.be>
 //   NOTIFY_CRON_SECRET  secret partagé avec la tâche pg_cron
 //   APP_URL             (optionnel) adresse web de l'app pour les liens (défaut : freepaws://)
+//   EXPO_ACCESS_TOKEN   (optionnel) jeton Expo si la sécurité renforcée des push est activée
 //   RESEND_API_URL      (optionnel, tests) autre adresse d'envoi que l'API Resend
 import { createClient } from "npm:@supabase/supabase-js@2";
 import nodemailer from "npm:nodemailer@6";
@@ -34,7 +35,8 @@ type Kind =
   | "admin_documents_expired"
   | "admin_vaccination_to_review"
   | "admin_emergency"
-  | "guest_live_link";
+  | "guest_live_link"
+  | "admin_questionnaire_submitted";
 
 type NotificationRow = {
   id: string;
@@ -45,6 +47,7 @@ type NotificationRow = {
   dog_id: string | null;
   emergency_id: string | null;
   guest_id: string | null;
+  push_sent_at: string | null;
   ref_date: string | null;
   payload: Record<string, unknown>;
 };
@@ -63,6 +66,7 @@ type BookingRow = {
   appointment: {
     period: string;
     service: {
+      id: string;
       name: string;
       location: string;
       translations: Record<string, Record<string, string>> | null;
@@ -88,6 +92,9 @@ const TEXT = {
     documents: "Documents acceptés",
     version: (v: number) => `version ${v}`,
     footer: "Cet email vous est envoyé suite à une réservation dans l’app FreePaws.",
+    questionnaireText: "Avant la visite, merci de remplir le questionnaire pré-visite.",
+    questionnaireButton: "Remplir le questionnaire",
+    manageButton: "Voir, reporter ou annuler",
   },
   en: {
     booking_confirmed: ["Booking confirmed", "Your booking is confirmed."],
@@ -101,6 +108,9 @@ const TEXT = {
     documents: "Accepted documents",
     version: (v: number) => `version ${v}`,
     footer: "You are receiving this email following a booking in the FreePaws app.",
+    questionnaireText: "Before the visit, please fill in the pre-visit questionnaire.",
+    questionnaireButton: "Fill in the questionnaire",
+    manageButton: "View, reschedule or cancel",
   },
 } as const;
 
@@ -166,6 +176,7 @@ function formatDay(isoDay: string, lang: Lang) {
 }
 
 const ADMIN_SUBJECT: Record<string, string> = {
+  admin_questionnaire_submitted: "Questionnaire pré-visite reçu",
   admin_new_booking: "Nouvelle réservation",
   admin_booking_rescheduled: "Réservation déplacée",
   admin_booking_cancelled: "Réservation annulée",
@@ -219,6 +230,95 @@ const field = (label: string, value: string) =>
 const makeDb = (url: string, key: string) => createClient(url, key, { auth: { persistSession: false } });
 type Db = ReturnType<typeof makeDb>;
 
+// ---------------------------------------------------------------------------
+// Notifications push (Expo) : messages courts sur les appareils enregistrés (M6-06, M9-08)
+// ---------------------------------------------------------------------------
+
+const PUSH_TEXT: Record<Lang, Partial<Record<Kind, [string, string]>>> = {
+  fr: {
+    booking_confirmed: ["Réservation confirmée", "Votre réservation FreePaws est confirmée."],
+    booking_rescheduled: ["Réservation déplacée", "Votre réservation FreePaws a été déplacée."],
+    booking_cancelled: ["Réservation annulée", "Votre réservation FreePaws a été annulée."],
+    booking_reminder: ["Rappel", "Votre rendez-vous FreePaws approche."],
+    waitlist_slot_freed: ["Un créneau s’est libéré", "Ouvrez l’app pour le réserver."],
+    vaccination_reviewed: ["Vaccination vérifiée", "Le résultat est dans la fiche de votre chien."],
+    insurance_expiring: ["Assurance bientôt échue", "Mettez à jour votre fiche pour continuer à réserver le parc."],
+    vaccination_expiring: ["Vaccin à renouveler", "Mettez à jour la fiche de votre chien."],
+    admin_emergency: ["URGENCE", "Une personne a appuyé sur le bouton Urgence. Ouvrez le mode urgence."],
+    admin_new_booking: ["Nouvelle réservation", "Une réservation vient d’être faite."],
+    admin_booking_cancelled: ["Réservation annulée", "Un client a annulé une réservation."],
+    admin_booking_rescheduled: ["Réservation déplacée", "Un client a déplacé une réservation."],
+    admin_vaccination_to_review: ["Vaccination à valider", "Un justificatif attend votre validation."],
+    admin_documents_expired: ["Documents échus", "Des assurances ou vaccins sont arrivés à échéance."],
+    admin_questionnaire_submitted: ["Questionnaire reçu", "Un client a rempli son questionnaire pré-visite."],
+  },
+  en: {
+    booking_confirmed: ["Booking confirmed", "Your FreePaws booking is confirmed."],
+    booking_rescheduled: ["Booking moved", "Your FreePaws booking has been moved."],
+    booking_cancelled: ["Booking cancelled", "Your FreePaws booking has been cancelled."],
+    booking_reminder: ["Reminder", "Your FreePaws appointment is coming up."],
+    waitlist_slot_freed: ["A slot is available", "Open the app to book it."],
+    vaccination_reviewed: ["Vaccination reviewed", "See the result in your dog’s profile."],
+    insurance_expiring: ["Insurance expiring soon", "Update your details to keep booking the park."],
+    vaccination_expiring: ["Vaccine to renew", "Update your dog’s profile."],
+  },
+};
+
+async function sendPush(db: Db, n: NotificationRow, bookingClientId: string | null): Promise<void> {
+  let userIds: string[] = [];
+  if (n.audience === "admin") {
+    const { data } = await db.from("profiles").select("id").eq("role", "admin");
+    userIds = (data ?? []).map((row) => row.id);
+  } else if (n.audience === "client") {
+    const id = n.profile_id ?? bookingClientId;
+    if (id) userIds = [id];
+  }
+  if (userIds.length === 0) return;
+
+  const { data: tokens } = await db.from("push_tokens").select("token, user_id").in("user_id", userIds);
+  if (!tokens?.length) return;
+  const { data: profiles } = await db.from("profiles").select("id, language").in("id", userIds);
+  const languageOf = new Map((profiles ?? []).map((row) => [row.id, row.language === "en" ? "en" : "fr"] as const));
+
+  const urgent = n.kind === "admin_emergency";
+  const messages = tokens
+    .map((row) => {
+      const lang: Lang = n.audience === "admin" ? "fr" : (languageOf.get(row.user_id) ?? "fr");
+      const text = PUSH_TEXT[lang][n.kind] ?? PUSH_TEXT.fr[n.kind];
+      if (!text) return null;
+      return {
+        to: row.token,
+        title: text[0],
+        body: text[1],
+        sound: "default",
+        priority: "high",
+        // Canal Android dédié aux urgences (son et priorité maximale, déclaré par l'app).
+        channelId: urgent ? "urgent" : "default",
+        interruptionLevel: urgent ? "time-sensitive" : "active",
+        data: { kind: n.kind, bookingId: n.booking_id },
+      };
+    })
+    .filter((message) => message != null);
+  if (messages.length === 0) return;
+
+  const headers: Record<string, string> = { "Content-Type": "application/json", Accept: "application/json" };
+  const accessToken = Deno.env.get("EXPO_ACCESS_TOKEN");
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+  const response = await fetch(Deno.env.get("EXPO_PUSH_URL") ?? "https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(messages),
+  });
+  if (!response.ok) throw new Error(`push_${response.status}`);
+  const result = (await response.json()) as { data?: { status: string; details?: { error?: string } }[] };
+  // Appareils désinstallés : on oublie leur jeton.
+  const gone = (result.data ?? [])
+    .map((ticket, index) => (ticket.details?.error === "DeviceNotRegistered" ? messages[index]?.to : null))
+    .filter((token): token is string => Boolean(token));
+  if (gone.length) await db.from("push_tokens").delete().in("token", gone);
+  await db.from("notifications").update({ push_sent_at: new Date().toISOString() }).eq("id", n.id);
+}
+
 /** Emails non liés à une réservation, et alerte d'urgence. Null = rien à envoyer. */
 async function standaloneEmail(db: Db, n: NotificationRow, adminEmail: string | null): Promise<Email | null> {
   const footer = (lang: Lang) =>
@@ -227,13 +327,15 @@ async function standaloneEmail(db: Db, n: NotificationRow, adminEmail: string | 
     )}</p>`;
 
   if (n.kind === "admin_emergency") {
-    if (!adminEmail) throw new Error("admin_email_missing");
+    // Sans adresse email, l'alerte part uniquement en push (voir sendPush).
+    if (!adminEmail) return null;
     const { data } = await db
       .from("emergencies")
       .select(
         `created_at, message,
          user:profiles!emergencies_user_id_fkey ( full_name, phone, email, emergency_contact_name, emergency_contact_phone ),
-         booking:bookings ( adults_count, children_count, appointment:appointments ( period, service:services ( name ) ) )`,
+         booking:bookings ( id, adults_count, children_count, group_dogs,
+           appointment:appointments ( period, service:services ( name ) ) )`,
       )
       .eq("id", n.emergency_id ?? "")
       .single();
@@ -241,9 +343,31 @@ async function standaloneEmail(db: Db, n: NotificationRow, adminEmail: string | 
       created_at: string;
       message: string | null;
       user: { full_name: string; phone: string | null; email: string; emergency_contact_name: string | null; emergency_contact_phone: string | null } | null;
-      booking: { adults_count: number | null; children_count: number | null; appointment: { period: string; service: { name: string } | null } | null } | null;
+      booking: {
+        id: string;
+        adults_count: number | null;
+        children_count: number | null;
+        group_dogs: { name: string; breed: string | null; size: string | null; protocol: boolean }[];
+        appointment: { period: string; service: { name: string } | null } | null;
+      } | null;
     } | null;
     if (!e?.user) throw new Error("emergency_not_found");
+    // Fiche des chiens présents (M9-01) : ceux du responsable et ceux du groupe.
+    const { data: ownDogs } = await db
+      .from("booking_dogs")
+      .select("dog:dogs ( name, breed, size, protocol, protocol_note )")
+      .eq("booking_id", e.booking?.id ?? "");
+    const SIZE: Record<string, string> = { small: "petit", medium: "moyen", large: "grand", giant: "très grand" };
+    const dogs = [
+      ...((ownDogs ?? []) as unknown as { dog: { name: string; breed: string | null; size: string | null; protocol: boolean; protocol_note: string | null } | null }[])
+        .map((row) => row.dog)
+        .filter((dog) => dog != null),
+      ...(e.booking?.group_dogs ?? []).map((dog) => ({ ...dog, protocol_note: null })),
+    ].map((dog) =>
+      [dog.name, dog.breed, dog.size ? SIZE[dog.size] : null, dog.protocol ? `CHIEN À PROTOCOLE${dog.protocol_note ? ` (${dog.protocol_note})` : ""}` : null]
+        .filter(Boolean)
+        .join(" · "),
+    );
     const period = e.booking?.appointment ? formatWhen(parseRange(String(e.booking.appointment.period)), "fr") : "";
     return {
       to: adminEmail,
@@ -254,6 +378,16 @@ async function standaloneEmail(db: Db, n: NotificationRow, adminEmail: string | 
         e.message ? field("Message", e.message) : "",
         period ? field("Créneau", `${e.booking?.appointment?.service?.name ?? ""} · ${period}`) : "",
         field("Contact d’urgence", [e.user.emergency_contact_name, e.user.emergency_contact_phone].filter(Boolean).join(" · ") || "—"),
+        field(
+          "Personnes",
+          [
+            e.booking?.adults_count != null ? `adultes : ${e.booking.adults_count}` : null,
+            e.booking?.children_count != null ? `enfants : ${e.booking.children_count}` : null,
+          ]
+            .filter(Boolean)
+            .join(" · ") || "—",
+        ),
+        dogs.length ? field("Chiens présents", dogs.join(" ; ")) : "",
         field("Heure de l’alerte", new Intl.DateTimeFormat("fr-BE", { timeZone: "Europe/Brussels", dateStyle: "full", timeStyle: "medium" }).format(new Date(e.created_at))),
       ].join("")),
     };
@@ -285,18 +419,18 @@ async function standaloneEmail(db: Db, n: NotificationRow, adminEmail: string | 
     const link = `${base}live/${g.access_token}`;
     const when = formatWhen(parseRange(String(g.booking.appointment.period)), lang);
     const host = g.booking.client?.full_name || "FreePaws";
-    const title = lang === "fr" ? "Votre accès au direct FreePaws Park" : "Your FreePaws Park live access";
+    const title = lang === "fr" ? "Invitation au FreePaws Park" : "FreePaws Park invitation";
     const intro =
       lang === "fr"
-        ? `${host} vous a ajouté·e à sa réservation du parc. Ce lien personnel vous donne accès au direct des caméras pendant le créneau uniquement. Merci de ne pas le partager.`
-        : `${host} added you to their park booking. This personal link gives you access to the live cameras during the slot only. Please do not share it.`;
+        ? `${host} vous a ajouté·e à sa réservation du parc. Avec ce lien personnel, complétez votre profil (contact, contact d’urgence, chien) et acceptez le règlement ; vous aurez ensuite accès au direct des caméras pendant le créneau. Merci de ne pas le partager.`
+        : `${host} added you to their park booking. Use this personal link to complete your profile (contact, emergency contact, dog) and accept the rules; you will then have access to the live cameras during the slot. Please do not share it.`;
     return {
       to: g.email,
       subject: title,
       html: layout(title, [
         p(intro),
         field(lang === "fr" ? "Créneau" : "Slot", when),
-        `<p style="margin:24px 0"><a href="${escapeHtml(link)}" style="display:inline-block;background:#2b3a30;color:#fff;text-decoration:none;padding:14px 22px;border-radius:10px;font-size:16px">${escapeHtml(lang === "fr" ? "Ouvrir le direct" : "Open the live view")}</a></p>`,
+        `<p style="margin:24px 0"><a href="${escapeHtml(link)}" style="display:inline-block;background:#2b3a30;color:#fff;text-decoration:none;padding:14px 22px;border-radius:10px;font-size:16px">${escapeHtml(lang === "fr" ? "Compléter mon profil" : "Complete my profile")}</a></p>`,
         footer(lang),
       ].join("")),
     };
@@ -406,12 +540,18 @@ Deno.serve(async (req) => {
   let sent = 0;
   for (const notification of (claimed ?? []) as NotificationRow[]) {
     try {
+      // Push d'abord pour une urgence (le plus rapide), sans bloquer l'email en cas d'échec.
+      const push = (clientId: string | null) =>
+        notification.push_sent_at ? Promise.resolve() : sendPush(db, notification, clientId).catch(() => undefined);
+      if (notification.kind === "admin_emergency") await push(null);
+
       if (notification.kind === "admin_emergency" || notification.kind === "guest_live_link" || !notification.booking_id) {
         const email = await standaloneEmail(db, notification, settings?.admin_email ?? null);
         if (email) {
           await send(email);
           sent++;
         }
+        if (notification.kind !== "admin_emergency") await push(null);
         await markSent(notification.id, email ? null : "skipped");
         continue;
       }
@@ -421,7 +561,7 @@ Deno.serve(async (req) => {
         .select(
           `id, status, client_id, client_notes, visit_address, adults_count, children_count, dogs_count, party_size,
            appointment:appointments ( period,
-             service:services ( name, location, translations, cancel_notice_hours, required_document_kinds ) ),
+             service:services ( id, name, location, translations, cancel_notice_hours, required_document_kinds ) ),
            client:profiles!bookings_client_id_fkey ( email, full_name, phone, language )`,
         )
         .eq("id", notification.booking_id)
@@ -507,6 +647,28 @@ Deno.serve(async (req) => {
           }
         }
 
+        // Liens vers l'app : questionnaire pré-visite (M1-05) et gestion de la réservation (M6-02).
+        const base = (Deno.env.get("APP_URL") ?? "freepaws://").replace(/\/?$/, "/");
+        const button = (href: string, text: string) =>
+          `<p style="margin:20px 0"><a href="${escapeHtml(href)}" style="display:inline-block;background:#2b3a30;color:#fff;text-decoration:none;padding:14px 22px;border-radius:10px;font-size:16px">${escapeHtml(text)}</a></p>`;
+        let links = "";
+        if (kind === "booking_confirmed" || kind === "booking_reminder") {
+          const { count } = await db
+            .from("questionnaire_questions")
+            .select("id", { count: "exact", head: true })
+            .eq("service_id", service.id)
+            .eq("active", true);
+          const { data: answered } = await db
+            .from("questionnaire_responses")
+            .select("booking_id")
+            .eq("booking_id", booking.id)
+            .maybeSingle();
+          if ((count ?? 0) > 0 && !answered) {
+            links += p(t.questionnaireText) + button(`${base}booking/${booking.id}/questionnaire`, t.questionnaireButton);
+          }
+        }
+        if (kind !== "booking_cancelled") links += button(`${base}booking/${booking.id}`, t.manageButton);
+
         html = layout(
           title,
           [
@@ -519,6 +681,7 @@ Deno.serve(async (req) => {
                 ? field(t.where, location)
                 : "",
             kind === "booking_cancelled" || service.cancel_notice_hours <= 0 ? "" : p(t.cancelPolicy(service.cancel_notice_hours)),
+            links,
             documents,
             `<p style="font-size:13px;color:#6f6a60;margin:28px 0 0">${escapeHtml(t.footer)}</p>`,
           ].join(""),
@@ -527,6 +690,7 @@ Deno.serve(async (req) => {
 
       if (!to) throw new Error("recipient_missing");
       await send({ to, subject, html });
+      await push(booking.client_id);
       await markSent(notification.id);
       sent++;
     } catch (err) {

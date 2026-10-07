@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { queryKeys } from "@/api/keys";
 import { useLanguage } from "@/i18n";
 import { useAuth } from "@/lib/auth";
+import { registerForPush } from "@/lib/push";
 import { supabase } from "@/lib/supabase";
 import type { TablesUpdate } from "@/types/database";
 
@@ -67,6 +68,19 @@ export function useSyncProfileLanguage() {
         if (!error) void client.invalidateQueries({ queryKey: queryKeys.profile(userId) });
       });
   }, [client, language, stored, userId]);
+}
+
+/** Enregistre l’appareil pour les notifications push une fois l’utilisateur connecté. */
+export function usePushRegistration() {
+  const { userId } = useAuth();
+  const { t } = useLanguage();
+  useEffect(() => {
+    if (!userId) return;
+    void registerForPush({ default: t("common.notifications"), urgent: t("common.urgentNotifications") }).catch(
+      () => undefined,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 }
 
 export function useDeleteAccount() {
