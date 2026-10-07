@@ -320,7 +320,9 @@ export function useParkSettings() {
       run(
         supabase
           .from("settings")
-          .select("min_dog_age_months, refuse_dogs_in_heat, expiry_alert_days, rescue_info")
+          .select(
+            "min_dog_age_months, refuse_dogs_in_heat, refuse_ill_dogs, require_antiparasitic, expiry_alert_days, rescue_info",
+          )
           .single(),
       ),
   });
@@ -331,7 +333,12 @@ export function useUpdateParkSettings() {
     async (
       values: Pick<
         TablesUpdate<"settings">,
-        "min_dog_age_months" | "refuse_dogs_in_heat" | "expiry_alert_days" | "rescue_info"
+        | "min_dog_age_months"
+        | "refuse_dogs_in_heat"
+        | "refuse_ill_dogs"
+        | "require_antiparasitic"
+        | "expiry_alert_days"
+        | "rescue_info"
       >,
     ) => {
       await run(supabase.from("settings").update(values).eq("id", true).select("id"));

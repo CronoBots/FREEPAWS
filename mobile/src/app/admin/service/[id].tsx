@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
@@ -201,6 +201,11 @@ function ServiceForm({ service }: { service: Service }) {
             keyboardType="decimal-pad"
           />
           <Checkbox label={t("admin.fieldPriceVisible")} checked={priceVisible} onChange={setPriceVisible} />
+          <Button
+            label={t("pricing.rulesButton")}
+            variant="secondary"
+            onPress={() => router.push({ pathname: "/admin/pricing/[serviceId]", params: { serviceId: service.id } })}
+          />
           {NUMBER_FIELDS.map(([key, label]) =>
             key === "default_capacity" && service.mode !== "event" ? null : (
               <TextField

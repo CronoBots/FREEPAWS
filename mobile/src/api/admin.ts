@@ -155,7 +155,8 @@ export function useBlackouts() {
   return useQuery({
     queryKey: adminKeys.blackouts,
     queryFn: async () => {
-      const rows = await run(supabase.from("blackouts").select("*"));
+      // Fermetures saisies à la main : les indisponibilités importées d’un agenda sont gérées ailleurs.
+      const rows = await run(supabase.from("blackouts").select("*").eq("source", "manual"));
       return (rows ?? [])
         .map((row) => ({ ...row, ...parseRange(row.period as string) }))
         .filter((row) => row.end > new Date())

@@ -49,6 +49,8 @@ function RulesForm({ settings }: { settings: Settings }) {
   const update = useUpdateParkSettings();
   const [minAge, setMinAge] = useState(settings.min_dog_age_months == null ? "" : String(settings.min_dog_age_months));
   const [refuseHeat, setRefuseHeat] = useState(settings.refuse_dogs_in_heat);
+  const [refuseIll, setRefuseIll] = useState(settings.refuse_ill_dogs);
+  const [requireAntiparasitic, setRequireAntiparasitic] = useState(settings.require_antiparasitic);
   const [expiryDays, setExpiryDays] = useState(String(settings.expiry_alert_days));
   const [rescue, setRescue] = useState(settings.rescue_info);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +66,14 @@ function RulesForm({ settings }: { settings: Settings }) {
       return setError(t("adminSafety.invalidNumber", { field: t("adminSafety.expiryDays") }));
     }
     update.mutate(
-      { min_dog_age_months: age, refuse_dogs_in_heat: refuseHeat, expiry_alert_days: days, rescue_info: rescue.trim() },
+      {
+        min_dog_age_months: age,
+        refuse_dogs_in_heat: refuseHeat,
+        refuse_ill_dogs: refuseIll,
+        require_antiparasitic: requireAntiparasitic,
+        expiry_alert_days: days,
+        rescue_info: rescue.trim(),
+      },
       { onSuccess: () => notify(t("adminSafety.saved"), ""), onError: (err) => setError(toUserMessage(err)) },
     );
   };
@@ -82,6 +91,12 @@ function RulesForm({ settings }: { settings: Settings }) {
           maxLength={2}
         />
         <Checkbox label={t("adminSafety.refuseHeat")} checked={refuseHeat} onChange={setRefuseHeat} />
+        <Checkbox label={t("adminSafety.refuseIll")} checked={refuseIll} onChange={setRefuseIll} />
+        <Checkbox
+          label={t("adminSafety.requireAntiparasitic")}
+          checked={requireAntiparasitic}
+          onChange={setRequireAntiparasitic}
+        />
         <TextField
           label={t("adminSafety.expiryDays")}
           hint={t("adminSafety.expiryHint")}

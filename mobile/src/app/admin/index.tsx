@@ -34,7 +34,10 @@ type HubKey =
   | "hubIncidents"
   | "hubEmergency"
   | "hubParkRules"
-  | "hubSecurity";
+  | "hubSecurity"
+  | "hubPricing"
+  | "hubCalendarDays"
+  | "hubCalendarSync";
 
 const SECTIONS: { title: TranslationKey; rows: [HubKey, Href][] }[] = [
   {
@@ -43,7 +46,10 @@ const SECTIONS: { title: TranslationKey; rows: [HubKey, Href][] }[] = [
       ["hubAgenda", "/admin/agenda"],
       ["hubDashboard", "/admin/dashboard"],
       ["hubServices", "/admin/services"],
+      ["hubPricing", "/admin/pricing"],
+      ["hubCalendarDays", "/admin/calendar-days"],
       ["hubAvailability", "/admin/availability"],
+      ["hubCalendarSync", "/admin/calendar-sync"],
       ["hubClosures", "/admin/closures"],
       ["hubDiscounts", "/admin/discounts"],
       ["hubDocuments", "/admin/documents"],

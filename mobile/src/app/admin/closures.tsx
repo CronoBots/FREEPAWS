@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { router } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
@@ -131,6 +132,8 @@ function Closures() {
       </Card>
 
       <AppText variant="heading">{t("admin.upcomingClosures")}</AppText>
+      <AppText variant="caption">{t("pricing.closuresExternalNote")}</AppText>
+      <Button label={t("admin.hubCalendarSync")} variant="ghost" onPress={() => router.push("/admin/calendar-sync")} />
       {blackouts.isLoading ? (
         <LoadingView />
       ) : blackouts.isError ? (
