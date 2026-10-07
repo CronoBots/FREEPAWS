@@ -20,7 +20,27 @@ type Kind =
   | "booking_reminder"
   | "admin_new_booking"
   | "admin_booking_rescheduled"
-  | "admin_booking_cancelled";
+  | "admin_booking_cancelled"
+  | "insurance_expiring"
+  | "vaccination_expiring"
+  | "vaccination_reviewed"
+  | "waitlist_slot_freed"
+  | "admin_documents_expired"
+  | "admin_vaccination_to_review"
+  | "admin_emergency";
+
+type NotificationRow = {
+  id: string;
+  kind: Kind;
+  audience: "client" | "admin";
+  booking_id: string | null;
+  profile_id: string | null;
+  dog_id: string | null;
+  emergency_id: string | null;
+  ref_date: string | null;
+  payload: Record<string, unknown>;
+};
+type Email = { to: string; subject: string; html: string };
 
 type BookingRow = {
   id: string;
@@ -76,6 +96,67 @@ const TEXT = {
   },
 } as const;
 
+/** Messages hors réservation (échéances, vaccins, liste d'attente). */
+const OTHER_TEXT = {
+  fr: {
+    insurance_expiring: (date: string) => [
+      "Votre assurance arrive à échéance",
+      `Votre assurance responsabilité civile enregistrée dans l’app FreePaws arrive à échéance le ${date}. Mettez à jour votre fiche (Compte → Mes informations) pour pouvoir continuer à réserver le parc.`,
+    ],
+    vaccination_expiring: (dog: string, vaccine: string, date: string) => [
+      `Vaccin de ${dog} à renouveler`,
+      `Le vaccin « ${vaccine} » de ${dog} arrive à échéance le ${date}. Ajoutez la nouvelle vaccination dans la fiche de votre chien pour pouvoir continuer à réserver le parc.`,
+    ],
+    vaccination_validated: (dog: string, vaccine: string) => [
+      "Vaccination validée",
+      `La vaccination « ${vaccine} » de ${dog} a été validée.`,
+    ],
+    vaccination_rejected: (dog: string, vaccine: string) => [
+      "Vaccination non validée",
+      `La vaccination « ${vaccine} » de ${dog} n’a pas pu être validée. Vérifiez le justificatif dans la fiche de votre chien.`,
+    ],
+    note: "Message",
+    waitlist_slot_freed: (service: string, date: string) => [
+      "Un créneau s’est libéré",
+      `Un créneau s’est libéré le ${date} pour « ${service} ». Ouvrez l’app FreePaws pour le réserver ; le premier à confirmer l’obtient.`,
+    ],
+  },
+  en: {
+    insurance_expiring: (date: string) => [
+      "Your insurance is about to expire",
+      `The liability insurance saved in the FreePaws app expires on ${date}. Update your details (Account → My details) to keep booking the park.`,
+    ],
+    vaccination_expiring: (dog: string, vaccine: string, date: string) => [
+      `${dog}’s vaccine needs renewing`,
+      `${dog}’s “${vaccine}” vaccine expires on ${date}. Add the new vaccination to your dog’s profile to keep booking the park.`,
+    ],
+    vaccination_validated: (dog: string, vaccine: string) => [
+      "Vaccination approved",
+      `${dog}’s “${vaccine}” vaccination has been approved.`,
+    ],
+    vaccination_rejected: (dog: string, vaccine: string) => [
+      "Vaccination not approved",
+      `${dog}’s “${vaccine}” vaccination could not be approved. Please check the proof in your dog’s profile.`,
+    ],
+    note: "Message",
+    waitlist_slot_freed: (service: string, date: string) => [
+      "A slot is now available",
+      `A slot is now available on ${date} for “${service}”. Open the FreePaws app to book it; first to confirm gets it.`,
+    ],
+  },
+} as const;
+
+function formatDay(isoDay: string, lang: Lang) {
+  const [y, m, d] = isoDay.split("-").map(Number) as [number, number, number];
+  return new Intl.DateTimeFormat(lang === "fr" ? "fr-BE" : "en-GB", {
+    timeZone: "UTC",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(Date.UTC(y, m - 1, d, 12)));
+}
+
 const ADMIN_SUBJECT: Record<string, string> = {
   admin_new_booking: "Nouvelle réservation",
   admin_booking_rescheduled: "Réservation déplacée",
@@ -127,6 +208,107 @@ const p = (text: string) => `<p style="font-size:16px;line-height:1.5;margin:0 0
 const field = (label: string, value: string) =>
   `<p style="font-size:16px;line-height:1.5;margin:0 0 10px"><strong>${escapeHtml(label)}</strong><br>${escapeHtml(value)}</p>`;
 
+const makeDb = (url: string, key: string) => createClient(url, key, { auth: { persistSession: false } });
+type Db = ReturnType<typeof makeDb>;
+
+/** Emails non liés à une réservation, et alerte d'urgence. Null = rien à envoyer. */
+async function standaloneEmail(db: Db, n: NotificationRow, adminEmail: string | null): Promise<Email | null> {
+  const footer = (lang: Lang) =>
+    `<p style="font-size:13px;color:#6f6a60;margin:28px 0 0">${escapeHtml(
+      lang === "fr" ? "Cet email vous est envoyé par l’app FreePaws." : "This email was sent by the FreePaws app.",
+    )}</p>`;
+
+  if (n.kind === "admin_emergency") {
+    if (!adminEmail) throw new Error("admin_email_missing");
+    const { data } = await db
+      .from("emergencies")
+      .select(
+        `created_at, message,
+         user:profiles!emergencies_user_id_fkey ( full_name, phone, email, emergency_contact_name, emergency_contact_phone ),
+         booking:bookings ( adults_count, children_count, appointment:appointments ( period, service:services ( name ) ) )`,
+      )
+      .eq("id", n.emergency_id ?? "")
+      .single();
+    const e = data as unknown as {
+      created_at: string;
+      message: string | null;
+      user: { full_name: string; phone: string | null; email: string; emergency_contact_name: string | null; emergency_contact_phone: string | null } | null;
+      booking: { adults_count: number | null; children_count: number | null; appointment: { period: string; service: { name: string } | null } | null } | null;
+    } | null;
+    if (!e?.user) throw new Error("emergency_not_found");
+    const period = e.booking?.appointment ? formatWhen(parseRange(String(e.booking.appointment.period)), "fr") : "";
+    return {
+      to: adminEmail,
+      subject: `URGENCE · ${e.user.full_name || e.user.email}`,
+      html: layout("Alerte urgence", [
+        p("Une personne a appuyé sur le bouton « Urgence » de l’app. Rappelez-la immédiatement ; en cas de danger, appelez le 112."),
+        field("Personne", [e.user.full_name, e.user.phone, e.user.email].filter(Boolean).join(" · ")),
+        e.message ? field("Message", e.message) : "",
+        period ? field("Créneau", `${e.booking?.appointment?.service?.name ?? ""} · ${period}`) : "",
+        field("Contact d’urgence", [e.user.emergency_contact_name, e.user.emergency_contact_phone].filter(Boolean).join(" · ") || "—"),
+        field("Heure de l’alerte", new Intl.DateTimeFormat("fr-BE", { timeZone: "Europe/Brussels", dateStyle: "full", timeStyle: "medium" }).format(new Date(e.created_at))),
+      ].join("")),
+    };
+  }
+
+  if (n.audience === "admin") {
+    if (!adminEmail) throw new Error("admin_email_missing");
+    if (n.kind === "admin_documents_expired") {
+      const count = Number(n.payload.count ?? 0);
+      return {
+        to: adminEmail,
+        subject: "Documents arrivés à échéance",
+        html: layout("Documents arrivés à échéance", p(`${count} assurance(s) ou vaccination(s) exigée(s) sont arrivées à échéance hier. Les clients concernés ne peuvent plus réserver le parc tant qu’ils n’ont pas mis leur fiche à jour.`)),
+      };
+    }
+    if (n.kind === "admin_vaccination_to_review") {
+      const { data } = await db.from("dogs").select("name, owner:profiles ( full_name, email )").eq("id", n.dog_id ?? "").single();
+      const dog = data as unknown as { name: string; owner: { full_name: string; email: string } | null } | null;
+      if (!dog) return null;
+      return {
+        to: adminEmail,
+        subject: `Vaccination à valider · ${dog.name}`,
+        html: layout("Vaccination à valider", [
+          p("Une vaccination a été ajoutée ou modifiée. Vérifiez le justificatif dans l’app (Administration → Vaccinations à valider)."),
+          field("Chien", dog.name),
+          field("Propriétaire", [dog.owner?.full_name, dog.owner?.email].filter(Boolean).join(" · ")),
+        ].join("")),
+      };
+    }
+    return null;
+  }
+
+  const { data: profile } = await db.from("profiles").select("email, language").eq("id", n.profile_id ?? "").single();
+  if (!profile?.email) throw new Error("recipient_missing");
+  const lang: Lang = profile.language === "en" ? "en" : "fr";
+  const t = OTHER_TEXT[lang];
+  let title: string;
+  let body: string;
+  let extra = "";
+
+  if (n.kind === "insurance_expiring") {
+    [title, body] = t.insurance_expiring(formatDay(n.ref_date ?? "", lang));
+  } else if (n.kind === "vaccination_expiring" || n.kind === "vaccination_reviewed") {
+    const { data: dog } = await db.from("dogs").select("name").eq("id", n.dog_id ?? "").single();
+    const vaccine = String(n.payload.vaccine ?? "");
+    const name = dog?.name ?? "";
+    if (n.kind === "vaccination_expiring") {
+      [title, body] = t.vaccination_expiring(name, vaccine, formatDay(n.ref_date ?? "", lang));
+    } else {
+      [title, body] = n.payload.status === "validated" ? t.vaccination_validated(name, vaccine) : t.vaccination_rejected(name, vaccine);
+      if (n.payload.note) extra = field(t.note, String(n.payload.note));
+    }
+  } else if (n.kind === "waitlist_slot_freed") {
+    const { data: service } = await db.from("services").select("name, translations").eq("id", String(n.payload.service_id ?? "")).single();
+    const localized = (service?.translations as Record<string, Record<string, string>> | null)?.[lang]?.name;
+    [title, body] = t.waitlist_slot_freed(localized || service?.name || "FreePaws", formatDay(n.ref_date ?? "", lang));
+  } else {
+    return null;
+  }
+
+  return { to: profile.email, subject: title, html: layout(title, p(body) + extra + footer(lang)) };
+}
+
 Deno.serve(async (req) => {
   const secret = Deno.env.get("NOTIFY_CRON_SECRET") ?? "";
   const given = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
@@ -139,14 +321,35 @@ Deno.serve(async (req) => {
   // Sans fournisseur d'email, on laisse la file intacte (rien n'est réclamé ni perdu).
   if (!supabaseUrl || !serviceKey || !resendKey || !from) return new Response("not_configured", { status: 503 });
 
-  const db = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+  const db = makeDb(supabaseUrl, serviceKey);
   const { data: settings } = await db.from("settings").select("admin_email").single();
   const { data: claimed, error } = await db.rpc("claim_notifications", { p_limit: 25 });
   if (error) return new Response("error", { status: 500 });
 
+  const send = async (email: Email) => {
+    const response = await fetch(Deno.env.get("RESEND_API_URL") ?? "https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from, to: [email.to], subject: email.subject, html: email.html }),
+    });
+    if (!response.ok) throw new Error(`resend_${response.status}`);
+  };
+  const markSent = (id: string, note: string | null = null) =>
+    db.from("notifications").update({ sent_at: new Date().toISOString(), last_error: note }).eq("id", id);
+
   let sent = 0;
-  for (const notification of claimed ?? []) {
+  for (const notification of (claimed ?? []) as NotificationRow[]) {
     try {
+      if (notification.kind === "admin_emergency" || !notification.booking_id) {
+        const email = await standaloneEmail(db, notification, settings?.admin_email ?? null);
+        if (email) {
+          await send(email);
+          sent++;
+        }
+        await markSent(notification.id, email ? null : "skipped");
+        continue;
+      }
+
       const { data, error: bookingError } = await db
         .from("bookings")
         .select(
@@ -162,7 +365,7 @@ Deno.serve(async (req) => {
 
       // Réservation annulée entre-temps : seul l'email d'annulation reste pertinent.
       if (booking.status === "cancelled" && !notification.kind.endsWith("cancelled")) {
-        await db.from("notifications").update({ sent_at: new Date().toISOString(), last_error: "skipped" }).eq("id", notification.id);
+        await markSent(notification.id, "skipped");
         continue;
       }
 
@@ -249,7 +452,7 @@ Deno.serve(async (req) => {
               : location
                 ? field(t.where, location)
                 : "",
-            kind === "booking_cancelled" ? "" : p(t.cancelPolicy(service.cancel_notice_hours)),
+            kind === "booking_cancelled" || service.cancel_notice_hours <= 0 ? "" : p(t.cancelPolicy(service.cancel_notice_hours)),
             documents,
             `<p style="font-size:13px;color:#6f6a60;margin:28px 0 0">${escapeHtml(t.footer)}</p>`,
           ].join(""),
@@ -257,14 +460,8 @@ Deno.serve(async (req) => {
       }
 
       if (!to) throw new Error("recipient_missing");
-      const response = await fetch(Deno.env.get("RESEND_API_URL") ?? "https://api.resend.com/emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from, to: [to], subject, html }),
-      });
-      if (!response.ok) throw new Error(`resend_${response.status}`);
-
-      await db.from("notifications").update({ sent_at: new Date().toISOString(), last_error: null }).eq("id", notification.id);
+      await send({ to, subject, html });
+      await markSent(notification.id);
       sent++;
     } catch (err) {
       await db

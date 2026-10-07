@@ -102,3 +102,6 @@ update public.services set translations = jsonb_build_object('en', jsonb_build_o
   'summary', 'A place designed so your dog can finally run, play and burn off energy freely and safely, between Liège, Huy and Waremme.',
   'description', 'A place designed so your dog can finally run, play and burn off energy freely and safely, between Liège, Huy and Waremme.'))
 where slug = 'park-session';
+
+-- Cahier des charges (M2) : la réservation du parc exige fiche complète, assurance et vaccins valides.
+update public.services set requires_park_profile = true where slug = 'park-session';

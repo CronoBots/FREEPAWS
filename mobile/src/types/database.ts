@@ -88,6 +88,40 @@ export type Database = {
           },
         ];
       };
+      audit_log: {
+        Row: {
+          action: string;
+          actor: string | null;
+          actor_is_admin: boolean;
+          changes: NonNullable<Json>;
+          created_at: string;
+          id: number;
+          row_id: string | null;
+          table_name: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          action: string;
+          actor?: string | null;
+          actor_is_admin?: boolean;
+          changes?: NonNullable<Json>;
+          created_at?: string;
+          id?: never;
+          row_id?: string | null;
+          table_name: string;
+        };
+        Update: {
+          action?: string;
+          actor?: string | null;
+          actor_is_admin?: boolean;
+          changes?: NonNullable<Json>;
+          created_at?: string;
+          id?: never;
+          row_id?: string | null;
+          table_name?: string;
+        };
+        Relationships: [];
+      };
       availability_rules: {
         Row: {
           created_at: string;
@@ -159,6 +193,73 @@ export type Database = {
             columns: ["resource_id"];
             isOneToOne: false;
             referencedRelation: "resources";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      booking_dogs: {
+        Row: {
+          booking_id: string;
+          dog_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          booking_id: string;
+          dog_id: string;
+        };
+        Update: {
+          booking_id?: string;
+          dog_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_dogs_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "booking_dogs_dog_id_fkey";
+            columns: ["dog_id"];
+            isOneToOne: false;
+            referencedRelation: "dogs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      booking_guests: {
+        Row: {
+          booking_id: string;
+          created_at: string;
+          email: string | null;
+          full_name: string;
+          id: string;
+          phone: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          booking_id: string;
+          created_at?: string;
+          email?: string | null;
+          full_name: string;
+          id?: string;
+          phone?: string | null;
+        };
+        Update: {
+          booking_id?: string;
+          created_at?: string;
+          email?: string | null;
+          full_name?: string;
+          id?: string;
+          phone?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_guests_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
             referencedColumns: ["id"];
           },
         ];
@@ -386,42 +487,263 @@ export type Database = {
           },
         ];
       };
+      dog_vaccinations: {
+        Row: {
+          created_at: string;
+          dog_id: string;
+          id: string;
+          proof_path: string | null;
+          review_note: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          status: Database["public"]["Enums"]["review_status"];
+          updated_at: string;
+          vaccinated_on: string;
+          vaccine_type_id: string;
+          valid_until: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          dog_id: string;
+          id?: string;
+          proof_path?: string | null;
+          review_note?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: Database["public"]["Enums"]["review_status"];
+          updated_at?: string;
+          vaccinated_on: string;
+          vaccine_type_id: string;
+          valid_until: string;
+        };
+        Update: {
+          created_at?: string;
+          dog_id?: string;
+          id?: string;
+          proof_path?: string | null;
+          review_note?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: Database["public"]["Enums"]["review_status"];
+          updated_at?: string;
+          vaccinated_on?: string;
+          vaccine_type_id?: string;
+          valid_until?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "dog_vaccinations_dog_id_fkey";
+            columns: ["dog_id"];
+            isOneToOne: false;
+            referencedRelation: "dogs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "dog_vaccinations_reviewed_by_fkey";
+            columns: ["reviewed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "dog_vaccinations_vaccine_type_id_fkey";
+            columns: ["vaccine_type_id"];
+            isOneToOne: false;
+            referencedRelation: "vaccine_types";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       dogs: {
         Row: {
           birth_date: string | null;
+          bite_history: boolean | null;
           breed: string | null;
+          chip_number: string | null;
           created_at: string;
+          dogid_registered: boolean;
           id: string;
+          in_heat: boolean;
           name: string;
           notes: string | null;
           owner_id: string;
+          protocol: boolean;
+          protocol_note: string | null;
+          reactivity: string | null;
+          sex: string | null;
+          size: string | null;
+          special_needs: string | null;
+          sterilised: boolean | null;
           updated_at: string;
+          vet_name: string | null;
+          vet_phone: string | null;
         };
         ComputedFields: never;
         Insert: {
           birth_date?: string | null;
+          bite_history?: boolean | null;
           breed?: string | null;
+          chip_number?: string | null;
           created_at?: string;
+          dogid_registered?: boolean;
           id?: string;
+          in_heat?: boolean;
           name: string;
           notes?: string | null;
           owner_id?: string;
+          protocol?: boolean;
+          protocol_note?: string | null;
+          reactivity?: string | null;
+          sex?: string | null;
+          size?: string | null;
+          special_needs?: string | null;
+          sterilised?: boolean | null;
           updated_at?: string;
+          vet_name?: string | null;
+          vet_phone?: string | null;
         };
         Update: {
           birth_date?: string | null;
+          bite_history?: boolean | null;
           breed?: string | null;
+          chip_number?: string | null;
           created_at?: string;
+          dogid_registered?: boolean;
           id?: string;
+          in_heat?: boolean;
           name?: string;
           notes?: string | null;
           owner_id?: string;
+          protocol?: boolean;
+          protocol_note?: string | null;
+          reactivity?: string | null;
+          sex?: string | null;
+          size?: string | null;
+          special_needs?: string | null;
+          sterilised?: boolean | null;
           updated_at?: string;
+          vet_name?: string | null;
+          vet_phone?: string | null;
         };
         Relationships: [
           {
             foreignKeyName: "dogs_owner_id_fkey";
             columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      emergencies: {
+        Row: {
+          acknowledged_at: string | null;
+          acknowledged_by: string | null;
+          booking_id: string | null;
+          created_at: string;
+          id: string;
+          message: string | null;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          acknowledged_at?: string | null;
+          acknowledged_by?: string | null;
+          booking_id?: string | null;
+          created_at?: string;
+          id?: string;
+          message?: string | null;
+          user_id: string;
+        };
+        Update: {
+          acknowledged_at?: string | null;
+          acknowledged_by?: string | null;
+          booking_id?: string | null;
+          created_at?: string;
+          id?: string;
+          message?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "emergencies_acknowledged_by_fkey";
+            columns: ["acknowledged_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "emergencies_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "emergencies_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      incidents: {
+        Row: {
+          booking_id: string | null;
+          created_at: string;
+          created_by: string | null;
+          description: string;
+          dog_ids: string[];
+          id: string;
+          kind: Database["public"]["Enums"]["incident_kind"];
+          occurred_at: string;
+          person_ids: string[];
+          photo_paths: string[];
+          rule_reference: string | null;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          booking_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          description?: string;
+          dog_ids?: string[];
+          id?: string;
+          kind: Database["public"]["Enums"]["incident_kind"];
+          occurred_at?: string;
+          person_ids?: string[];
+          photo_paths?: string[];
+          rule_reference?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          booking_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          description?: string;
+          dog_ids?: string[];
+          id?: string;
+          kind?: Database["public"]["Enums"]["incident_kind"];
+          occurred_at?: string;
+          person_ids?: string[];
+          photo_paths?: string[];
+          rule_reference?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "incidents_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "incidents_created_by_fkey";
+            columns: ["created_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
@@ -466,12 +788,17 @@ export type Database = {
         Row: {
           attempts: number;
           audience: string;
-          booking_id: string;
+          booking_id: string | null;
           created_at: string;
+          dog_id: string | null;
+          emergency_id: string | null;
           id: string;
           kind: Database["public"]["Enums"]["notification_kind"];
           last_error: string | null;
           locked_until: string | null;
+          payload: NonNullable<Json>;
+          profile_id: string | null;
+          ref_date: string | null;
           send_after: string;
           sent_at: string | null;
         };
@@ -479,24 +806,34 @@ export type Database = {
         Insert: {
           attempts?: number;
           audience: string;
-          booking_id: string;
+          booking_id?: string | null;
           created_at?: string;
+          dog_id?: string | null;
+          emergency_id?: string | null;
           id?: string;
           kind: Database["public"]["Enums"]["notification_kind"];
           last_error?: string | null;
           locked_until?: string | null;
+          payload?: NonNullable<Json>;
+          profile_id?: string | null;
+          ref_date?: string | null;
           send_after?: string;
           sent_at?: string | null;
         };
         Update: {
           attempts?: number;
           audience?: string;
-          booking_id?: string;
+          booking_id?: string | null;
           created_at?: string;
+          dog_id?: string | null;
+          emergency_id?: string | null;
           id?: string;
           kind?: Database["public"]["Enums"]["notification_kind"];
           last_error?: string | null;
           locked_until?: string | null;
+          payload?: NonNullable<Json>;
+          profile_id?: string | null;
+          ref_date?: string | null;
           send_after?: string;
           sent_at?: string | null;
         };
@@ -508,14 +845,42 @@ export type Database = {
             referencedRelation: "bookings";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "notifications_dog_id_fkey";
+            columns: ["dog_id"];
+            isOneToOne: false;
+            referencedRelation: "dogs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_emergency_id_fkey";
+            columns: ["emergency_id"];
+            isOneToOne: false;
+            referencedRelation: "emergencies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
         ];
       };
       profiles: {
         Row: {
+          birth_date: string | null;
           created_at: string;
           email: string;
+          emergency_contact_name: string | null;
+          emergency_contact_phone: string | null;
           full_name: string;
           id: string;
+          insurance_company: string | null;
+          insurance_policy: string | null;
+          insurance_proof_path: string | null;
+          insurance_valid_until: string | null;
           language: string;
           phone: string | null;
           role: Database["public"]["Enums"]["user_role"];
@@ -523,20 +888,34 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          birth_date?: string | null;
           created_at?: string;
           email?: string;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
           full_name?: string;
           id: string;
+          insurance_company?: string | null;
+          insurance_policy?: string | null;
+          insurance_proof_path?: string | null;
+          insurance_valid_until?: string | null;
           language?: string;
           phone?: string | null;
           role?: Database["public"]["Enums"]["user_role"];
           updated_at?: string;
         };
         Update: {
+          birth_date?: string | null;
           created_at?: string;
           email?: string;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
           full_name?: string;
           id?: string;
+          insurance_company?: string | null;
+          insurance_policy?: string | null;
+          insurance_proof_path?: string | null;
+          insurance_valid_until?: string | null;
           language?: string;
           phone?: string | null;
           role?: Database["public"]["Enums"]["user_role"];
@@ -569,6 +948,65 @@ export type Database = {
         };
         Relationships: [];
       };
+      sanctions: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          ends_at: string | null;
+          id: string;
+          incident_id: string | null;
+          level: Database["public"]["Enums"]["sanction_level"];
+          reason: string;
+          starts_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          ends_at?: string | null;
+          id?: string;
+          incident_id?: string | null;
+          level: Database["public"]["Enums"]["sanction_level"];
+          reason?: string;
+          starts_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          ends_at?: string | null;
+          id?: string;
+          incident_id?: string | null;
+          level?: Database["public"]["Enums"]["sanction_level"];
+          reason?: string;
+          starts_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sanctions_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sanctions_incident_fk";
+            columns: ["incident_id"];
+            isOneToOne: false;
+            referencedRelation: "incidents";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sanctions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       services: {
         Row: {
           active: boolean;
@@ -583,6 +1021,7 @@ export type Database = {
           location: string;
           max_advance_days: number;
           max_dogs: number | null;
+          max_people: number | null;
           min_notice_hours: number;
           mode: Database["public"]["Enums"]["booking_mode"];
           name: string;
@@ -590,6 +1029,7 @@ export type Database = {
           price_visible: boolean;
           required_document_kinds: string[];
           requires_address: boolean;
+          requires_park_profile: boolean;
           resource_id: string;
           slot_step_minutes: number;
           slug: string;
@@ -612,6 +1052,7 @@ export type Database = {
           location?: string;
           max_advance_days?: number;
           max_dogs?: number | null;
+          max_people?: number | null;
           min_notice_hours?: number;
           mode: Database["public"]["Enums"]["booking_mode"];
           name: string;
@@ -619,6 +1060,7 @@ export type Database = {
           price_visible?: boolean;
           required_document_kinds?: string[];
           requires_address?: boolean;
+          requires_park_profile?: boolean;
           resource_id: string;
           slot_step_minutes?: number;
           slug: string;
@@ -640,6 +1082,7 @@ export type Database = {
           location?: string;
           max_advance_days?: number;
           max_dogs?: number | null;
+          max_people?: number | null;
           min_notice_hours?: number;
           mode?: Database["public"]["Enums"]["booking_mode"];
           name?: string;
@@ -647,6 +1090,7 @@ export type Database = {
           price_visible?: boolean;
           required_document_kinds?: string[];
           requires_address?: boolean;
+          requires_park_profile?: boolean;
           resource_id?: string;
           slot_step_minutes?: number;
           slug?: string;
@@ -669,8 +1113,12 @@ export type Database = {
         Row: {
           admin_email: string | null;
           calendar_token: string;
+          expiry_alert_days: number;
           id: boolean;
+          min_dog_age_months: number | null;
+          refuse_dogs_in_heat: boolean;
           reminder_hours: number;
+          rescue_info: string;
           social_monthly_cap: number | null;
           updated_at: string;
         };
@@ -678,28 +1126,125 @@ export type Database = {
         Insert: {
           admin_email?: string | null;
           calendar_token?: string;
+          expiry_alert_days?: number;
           id?: boolean;
+          min_dog_age_months?: number | null;
+          refuse_dogs_in_heat?: boolean;
           reminder_hours?: number;
+          rescue_info?: string;
           social_monthly_cap?: number | null;
           updated_at?: string;
         };
         Update: {
           admin_email?: string | null;
           calendar_token?: string;
+          expiry_alert_days?: number;
           id?: boolean;
+          min_dog_age_months?: number | null;
+          refuse_dogs_in_heat?: boolean;
           reminder_hours?: number;
+          rescue_info?: string;
           social_monthly_cap?: number | null;
           updated_at?: string;
         };
         Relationships: [];
+      };
+      vaccine_types: {
+        Row: {
+          active: boolean;
+          created_at: string;
+          id: string;
+          name: string;
+          required: boolean;
+          sort_order: number;
+          translations: NonNullable<Json>;
+        };
+        ComputedFields: never;
+        Insert: {
+          active?: boolean;
+          created_at?: string;
+          id?: string;
+          name: string;
+          required?: boolean;
+          sort_order?: number;
+          translations?: NonNullable<Json>;
+        };
+        Update: {
+          active?: boolean;
+          created_at?: string;
+          id?: string;
+          name?: string;
+          required?: boolean;
+          sort_order?: number;
+          translations?: NonNullable<Json>;
+        };
+        Relationships: [];
+      };
+      waitlist_entries: {
+        Row: {
+          created_at: string;
+          day: string;
+          id: string;
+          notified_at: string | null;
+          service_id: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          day: string;
+          id?: string;
+          notified_at?: string | null;
+          service_id: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          day?: string;
+          id?: string;
+          notified_at?: string | null;
+          service_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_entries_service_id_fkey";
+            columns: ["service_id"];
+            isOneToOne: false;
+            referencedRelation: "services";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "waitlist_entries_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      admin_stats: { Args: { p_from: string; p_to: string }; Returns: Json };
       assert_booking_quota: { Args: { p_client_id: string }; Returns: undefined };
       assert_dog_owner: { Args: { p_dog_id: string; p_owner_id: string }; Returns: undefined };
+      assert_dogs_owner: { Args: { p_dog_ids: string[]; p_owner_id: string }; Returns: undefined };
+      assert_eligibility: {
+        Args: {
+          p_dog_ids: string[];
+          p_service: Omit<
+            Database["public"]["Tables"]["services"]["Row"],
+            Database["public"]["Tables"]["services"]["ComputedFields"]
+          >;
+          p_starts_at: string;
+          p_uid: string;
+        };
+        Returns: undefined;
+      };
+      assert_not_sanctioned: { Args: { p_uid: string }; Returns: undefined };
       book_event: {
         Args: {
           p_adults_count?: number;
@@ -708,6 +1253,7 @@ export type Database = {
           p_discount_code?: string;
           p_document_ids?: string[];
           p_dog_id?: string;
+          p_dog_ids?: string[];
           p_dogs_count?: number;
           p_notes?: string;
           p_party_size?: number;
@@ -721,6 +1267,7 @@ export type Database = {
           p_discount_code?: string;
           p_document_ids?: string[];
           p_dog_id?: string;
+          p_dog_ids?: string[];
           p_dogs_count?: number;
           p_notes?: string;
           p_service_id: string;
@@ -750,12 +1297,17 @@ export type Database = {
         Returns: {
           attempts: number;
           audience: string;
-          booking_id: string;
+          booking_id: string | null;
           created_at: string;
+          dog_id: string | null;
+          emergency_id: string | null;
           id: string;
           kind: Database["public"]["Enums"]["notification_kind"];
           last_error: string | null;
           locked_until: string | null;
+          payload: NonNullable<Json>;
+          profile_id: string | null;
+          ref_date: string | null;
           send_after: string;
           sent_at: string | null;
         }[];
@@ -781,6 +1333,8 @@ export type Database = {
         Returns: number;
       };
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
+      enqueue_expiry_alerts: { Args: Record<PropertyKey, never>; Returns: number };
+      export_my_data: { Args: Record<PropertyKey, never>; Returns: Json };
       get_available_slots: {
         Args: { p_from: string; p_service_id: string; p_to: string };
         Returns: {
@@ -790,6 +1344,7 @@ export type Database = {
           starts_at: string;
         }[];
       };
+      get_emergency_overview: { Args: { p_resource_slug?: string }; Returns: Json };
       get_required_documents: {
         Args: { p_language?: string; p_service_id: string };
         Returns: {
@@ -801,6 +1356,7 @@ export type Database = {
           version: number;
         }[];
       };
+      get_rescue_info: { Args: Record<PropertyKey, never>; Returns: string };
       get_resource_status: {
         Args: { p_resource_slug: string };
         Returns: {
@@ -809,6 +1365,8 @@ export type Database = {
         }[];
       };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      my_role: { Args: Record<PropertyKey, never>; Returns: string };
+      normalize_dog_ids: { Args: { p_dog_id: string; p_dog_ids: string[] }; Returns: string[] };
       prepare_booking: {
         Args: {
           p_adults_count: number;
@@ -827,18 +1385,25 @@ export type Database = {
         };
         Returns: Record<string, unknown>;
       };
+      raise_emergency: { Args: { p_message?: string }; Returns: string };
       record_acceptances: {
         Args: { p_booking_id: string; p_document_ids: string[]; p_uid: string };
         Returns: undefined;
       };
       reschedule_booking: { Args: { p_booking_id: string; p_starts_at: string }; Returns: undefined };
       schedule_booking_reminder: { Args: { p_booking_id: string; p_starts_at: string }; Returns: undefined };
+      set_booking_guests: { Args: { p_booking_id: string; p_guests: Json }; Returns: undefined };
+      set_user_role: {
+        Args: { p_role: Database["public"]["Enums"]["user_role"]; p_user_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       appointment_status: "scheduled" | "cancelled";
       booking_mode: "slot" | "event";
       booking_status: "confirmed" | "cancelled";
       discount_kind: "percent" | "amount";
+      incident_kind: "injury" | "bite" | "fight" | "dirt" | "rules_breach" | "other";
       notification_kind:
         | "booking_confirmed"
         | "booking_rescheduled"
@@ -846,7 +1411,16 @@ export type Database = {
         | "booking_reminder"
         | "admin_new_booking"
         | "admin_booking_rescheduled"
-        | "admin_booking_cancelled";
+        | "admin_booking_cancelled"
+        | "insurance_expiring"
+        | "vaccination_expiring"
+        | "vaccination_reviewed"
+        | "waitlist_slot_freed"
+        | "admin_documents_expired"
+        | "admin_vaccination_to_review"
+        | "admin_emergency";
+      review_status: "pending" | "validated" | "rejected";
+      sanction_level: "warning" | "suspension" | "ban";
       user_role: "client" | "admin";
     };
     CompositeTypes: {
@@ -962,6 +1536,7 @@ export const Constants = {
       booking_mode: ["slot", "event"],
       booking_status: ["confirmed", "cancelled"],
       discount_kind: ["percent", "amount"],
+      incident_kind: ["injury", "bite", "fight", "dirt", "rules_breach", "other"],
       notification_kind: [
         "booking_confirmed",
         "booking_rescheduled",
@@ -970,7 +1545,16 @@ export const Constants = {
         "admin_new_booking",
         "admin_booking_rescheduled",
         "admin_booking_cancelled",
+        "insurance_expiring",
+        "vaccination_expiring",
+        "vaccination_reviewed",
+        "waitlist_slot_freed",
+        "admin_documents_expired",
+        "admin_vaccination_to_review",
+        "admin_emergency",
       ],
+      review_status: ["pending", "validated", "rejected"],
+      sanction_level: ["warning", "suspension", "ban"],
       user_role: ["client", "admin"],
     },
   },

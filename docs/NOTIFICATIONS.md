@@ -8,6 +8,10 @@
 | Report | « Réservation déplacée » | Alerte |
 | Annulation (par le client, l’admin ou une fermeture) | « Réservation annulée » | Alerte (sauf si elle annule elle-même) |
 | X heures avant le rendez-vous (48 h par défaut) | Rappel | — |
+| Assurance ou vaccin exigé qui expire dans les 30 jours (réglable) | Alerte | Récapitulatif des documents échus |
+| Vaccination ajoutée ou modifiée | Résultat de la validation | « Vaccination à valider » |
+| Créneau libéré un jour où il est inscrit en liste d’attente | Alerte | — |
+| Bouton « Urgence » pendant une réservation | — | Alerte immédiate (identité, créneau, contact d’urgence) |
 
 - L’email du client part dans la langue choisie dans l’app (`profiles.language`, FR ou EN).
 - L’adresse des alertes et le délai du rappel se règlent dans l’app : **Compte → Administration**.
@@ -53,6 +57,9 @@ Les erreurs d’envoi restent visibles dans `notifications.last_error` (lecture 
        body := '{}'::jsonb
      );
    $$);
+
+   -- Alertes d'échéance (assurance, vaccins) : chaque jour à 7 h 55 (heure UTC).
+   select cron.schedule('expiry-alerts', '55 7 * * *', $$ select public.enqueue_expiry_alerts() $$);
    ```
 
 Sans ces secrets la fonction répond `503 not_configured` et la file reste intacte : rien n’est perdu,
