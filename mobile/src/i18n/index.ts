@@ -2,11 +2,18 @@ import { getLocales } from "expo-localization";
 import { useSyncExternalStore } from "react";
 
 import { en } from "@/i18n/en";
-import { type Dictionary, fr } from "@/i18n/fr";
+import { type Dictionary, fr as baseFr } from "@/i18n/fr";
+import reviewed from "@/i18n/reviewed.json";
+import { withReviewed } from "@/i18n/reviewed";
 import { sessionStorage as storage } from "@/lib/session-storage";
 
 // Français et anglais au lancement ; ajouter « nl » ou « de » = un dictionnaire + une entrée ici.
-const DICTIONARIES = { fr, en } satisfies Record<string, Dictionary>;
+// Les textes relus par FreePaws (reviewed.json) remplacent ceux des dictionnaires.
+const DICTIONARIES = {
+  fr: withReviewed(baseFr, reviewed.fr),
+  en: withReviewed(en, reviewed.en),
+} satisfies Record<string, Dictionary>;
+const fr = DICTIONARIES.fr;
 export type Language = keyof typeof DICTIONARIES;
 export const LANGUAGES: { code: Language; label: string }[] = [
   { code: "fr", label: "Français" },

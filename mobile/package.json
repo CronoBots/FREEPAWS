@@ -53,7 +53,9 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "check": "npm run typecheck && npm run lint && prettier --check \"src/**/*.{ts,tsx}\" && npm test -- --ci",
-    "format": "prettier --write \"src/**/*.{ts,tsx}\" app.config.ts"
+    "format": "prettier --write \"src/**/*.{ts,tsx}\" app.config.ts",
+    "i18n:export": "python3 scripts/i18n-xlsx.py export",
+    "i18n:import": "python3 scripts/i18n-xlsx.py import"
   },
   "private": true,
   "jest": {

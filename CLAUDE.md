@@ -38,6 +38,8 @@ npx jest -t "parseRange"                  # tests by name
 npx expo install <pkg>       # always use this instead of npm install for deps
 npx expo install --check     # SDK compatibility (also in CI)
 python3 scripts/generate-icons.py ../FreePaws.png   # regenerate icons/splash from the logo
+npm run i18n:export                       # Excel FR/EN for FreePaws to proofread (final texts)
+npm run i18n:import -- <file.xlsx>        # proofread texts -> src/i18n/reviewed.json (overrides dictionaries)
 ```
 
 The app needs `mobile/.env.local` (copy `.env.example`); without the Supabase vars it shows a
