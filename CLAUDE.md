@@ -38,6 +38,7 @@ npx jest -t "parseRange"                  # tests by name
 npx expo install <pkg>       # always use this instead of npm install for deps
 npx expo install --check     # SDK compatibility (also in CI)
 python3 scripts/generate-icons.py ../FreePaws.png   # regenerate icons/splash from the logo
+EXPO_BASE_URL=/sub EXPO_PUBLIC_SUPABASE_URL=… EXPO_PUBLIC_SUPABASE_KEY=… npm run export:web   # web build in dist/ (PWA icons, base path)
 npm run i18n:export                       # Excel FR/EN for FreePaws to proofread (final texts)
 npm run i18n:import -- <file.xlsx>        # proofread texts -> src/i18n/reviewed.json (overrides dictionaries)
 ```

@@ -23,6 +23,8 @@ lum = pixels.mean(axis=2)
 paper = np.percentile(lum, 90) - 12
 ink = np.percentile(lum, 1)
 alpha = np.clip((paper - lum) / (paper - ink), 0, 1)
+# Grain du papier : les pixels à peine teintés faussent le recadrage (logo décentré) ; on les efface.
+alpha[alpha < 0.25] = 0
 ink_color = pixels[alpha > 0.9].mean(axis=0).astype(np.uint8)
 
 rgba = np.zeros((*alpha.shape, 4), dtype=np.uint8)
@@ -51,4 +53,8 @@ place(1024, 0.60, art=monochrome).save("assets/android-icon-monochrome.png")
 place(1024, 0.92).save("assets/splash-icon.png")
 place(512, 0.92).save("assets/logo.png")
 place(48, 0.9, CREAM).save("assets/favicon.png")
+# Écran d'accueil en version web (PWA) : icônes opaques (iOS remplit la transparence en noir).
+place(180, 0.78, CREAM).convert("RGB").save("public/apple-touch-icon.png")
+place(192, 0.78, CREAM).convert("RGB").save("public/icon-192.png")
+place(512, 0.78, CREAM).convert("RGB").save("public/icon-512.png")
 print("Icônes générées, couleur d'encre", tuple(int(c) for c in ink_color), "cadre", logo.size)
