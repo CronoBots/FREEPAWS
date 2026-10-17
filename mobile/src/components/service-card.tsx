@@ -38,5 +38,11 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.8 },
   // Seule action de la carte : couleur de marque pour qu’on la repère.
-  more: { color: colors.olive },
+  // .link-inline du site : texte encre souligné d’un filet olive.
+  more: {
+    alignSelf: "flex-start",
+    color: colors.ink,
+    textDecorationLine: "underline",
+    textDecorationColor: colors.olive,
+  },
 });

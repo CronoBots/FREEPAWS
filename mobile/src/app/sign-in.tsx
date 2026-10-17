@@ -165,6 +165,6 @@ const styles = StyleSheet.create({
   // Lien aligné à gauche, juste sous la mention (même style que « Lire le document » de l’invitation).
   // Zone tactile de 44 px : le padding compense le retrait visuel.
   link: { alignSelf: "flex-start", marginTop: -space.sm - 10, paddingVertical: 10 },
-  linkText: { color: colors.ink, textDecorationLine: "underline" },
+  linkText: { color: colors.ink, textDecorationLine: "underline", textDecorationColor: colors.olive },
   pressed: { opacity: 0.6 },
 });

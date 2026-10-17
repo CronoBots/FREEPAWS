@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: 1.5,
     borderColor: colors.ink,
-    backgroundColor: colors.white,
+    backgroundColor: colors.creamAlt,
     alignItems: "center",
     justifyContent: "center",
   },

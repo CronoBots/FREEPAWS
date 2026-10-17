@@ -23,6 +23,6 @@ export function Badge({ label, tone = "neutral" }: { label: string; tone?: keyof
 }
 
 const styles = StyleSheet.create({
-  badge: { alignSelf: "flex-start", borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 4 },
+  badge: { alignSelf: "flex-start", borderRadius: radius.sm, paddingHorizontal: space.md, paddingVertical: 4 },
   label: { fontWeight: "600" },
 });

@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.line,
-    backgroundColor: colors.white,
+    backgroundColor: colors.cream,
     paddingHorizontal: space.md,
     fontFamily: fonts.sans,
     fontSize: 16,

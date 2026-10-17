@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.line,
-    backgroundColor: colors.white,
+    backgroundColor: colors.creamAlt,
   },
   pressed: { opacity: 0.7 },
   danger: { color: colors.danger },

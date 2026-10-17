@@ -17,7 +17,7 @@ export function LivePanel({ status, statusFailed }: { status: ParkStatus | undef
 
   if (status?.status === "not_open") {
     return (
-      <Card>
+      <Card tick="02">
         <AppText variant="eyebrow">{t("camera.accessTitle")}</AppText>
         <AppText variant="body">{t("camera.twoTimes")}</AppText>
         <AppText variant="bodyStrong">{t("camera.freeTitle")}</AppText>
@@ -56,7 +56,7 @@ export function LivePanel({ status, statusFailed }: { status: ParkStatus | undef
 
   return (
     <>
-      <Card>
+      <Card tick="02">
         <AppText variant="eyebrow">{t("camera.eyebrow")}</AppText>
         {body}
       </Card>

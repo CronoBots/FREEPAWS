@@ -10,6 +10,7 @@ import { Card } from "@/components/card";
 import { LivePanel } from "@/components/live-panel";
 import { ParkStatusCard } from "@/components/park-status-card";
 import { Screen } from "@/components/screen";
+import { Tick } from "@/components/spine";
 import { ErrorView } from "@/components/state-views";
 import { AppText } from "@/components/text";
 import { useCompact } from "@/hooks/use-compact";
@@ -34,20 +35,22 @@ export default function ParkScreen() {
 
   return (
     <Screen refreshing={status.isRefetching} onRefresh={() => void status.refetch()}>
-      <View style={styles.brand}>
-        <Image
-          source={require("@/assets/logo.png")}
-          style={compact ? styles.logoCompact : styles.logo}
-          contentFit="contain"
-          accessibilityLabel={t("common.logoLabel")}
-        />
-        <View style={styles.brandText}>
-          <AppText variant="eyebrow">{t("park.eyebrow")}</AppText>
-          <AppText variant="display" accessibilityRole="header" style={compact && styles.titleCompact}>
-            FreePaws Park
-          </AppText>
+      <Tick label="FR—03" offset={compact ? 24 : 32}>
+        <View style={styles.brand}>
+          <Image
+            source={require("@/assets/logo.png")}
+            style={compact ? styles.logoCompact : styles.logo}
+            contentFit="contain"
+            accessibilityLabel={t("common.logoLabel")}
+          />
+          <View style={styles.brandText}>
+            <AppText variant="eyebrow">{t("park.eyebrow")}</AppText>
+            <AppText variant="display" accessibilityRole="header" style={compact && styles.titleCompact}>
+              FreePaws Park
+            </AppText>
+          </View>
         </View>
-      </View>
+      </Tick>
 
       <AppText variant="body">{t("park.intro")}</AppText>
 
@@ -58,7 +61,7 @@ export default function ParkScreen() {
       )}
 
       {notOpen || !parkService?.booking_enabled ? (
-        <Card>
+        <Card tick="01">
           <AppText variant="heading">{t("park.waitlistTitle")}</AppText>
           <AppText variant="body">{t("park.waitlistText")}</AppText>
           <Button label={t("park.waitlistButton")} onPress={() => void openContactEmail(t("park.waitlistSubject"))} />
@@ -73,7 +76,7 @@ export default function ParkScreen() {
       <LivePanel status={status.data} statusFailed={status.isError} />
 
       {notOpen ? (
-        <Card>
+        <Card tick="03">
           <AppText variant="eyebrow">{t("park.projectTitle")}</AppText>
           {STEPS.map((step) => (
             <View key={step.title} style={styles.step}>

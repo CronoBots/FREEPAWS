@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1.5,
     borderColor: colors.danger,
-    backgroundColor: colors.white,
+    backgroundColor: colors.creamAlt,
   },
   emergencyTexts: { flex: 1, gap: 2 },
   emergencyLabel: { color: colors.danger },

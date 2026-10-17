@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.white,
+    backgroundColor: colors.creamAlt,
   },
   groupDog: { gap: space.xs, alignItems: "flex-start" },
   notes: { gap: 2 },

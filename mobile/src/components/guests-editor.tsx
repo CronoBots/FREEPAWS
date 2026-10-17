@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.white,
+    backgroundColor: colors.creamAlt,
   },
   guestHeader: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: space.sm },
   guestTitle: { flex: 1, minWidth: 100 },

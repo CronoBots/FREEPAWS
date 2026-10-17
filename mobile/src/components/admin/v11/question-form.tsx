@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.white,
+    backgroundColor: colors.creamAlt,
   },
   fakeInput: {
     minHeight: 44,

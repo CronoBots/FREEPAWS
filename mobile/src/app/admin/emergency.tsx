@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.line,
-    backgroundColor: colors.white,
+    backgroundColor: colors.creamAlt,
   },
   dogProtocol: { borderColor: colors.danger, borderWidth: 1 },
   badges: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: space.xs },
